@@ -1,0 +1,83 @@
+[GameType "Base+MLP"]
+[Date "????.??.??"]
+[Site "hivegame.com"]
+[White "PlayerWhite"]
+[Black "PlayerBlack"]
+[Result "BlackWins"]
+
+1. wL
+2. bP \wL
+3. wQ /wL
+4. bQ bP/
+5. wB1 wL-
+6. bM \bP
+7. wB1 wL
+8. bA1 /bM
+9. wP /wQ
+10. bA1 wB1\
+11. wB1 bP
+12. bB1 bA1-
+13. wA1 -wP
+14. bB1 bA1
+15. wA1 -bM
+16. bB2 bQ/
+17. wA2 -wP
+18. bS1 \bQ
+19. wA2 bB2\
+20. bB2 wA2
+21. wG1 \wQ
+22. bB1 wL
+23. wG1 \bB2
+24. bS1 -wA1
+25. wA3 /wP
+26. bA1 wA1\
+27. wB2 \wG1
+28. bM \wB2
+29. wM wP\
+30. bA2 bB2-
+31. wM bA2-
+32. bS2 bB2\
+33. wA3 \bQ
+34. bA3 \bS1
+35. wA3 -bA3
+36. bG1 /bS2
+37. wB1 bA1
+38. bQ /wB2
+39. wS1 \wP
+40. bL bA3/
+41. wA3 \bL
+42. bG2 -bA3
+43. wS1 bS1\
+44. bG2 bL\
+45. wA1 -bA3
+46. bQ /bM
+47. wS2 wG1/
+48. bG3 \bG1
+49. wS2 \bM
+50. bB2 wG1
+51. wP -wQ
+52. bB1 wQ
+53. wB1 bP
+54. bB1 wP
+55. wB1 bA1
+56. bQ /wS2
+57. wB1 wS1
+58. bB2 wA2
+59. wB1 bS1
+60. bB2 bG3
+61. wB1 bA3
+62. bG2 -wA1
+63. wB1 bL
+64. bG1 \bB2
+65. wA3 bS2\
+66. bB2 wL
+67. wM bA2/
+68. bG3 bB1\
+69. wM bA2-
+70. bG3 bG1\
+71. wM bA2/
+72. bG1 bG3\
+73. wB1 \bL
+74. bQ /bM
+
+BlackWins

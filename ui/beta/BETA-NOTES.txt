@@ -1,0 +1,56 @@
+FoulBrood GUI — 0.1.0-beta.3
+Apple Silicon Mac beta · September 16, 2026
+
+Included: viewer, Hive rules helper, Python runtime, local assets and licenses.
+Not included: any selectable playing engine, personal engine paths, test games,
+accounts, or developer tools. FoulBrood is not required as a playing engine.
+
+CHANGES IN BETA 3
+• Engine information now appears in player bars above and below the board.
+• White suggestions are gold; Black suggestions are blue. Recommendations follow
+  your selected notation and the History option for board flips and rotations.
+• Game review compares played and preferred moves, shows their difference, and
+  lists moves by largest or smallest difference with history navigation.
+• Save review and Load review preserve analysis in a PGN that still opens as a
+  normal game in other compatible Hive programs. Interrupted reviews can resume.
+• Imports and setup changes warn before replacing history or review work.
+• Recorded in-game analysis can be revisited and transferred into game review.
+• Longer analysis times and Match timing for Play; improved clocks and sound.
+• Auto board fitting, less clutter, and a warmer light-mode board background.
+
+KNOWN LIMITS
+• Apple Silicon only. Built with a macOS 11 minimum; tested on macOS 15.6.1
+  with Chrome, plus focused Safari and Firefox checks. Older macOS versions
+  and a separate clean Mac still need tester verification. External engines set their own requirements.
+• No Apple notarization or Developer ID signing. Local ad-hoc signatures provide
+  integrity checks, not Apple approval. See START-HERE.html for first launch.
+• Use Save review to keep a reviewed game, or export an ordinary game. Automatic
+  game/review recovery after a backend
+  restart and automatic updates are not included.
+• Stop analysis/review and pause play before closing the viewer. A local helper
+  remains running after closing the browser; active reviews can continue. Log out or
+  restart your Mac to end it completely. Before replacing this beta with an
+  update, export your games, close the viewer, and log out/back in.
+• Raw scores from different engines use different scales. Game review labels
+  are estimates from the selected engine and thinking time, not objective truth.
+• Game review supports the verified Mzinga and Nokamute score formats. Other
+  UHP engines can play; review is enabled only if a recognized score format
+  passes the viewer's compatibility checks.
+• A forced-win distance is shown only when the engine provides a recognized
+  forced result. An ordinary large score is not treated as proof of a win.
+• An external engine's executable and companion files must stay in place.
+  If you move them, remove the old entry and add the engine from its new folder.
+• Keep one viewer tab open per session to avoid duplicate audio and competing
+  controls. The default-browser launch is local to this computer, not a hosted site.
+
+FIRST TEST ON ANOTHER MAC
+1. Extract and launch without installing Python or developer tools.
+2. Record any macOS approval messages and whether Open Anyway works.
+3. Play several human moves, including a placement and a piece movement.
+4. Connect the Mac ARM64 Mzinga release and play a short game against it.
+5. Export/import the game; try a short review, stop and resume it, then use
+   Save review and Load review to check that its results return.
+6. Check sounds, board previews, setup, and reopening the app.
+
+Please send reproducible steps, a screenshot and a PGN/JSON when relevant.
+Do not send personal files or an entire engine cache. FEEDBACK.txt is a template.

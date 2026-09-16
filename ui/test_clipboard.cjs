@@ -1,0 +1,10 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const source=fs.readFileSync(__dirname+'/app.js','utf8');
+const snippet=source.slice(source.indexOf('async function pasteInto'),source.indexOf("$('pasteLink').onclick"));
+const fields={gameLink:{value:'',focus(){this.focused=true}},position:{value:'',focus(){this.focused=true}}};
+let notices=[];const context=vm.createContext({navigator:{clipboard:{readText:async()=> 'https://hivegame.com/game/example'}},$:id=>fields[id],toast:s=>notices.push(s)});
+vm.runInContext(snippet,context);
+(async()=>{await vm.runInContext("pasteInto('gameLink')",context);assert.equal(fields.gameLink.value,'https://hivegame.com/game/example');assert(fields.gameLink.focused);
+ context.navigator.clipboard.readText=async()=> 'wS1\nbS1 wS1-';await vm.runInContext("pasteInto('position')",context);assert.equal(fields.position.value,'wS1\nbS1 wS1-');
+ context.navigator.clipboard.readText=async()=>{throw Error('denied')};await vm.runInContext("pasteInto('position')",context);assert(notices.pop().includes('Command+V'));assert.equal(fields.position.value,'wS1\nbS1 wS1-');
+ console.log('PASS: both paste targets receive clipboard text; denied access preserves input and offers keyboard paste.');})();

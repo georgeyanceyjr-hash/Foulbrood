@@ -1,0 +1,24 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const source=fs.readFileSync(__dirname+'/app.js','utf8');
+let responses=[],renders=[];
+const ctx=vm.createContext({busy:false,actionEpoch:0,window:{BOARD_TOKEN:'test'},fetch:()=>new Promise(resolve=>responses.push(resolve)),render:s=>renders.push(s),toast:m=>{throw Error(m)},setTimeout(){}});
+vm.runInContext(source.slice(source.indexOf('async function action('),source.indexOf('function canMove(')),ctx);
+const poll=source.slice(source.indexOf('async function poll('),source.indexOf('poll();',source.indexOf('async function poll(')));
+vm.runInContext(poll,ctx);
+(async()=>{
+ const oldPoll=ctx.poll();
+ const action=ctx.action({action:'insight_time',milliseconds:5000});
+ responses[1]({ok:true,json:async()=>({analysis_ms:5000})});await action;
+ responses[0]({ok:true,json:async()=>({analysis_ms:60000})});await oldPoll;
+ assert.deepEqual(renders,[{analysis_ms:5000}],'late poll must not overwrite a completed action');
+ const fresh=ctx.poll();responses[2]({ok:true,json:async()=>({analysis_ms:5000})});await fresh;
+ assert.equal(renders.length,2,'fresh polls continue normally');
+ const engineCode=fs.readFileSync(__dirname+'/engines.js','utf8');
+ ctx.$=()=>({textContent:'',disabled:false});
+ vm.runInContext(engineCode.slice(engineCode.indexOf('async function engineRequest('),engineCode.indexOf("$('engineTab').onclick")),ctx);
+ const enginePoll=ctx.poll();const engineChange=ctx.engineRequest({action:'engine_select',id:'new-engine'});
+ responses[4]({ok:true,json:async()=>({analysis_engine:'new-engine'})});await engineChange;
+ responses[3]({ok:true,json:async()=>({analysis_engine:'old-engine'})});await enginePoll;
+ assert.equal(renders.at(-1).analysis_engine,'new-engine');
+ console.log('PASS: delayed state response cannot roll back completed time or engine changes');
+})().catch(e=>{console.error(e);process.exitCode=1});

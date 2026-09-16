@@ -1,0 +1,11 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const source=fs.readFileSync(__dirname+'/app.js','utf8'),ctx=vm.createContext({});
+vm.runInContext(source.slice(source.indexOf('function playerClockStatus('),source.indexOf('let seatPreviewPlayers=')),ctx);
+const s={mode:'play',side:0,running:false,state:'InProgress'};
+assert.equal(ctx.playerClockStatus(s,0),'Paused');assert.equal(ctx.playerClockStatus(s,1),'Clock');
+s.running=true;assert.equal(ctx.playerClockStatus(s,0),'To move');
+s.side=1;s.job='computer';assert.equal(ctx.playerClockStatus(s,1),'To move');assert.equal(ctx.playerClockStatus(s,0),'Clock');
+s.reviewing=true;s.side=0;s.live_side=1;assert.equal(ctx.playerClockStatus(s,1),'Live turn');assert.equal(ctx.playerClockStatus(s,0),'Clock');
+s.job=null;assert.equal(ctx.playerClockStatus(s,1),'Live turn');
+for(const extra of [{play_finished:true},{timeout_side:0},{resigned_side:1},{completed_state:'Draw'},{mode:'analysis'}])assert.equal(ctx.playerClockStatus({...s,...extra},1),'Clock');
+console.log('PASS: player clocks show To move for humans and bots, preserve paused/history state, and clear it after game end.');

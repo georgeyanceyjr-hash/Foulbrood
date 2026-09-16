@@ -1,0 +1,9 @@
+target/
+__pycache__/
+*.py[cod]
+.cache/
+work/
+.DS_Store
+*.log
+engines.json
+server.json

@@ -1,0 +1,3827 @@
+{
+  "seed": 4088,
+  "milliseconds": 500,
+  "opening_plies": 8,
+  "maximum_played_plies": 120,
+  "requested_pairs": 8,
+  "games": [
+    {
+      "opening": 0,
+      "game_type": "Base",
+      "foulbrood_side": 0,
+      "start": "Base;InProgress;White[5];wA1;bB1 /wA1;wB1 wA1-;bQ /bB1;wA2 wB1/;bS1 -bQ;wQ \\wA1;bG1 \\bQ",
+      "history": [
+        {
+          "move": "wA2 /bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.493407375,
+          "depth": 6,
+          "nodes": 4909941,
+          "score": 0,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bS1 /wQ",
+          "foulbrood": false,
+          "wall_seconds": 0.501582417
+        },
+        {
+          "move": "wQ \\wB1",
+          "foulbrood": true,
+          "wall_seconds": 0.4926324579999999,
+          "depth": 6,
+          "nodes": 4787953,
+          "score": -9,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 -bG1",
+          "foulbrood": false,
+          "wall_seconds": 0.5012717919999998
+        },
+        {
+          "move": "wQ wB1/",
+          "foulbrood": true,
+          "wall_seconds": 0.4931641659999997,
+          "depth": 6,
+          "nodes": 4631650,
+          "score": 0,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 wQ-",
+          "foulbrood": false,
+          "wall_seconds": 0.501269792
+        },
+        {
+          "move": "wB2 -wA2",
+          "foulbrood": true,
+          "wall_seconds": 0.49275499999999983,
+          "depth": 6,
+          "nodes": 4422612,
+          "score": -9,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bS1 \\wQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5013411670000005
+        },
+        {
+          "move": "wA3 \\wB2",
+          "foulbrood": true,
+          "wall_seconds": 0.49325920800000045,
+          "depth": 6,
+          "nodes": 4634708,
+          "score": 0,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 -bS1",
+          "foulbrood": false,
+          "wall_seconds": 0.50130725
+        },
+        {
+          "move": "wA3 wA2-",
+          "foulbrood": true,
+          "wall_seconds": 0.49284695799999945,
+          "depth": 6,
+          "nodes": 4523083,
+          "score": 0,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bG1 wA3\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5022742920000001
+        },
+        {
+          "move": "wS1 -wB2",
+          "foulbrood": true,
+          "wall_seconds": 0.49374275,
+          "depth": 7,
+          "nodes": 4697904,
+          "score": 33,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 /wS1",
+          "foulbrood": false,
+          "wall_seconds": 0.5013345830000002
+        },
+        {
+          "move": "wS2 wB2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4926605420000003,
+          "depth": 6,
+          "nodes": 4387052,
+          "score": -80,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA3 bA1-",
+          "foulbrood": false,
+          "wall_seconds": 0.5013690000000013
+        },
+        {
+          "move": "wG1 \\wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.49291854199999996,
+          "depth": 6,
+          "nodes": 3986676,
+          "score": -179,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 \\bA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5035279159999995
+        },
+        {
+          "move": "wS2 /bA2",
+          "foulbrood": true,
+          "wall_seconds": 0.49283050000000017,
+          "depth": 6,
+          "nodes": 4921154,
+          "score": -200,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bG2 bA1-",
+          "foulbrood": false,
+          "wall_seconds": 0.5005154579999989
+        },
+        {
+          "move": "wG2 wS1/",
+          "foulbrood": true,
+          "wall_seconds": 0.49279662500000043,
+          "depth": 7,
+          "nodes": 4418049,
+          "score": -224,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 \\wG1",
+          "foulbrood": false,
+          "wall_seconds": 0.5012264590000015
+        },
+        {
+          "move": "wG3 \\wA1",
+          "foulbrood": true,
+          "wall_seconds": 0.4928535830000005,
+          "depth": 7,
+          "nodes": 3917729,
+          "score": 57,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bG2 /bS1",
+          "foulbrood": false,
+          "wall_seconds": 0.5013285409999995
+        },
+        {
+          "move": "wG3 /wB1",
+          "foulbrood": true,
+          "wall_seconds": 0.492693375,
+          "depth": 6,
+          "nodes": 3736812,
+          "score": -164,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bB2 bA1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5012466250000003
+        },
+        {
+          "move": "wG3 \\bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49277891700000076,
+          "depth": 7,
+          "nodes": 4002621,
+          "score": 51,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bB2 wQ\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5015115419999994
+        },
+        {
+          "move": "wB1 wA1\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4931328749999988,
+          "depth": 7,
+          "nodes": 3508656,
+          "score": -230,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bS2 -bS1",
+          "foulbrood": false,
+          "wall_seconds": 0.5012568749999993
+        },
+        {
+          "move": "wG3 wB1-",
+          "foulbrood": true,
+          "wall_seconds": 0.4930164999999995,
+          "depth": 6,
+          "nodes": 3276104,
+          "score": -346,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bB2 wG3-",
+          "foulbrood": false,
+          "wall_seconds": 0.5003177910000023
+        },
+        {
+          "move": "wS2 -wG1",
+          "foulbrood": true,
+          "wall_seconds": 0.4929485000000007,
+          "depth": 6,
+          "nodes": 3178366,
+          "score": -221,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 -wA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5011823749999991
+        },
+        {
+          "move": "wS2 /bA2",
+          "foulbrood": true,
+          "wall_seconds": 0.4926685830000004,
+          "depth": 6,
+          "nodes": 2763357,
+          "score": -194,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA3 \\wG1",
+          "foulbrood": false,
+          "wall_seconds": 0.49925804100000093
+        },
+        {
+          "move": "wS2 -wG1",
+          "foulbrood": true,
+          "wall_seconds": 0.4928630420000033,
+          "depth": 6,
+          "nodes": 3117074,
+          "score": -221,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 bB1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5013344589999988
+        },
+        {
+          "move": "wS2 bA3/",
+          "foulbrood": true,
+          "wall_seconds": 0.4930570420000002,
+          "depth": 6,
+          "nodes": 2785126,
+          "score": -209,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bQ -bB1",
+          "foulbrood": false,
+          "wall_seconds": 0.5011962499999996
+        },
+        {
+          "move": "wS2 \\bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4935175830000027,
+          "depth": 7,
+          "nodes": 3111045,
+          "score": -288,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bB2 wG3",
+          "foulbrood": false,
+          "wall_seconds": 0.5010122499999987
+        },
+        {
+          "move": "wS1 -bA3",
+          "foulbrood": true,
+          "wall_seconds": 0.49277670900000103,
+          "depth": 7,
+          "nodes": 3315115,
+          "score": -177,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bS2 wS2/",
+          "foulbrood": false,
+          "wall_seconds": 0.5011972500000006
+        },
+        {
+          "move": "wS1 wG1/",
+          "foulbrood": true,
+          "wall_seconds": 0.49357141700000184,
+          "depth": 7,
+          "nodes": 3007886,
+          "score": -239,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 -wG1",
+          "foulbrood": false,
+          "wall_seconds": 0.5012349579999977
+        },
+        {
+          "move": "wS1 -bA3",
+          "foulbrood": true,
+          "wall_seconds": 0.49291195800000054,
+          "depth": 7,
+          "nodes": 3276700,
+          "score": -294,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bS2 -bS1",
+          "foulbrood": false,
+          "wall_seconds": 0.5032745829999996
+        },
+        {
+          "move": "wS2 -bS2",
+          "foulbrood": true,
+          "wall_seconds": 0.49295120799999737,
+          "depth": 7,
+          "nodes": 3444550,
+          "score": -203,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bS1 \\wS2",
+          "foulbrood": false,
+          "wall_seconds": 0.5011985830000008
+        },
+        {
+          "move": "wS1 -wB2",
+          "foulbrood": true,
+          "wall_seconds": 0.49285712500000045,
+          "depth": 6,
+          "nodes": 2892322,
+          "score": -209,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 wQ/",
+          "foulbrood": false,
+          "wall_seconds": 0.501158499999999
+        },
+        {
+          "move": "wS1 -bA3",
+          "foulbrood": true,
+          "wall_seconds": 0.49280041600000146,
+          "depth": 7,
+          "nodes": 2947412,
+          "score": -141,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 wS2\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5012091659999989
+        },
+        {
+          "move": "wS1 -wB2",
+          "foulbrood": true,
+          "wall_seconds": 0.49311304200000095,
+          "depth": 7,
+          "nodes": 2694961,
+          "score": -174,
+          "search_seconds": 0.490002
+        },
+        {
+          "move": "bA1 wQ-",
+          "foulbrood": false,
+          "wall_seconds": 0.5012302909999988
+        },
+        {
+          "move": "wS1 -bA3",
+          "foulbrood": true,
+          "wall_seconds": 0.4928034580000009,
+          "depth": 7,
+          "nodes": 3013342,
+          "score": -141,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 wQ/",
+          "foulbrood": false,
+          "wall_seconds": 0.5013385830000026
+        },
+        {
+          "move": "wS1 -wB2",
+          "foulbrood": true,
+          "wall_seconds": 0.4932870420000022,
+          "depth": 6,
+          "nodes": 2807881,
+          "score": -209,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 wQ-",
+          "foulbrood": false,
+          "wall_seconds": 0.5012547080000012
+        },
+        {
+          "move": "wS1 -bA3",
+          "foulbrood": true,
+          "wall_seconds": 0.4931940829999988,
+          "depth": 7,
+          "nodes": 2936172,
+          "score": -141,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 wQ/",
+          "foulbrood": false,
+          "wall_seconds": 0.5013732920000002
+        },
+        {
+          "move": "wS1 -wB2",
+          "foulbrood": true,
+          "wall_seconds": 0.4927627500000007,
+          "depth": 6,
+          "nodes": 2772280,
+          "score": -209,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 wQ-",
+          "foulbrood": false,
+          "wall_seconds": 0.5011958750000005
+        }
+      ],
+      "final": "Base;Draw;White[37];wA1;bB1 /wA1;wB1 wA1-;bQ /bB1;wA2 wB1/;bS1 -bQ;wQ \\wA1;bG1 \\bQ;wA2 /bQ;bS1 /wQ;wQ \\wB1;bA1 -bG1;wQ wB1/;bA1 wQ-;wB2 -wA2;bS1 \\wQ;wA3 \\wB2;bA2 -bS1;wA3 wA2-;bG1 wA3\\;wS1 -wB2;bA2 /wS1;wS2 wB2\\;bA3 bA1-;wG1 \\wS1;bA3 \\bA1;wS2 /bA2;bG2 bA1-;wG2 wS1/;bA3 \\wG1;wG3 \\wA1;bG2 /bS1;wG3 /wB1;bB2 bA1\\;wG3 \\bQ;bB2 wQ\\;wB1 wA1\\;bS2 -bS1;wG3 wB1-;bB2 wG3-;wS2 -wG1;bA3 -wA1;wS2 /bA2;bA3 \\wG1;wS2 -wG1;bA2 bB1\\;wS2 bA3/;bQ -bB1;wS2 \\bQ;bB2 wG3;wS1 -bA3;bS2 wS2/;wS1 wG1/;bA3 -wG1;wS1 -bA3;bS2 -bS1;wS2 -bS2;bS1 \\wS2;wS1 -wB2;bA1 wQ/;wS1 -bA3;bA1 wS2\\;wS1 -wB2;bA1 wQ-;wS1 -bA3;bA1 wQ/;wS1 -wB2;bA1 wQ-;wS1 -bA3;bA1 wQ/;wS1 -wB2;bA1 wQ-",
+      "outcome": "draw"
+    },
+    {
+      "opening": 0,
+      "game_type": "Base",
+      "foulbrood_side": 1,
+      "start": "Base;InProgress;White[5];wA1;bB1 /wA1;wB1 wA1-;bQ /bB1;wA2 wB1/;bS1 -bQ;wQ \\wA1;bG1 \\bQ",
+      "history": [
+        {
+          "move": "wA2 -bS1",
+          "foulbrood": false,
+          "wall_seconds": 0.5008843340000055
+        },
+        {
+          "move": "bA1 \\bG1",
+          "foulbrood": true,
+          "wall_seconds": 0.4926630829999965,
+          "depth": 7,
+          "nodes": 4279607,
+          "score": 3,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA2 \\bA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5029182910000003
+        },
+        {
+          "move": "bQ bS1\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49318025000000176,
+          "depth": 6,
+          "nodes": 4557940,
+          "score": -28,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA3 \\wA2",
+          "foulbrood": false,
+          "wall_seconds": 0.5011949169999994
+        },
+        {
+          "move": "bA2 \\bS1",
+          "foulbrood": true,
+          "wall_seconds": 0.49261158399999516,
+          "depth": 7,
+          "nodes": 4649921,
+          "score": 30,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA3 -bA2",
+          "foulbrood": false,
+          "wall_seconds": 0.5013649169999965
+        },
+        {
+          "move": "bG2 bB1\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49269112500000034,
+          "depth": 6,
+          "nodes": 4398564,
+          "score": 1,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wB1 wA1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5031569169999983
+        },
+        {
+          "move": "bA3 bG2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4929055420000026,
+          "depth": 6,
+          "nodes": 4172073,
+          "score": 18,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wA2 /bQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5011827499999981
+        },
+        {
+          "move": "bA3 \\wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49268679200000065,
+          "depth": 6,
+          "nodes": 4200898,
+          "score": 48,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wG1 -wA2",
+          "foulbrood": false,
+          "wall_seconds": 0.5010795419999994
+        },
+        {
+          "move": "bA1 wQ-",
+          "foulbrood": true,
+          "wall_seconds": 0.49277058399999873,
+          "depth": 6,
+          "nodes": 4331554,
+          "score": 48,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wB1 bG2",
+          "foulbrood": false,
+          "wall_seconds": 0.5012012920000046
+        },
+        {
+          "move": "bB2 -bA3",
+          "foulbrood": true,
+          "wall_seconds": 0.4926654169999978,
+          "depth": 6,
+          "nodes": 4070012,
+          "score": 51,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wG1 bQ\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5012382079999966
+        },
+        {
+          "move": "bB2 -wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49287279099999637,
+          "depth": 6,
+          "nodes": 3848151,
+          "score": 54,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wS1 wA2\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5012513750000025
+        },
+        {
+          "move": "bB2 wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49277800000000127,
+          "depth": 6,
+          "nodes": 4196226,
+          "score": 122,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wB1 bG1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5012537500000036
+        },
+        {
+          "move": "bS1 -wA3",
+          "foulbrood": true,
+          "wall_seconds": 0.49279145899999577,
+          "depth": 6,
+          "nodes": 4248678,
+          "score": 161,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wG2 wG1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5012079589999985
+        },
+        {
+          "move": "bS2 -bB2",
+          "foulbrood": true,
+          "wall_seconds": 0.49279254199999656,
+          "depth": 6,
+          "nodes": 4023340,
+          "score": 406,
+          "search_seconds": 0.490004
+        },
+        {
+          "move": "wA2 bA1/",
+          "foulbrood": false,
+          "wall_seconds": 0.501191833
+        },
+        {
+          "move": "bB2 wQ/",
+          "foulbrood": true,
+          "wall_seconds": 0.03277929200000074,
+          "depth": 5,
+          "nodes": 254248,
+          "score": 99995,
+          "search_seconds": 0.030005
+        },
+        {
+          "move": "wA2 bG2\\",
+          "foulbrood": false,
+          "wall_seconds": 0.0007560419999990131
+        },
+        {
+          "move": "bG3 \\bS2",
+          "foulbrood": true,
+          "wall_seconds": 0.003371917000002611,
+          "depth": 3,
+          "nodes": 6887,
+          "score": 99997,
+          "search_seconds": 0.001009
+        },
+        {
+          "move": "wA2 -bQ",
+          "foulbrood": false,
+          "wall_seconds": 0.0008751250000003097
+        },
+        {
+          "move": "bG2 /wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.002659666999996091,
+          "depth": 1,
+          "nodes": 72,
+          "score": 99999,
+          "search_seconds": 0.000182
+        }
+      ],
+      "final": "Base;BlackWins;White[20];wA1;bB1 /wA1;wB1 wA1-;bQ /bB1;wA2 wB1/;bS1 -bQ;wQ \\wA1;bG1 \\bQ;wA2 -bS1;bA1 \\bG1;wA2 \\bA1;bQ bS1\\;wA3 \\wA2;bA2 \\bS1;wA3 -bA2;bG2 bB1\\;wB1 wA1\\;bA3 bG2\\;wA2 /bQ;bA3 \\wQ;wG1 -wA2;bA1 wQ-;wB1 bG2;bB2 -bA3;wG1 bQ\\;bB2 -wQ;wS1 wA2\\;bB2 wQ;wB1 bG1\\;bS1 -wA3;wG2 wG1\\;bS2 -bB2;wA2 bA1/;bB2 wQ/;wA2 bG2\\;bG3 \\bS2;wA2 -bQ;bG2 /wQ",
+      "outcome": "win"
+    },
+    {
+      "opening": 1,
+      "game_type": "Base+MLP",
+      "foulbrood_side": 1,
+      "start": "Base+MLP;InProgress;White[5];wP;bS1 wP-;wM /wP;bB1 bS1/;wS1 \\wM;bS2 bS1\\;wQ /wS1;bQ bB1/",
+      "history": [
+        {
+          "move": "wA1 \\wP",
+          "foulbrood": false,
+          "wall_seconds": 0.500745583000004
+        },
+        {
+          "move": "bA1 /bS2",
+          "foulbrood": true,
+          "wall_seconds": 0.4932517080000025,
+          "depth": 6,
+          "nodes": 4415801,
+          "score": -55,
+          "search_seconds": 0.490135
+        },
+        {
+          "move": "wA1 bQ/",
+          "foulbrood": false,
+          "wall_seconds": 0.5012342919999995
+        },
+        {
+          "move": "bA1 \\wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.49274445900000075,
+          "depth": 6,
+          "nodes": 4174740,
+          "score": -61,
+          "search_seconds": 0.490007
+        },
+        {
+          "move": "wA2 \\wA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5011395419999971
+        },
+        {
+          "move": "bS2 wQ\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49295895799999556,
+          "depth": 6,
+          "nodes": 3973771,
+          "score": -88,
+          "search_seconds": 0.49001
+        },
+        {
+          "move": "wA2 bA1/",
+          "foulbrood": false,
+          "wall_seconds": 0.5011993330000024
+        },
+        {
+          "move": "bA2 -bA1",
+          "foulbrood": true,
+          "wall_seconds": 0.4927190419999974,
+          "depth": 6,
+          "nodes": 4387905,
+          "score": -58,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wA2 wA1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5004268329999988
+        },
+        {
+          "move": "bA2 -wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4931636669999975,
+          "depth": 6,
+          "nodes": 4159861,
+          "score": -89,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wS2 wA2/",
+          "foulbrood": false,
+          "wall_seconds": 0.5012436250000007
+        },
+        {
+          "move": "bB2 -bA2",
+          "foulbrood": true,
+          "wall_seconds": 0.49278516600000444,
+          "depth": 5,
+          "nodes": 3911801,
+          "score": 24,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wM \\wP",
+          "foulbrood": false,
+          "wall_seconds": 0.5012033750000029
+        },
+        {
+          "move": "bA1 /wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49285516600000534,
+          "depth": 5,
+          "nodes": 4302352,
+          "score": 27,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wM wS1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5012119160000026
+        },
+        {
+          "move": "bA1 \\wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.4926414170000015,
+          "depth": 6,
+          "nodes": 3744971,
+          "score": -125,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bS2 wP\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5017037080000009
+        },
+        {
+          "move": "bA3 bB2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49273904200000374,
+          "depth": 6,
+          "nodes": 3622804,
+          "score": -125,
+          "search_seconds": 0.490009
+        },
+        {
+          "move": "wP -bB1",
+          "foulbrood": false,
+          "wall_seconds": 0.5011811660000021
+        },
+        {
+          "move": "bA3 /wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49278766700000176,
+          "depth": 5,
+          "nodes": 3141382,
+          "score": 48,
+          "search_seconds": 0.490002
+        },
+        {
+          "move": "wS2 -wA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5002292080000004
+        },
+        {
+          "move": "bB2 bA2",
+          "foulbrood": true,
+          "wall_seconds": 0.49315545800000393,
+          "depth": 5,
+          "nodes": 3659880,
+          "score": 101,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA3 wA2/",
+          "foulbrood": false,
+          "wall_seconds": 0.5012172500000034
+        },
+        {
+          "move": "bB2 \\wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4928218330000007,
+          "depth": 6,
+          "nodes": 3963182,
+          "score": -224,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wS1 bA1/",
+          "foulbrood": false,
+          "wall_seconds": 0.503014083999993
+        },
+        {
+          "move": "bG1 bS1-",
+          "foulbrood": true,
+          "wall_seconds": 0.49279037499999845,
+          "depth": 6,
+          "nodes": 3772693,
+          "score": -373,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wP /wS2",
+          "foulbrood": false,
+          "wall_seconds": 0.501495583999997
+        },
+        {
+          "move": "bG2 bG1-",
+          "foulbrood": true,
+          "wall_seconds": 0.23176079200000288,
+          "depth": 6,
+          "nodes": 1982567,
+          "score": -99994,
+          "search_seconds": 0.227916
+        },
+        {
+          "move": "wL -wS2",
+          "foulbrood": false,
+          "wall_seconds": 0.501397292
+        },
+        {
+          "move": "bA2 \\wL",
+          "foulbrood": true,
+          "wall_seconds": 0.004885375000000636,
+          "depth": 4,
+          "nodes": 16092,
+          "score": -99996,
+          "search_seconds": 0.002269
+        },
+        {
+          "move": "wA3 \\wS2",
+          "foulbrood": false,
+          "wall_seconds": 0.13848758299999986
+        },
+        {
+          "move": "bA2 -wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.002815082999994445,
+          "depth": 2,
+          "nodes": 486,
+          "score": -99998,
+          "search_seconds": 0.000253
+        },
+        {
+          "move": "wL bQ\\",
+          "foulbrood": false,
+          "wall_seconds": 0.00027775000000218597
+        }
+      ],
+      "final": "Base+MLP;WhiteWins;Black[21];wP;bS1 wP-;wM /wP;bB1 bS1/;wS1 \\wM;bS2 bS1\\;wQ /wS1;bQ bB1/;wA1 \\wP;bA1 /bS2;wA1 bQ/;bA1 \\wS1;wA2 \\wA1;bS2 wQ\\;wA2 bA1/;bA2 -bA1;wA2 wA1\\;bA2 -wQ;wS2 wA2/;bB2 -bA2;wM \\wP;bA1 /wQ;wM wS1\\;bA1 \\wS1;bS2 wP\\;bA3 bB2\\;wP -bB1;bA3 /wQ;wS2 -wA1;bB2 bA2;wA3 wA2/;bB2 \\wQ;wS1 bA1/;bG1 bS1-;wP /wS2;bG2 bG1-;wL -wS2;bA2 \\wL;wA3 \\wS2;bA2 -wQ;wL bQ\\",
+      "outcome": "loss"
+    },
+    {
+      "opening": 1,
+      "game_type": "Base+MLP",
+      "foulbrood_side": 0,
+      "start": "Base+MLP;InProgress;White[5];wP;bS1 wP-;wM /wP;bB1 bS1/;wS1 \\wM;bS2 bS1\\;wQ /wS1;bQ bB1/",
+      "history": [
+        {
+          "move": "wA1 wM\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49247600000000347,
+          "depth": 6,
+          "nodes": 4416858,
+          "score": 0,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bS2 wA1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5010809580000029
+        },
+        {
+          "move": "wS1 -bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4931630000000027,
+          "depth": 6,
+          "nodes": 4443770,
+          "score": 12,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bQ wS1/",
+          "foulbrood": false,
+          "wall_seconds": 0.501203750000002
+        },
+        {
+          "move": "wB1 -wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.4926385830000015,
+          "depth": 6,
+          "nodes": 4703758,
+          "score": 23,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bL bS2\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5011780829999992
+        },
+        {
+          "move": "wB1 wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.49301200000000023,
+          "depth": 6,
+          "nodes": 4573061,
+          "score": 64,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA1 \\bQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5011626249999992
+        },
+        {
+          "move": "wB1 bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49269295799999924,
+          "depth": 6,
+          "nodes": 4340850,
+          "score": 40,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 bL/",
+          "foulbrood": false,
+          "wall_seconds": 0.5013222909999939
+        },
+        {
+          "move": "wA2 wB1-",
+          "foulbrood": true,
+          "wall_seconds": 0.4928717080000098,
+          "depth": 6,
+          "nodes": 4786685,
+          "score": 34,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA2 wA2\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5011815829999904
+        },
+        {
+          "move": "wB2 wA2/",
+          "foulbrood": true,
+          "wall_seconds": 0.49272233400000687,
+          "depth": 5,
+          "nodes": 5005966,
+          "score": 246,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 -wQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5028629170000016
+        },
+        {
+          "move": "wB2 wB1/",
+          "foulbrood": true,
+          "wall_seconds": 0.4927647499999921,
+          "depth": 6,
+          "nodes": 4394311,
+          "score": 140,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 bL/",
+          "foulbrood": false,
+          "wall_seconds": 0.5011702500000013
+        },
+        {
+          "move": "wB2 bA1",
+          "foulbrood": true,
+          "wall_seconds": 0.4930170000000089,
+          "depth": 6,
+          "nodes": 4365100,
+          "score": 167,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 wA2/",
+          "foulbrood": false,
+          "wall_seconds": 0.5011757500000016
+        },
+        {
+          "move": "wS2 \\wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.03409629200000097,
+          "depth": 5,
+          "nodes": 291789,
+          "score": 99995,
+          "search_seconds": 0.031452
+        },
+        {
+          "move": "bL wQ\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5013667909999953
+        },
+        {
+          "move": "wB1 wS1-",
+          "foulbrood": true,
+          "wall_seconds": 0.0030811249999942447,
+          "depth": 3,
+          "nodes": 3162,
+          "score": 99997,
+          "search_seconds": 0.000533
+        },
+        {
+          "move": "bA3 \\wQ",
+          "foulbrood": false,
+          "wall_seconds": 0.00034683399999835274
+        },
+        {
+          "move": "wB2 \\wA2",
+          "foulbrood": true,
+          "wall_seconds": 0.0024755409999954736,
+          "depth": 1,
+          "nodes": 71,
+          "score": 99999,
+          "search_seconds": 0.000188
+        }
+      ],
+      "final": "Base+MLP;WhiteWins;Black[16];wP;bS1 wP-;wM /wP;bB1 bS1/;wS1 \\wM;bS2 bS1\\;wQ /wS1;bQ bB1/;wA1 wM\\;bS2 wA1\\;wS1 -bQ;bQ wS1/;wB1 -wS1;bL bS2\\;wB1 wS1;bA1 \\bQ;wB1 bQ;bA2 bL/;wA2 wB1-;bA2 wA2\\;wB2 wA2/;bA2 -wQ;wB2 wB1/;bA3 bL/;wB2 bA1;bA3 wA2/;wS2 \\wS1;bL wQ\\;wB1 wS1-;bA3 \\wQ;wB2 \\wA2",
+      "outcome": "win"
+    },
+    {
+      "opening": 2,
+      "game_type": "Base",
+      "foulbrood_side": 0,
+      "start": "Base;InProgress;White[5];wB1;bS1 wB1\\;wG1 wB1/;bQ /bS1;wQ wG1-;bS2 -bQ;wS1 \\wB1;bS2 bQ-",
+      "history": [
+        {
+          "move": "wA1 /wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.4923625419999951,
+          "depth": 7,
+          "nodes": 4500542,
+          "score": 79,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA1 /bQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5013292499999977
+        },
+        {
+          "move": "wA1 /bA1",
+          "foulbrood": true,
+          "wall_seconds": 0.49306854200000316,
+          "depth": 6,
+          "nodes": 4723943,
+          "score": 24,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bS2 wQ\\",
+          "foulbrood": false,
+          "wall_seconds": 0.501171541000005
+        },
+        {
+          "move": "wS1 -bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49269854099999577,
+          "depth": 6,
+          "nodes": 4619764,
+          "score": 48,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA2 bQ\\",
+          "foulbrood": false,
+          "wall_seconds": 0.500846082999999
+        },
+        {
+          "move": "wA2 -wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.49289808300000004,
+          "depth": 6,
+          "nodes": 4364253,
+          "score": 24,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 bS2/",
+          "foulbrood": false,
+          "wall_seconds": 0.5022090829999968
+        },
+        {
+          "move": "wA3 \\wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.4935428750000028,
+          "depth": 6,
+          "nodes": 4198299,
+          "score": 48,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bG1 bA2\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5011827499999981
+        },
+        {
+          "move": "wA2 bQ\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49268004099999985,
+          "depth": 6,
+          "nodes": 4237416,
+          "score": 257,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bG1 \\bA2",
+          "foulbrood": false,
+          "wall_seconds": 0.5012057080000005
+        },
+        {
+          "move": "wA3 wA2/",
+          "foulbrood": true,
+          "wall_seconds": 0.08048279199999797,
+          "depth": 5,
+          "nodes": 805065,
+          "score": 99995,
+          "search_seconds": 0.077331
+        },
+        {
+          "move": "bA2 -wB1",
+          "foulbrood": false,
+          "wall_seconds": 0.5011792079999964
+        },
+        {
+          "move": "wG2 wA2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.003611833999997316,
+          "depth": 3,
+          "nodes": 8362,
+          "score": 99997,
+          "search_seconds": 0.001001
+        },
+        {
+          "move": "bA2 /bS2",
+          "foulbrood": false,
+          "wall_seconds": 0.000287417000009782
+        },
+        {
+          "move": "wB1 wS1/",
+          "foulbrood": true,
+          "wall_seconds": 0.0031006660000088004,
+          "depth": 1,
+          "nodes": 88,
+          "score": 99999,
+          "search_seconds": 0.000179
+        }
+      ],
+      "final": "Base;WhiteWins;Black[13];wB1;bS1 wB1\\;wG1 wB1/;bQ /bS1;wQ wG1-;bS2 -bQ;wS1 \\wB1;bS2 bQ-;wA1 /wS1;bA1 /bQ;wA1 /bA1;bS2 wQ\\;wS1 -bQ;bA2 bQ\\;wA2 -wS1;bA2 bS2/;wA3 \\wS1;bG1 bA2\\;wA2 bQ\\;bG1 \\bA2;wA3 wA2/;bA2 -wB1;wG2 wA2\\;bA2 /bS2;wB1 wS1/",
+      "outcome": "win"
+    },
+    {
+      "opening": 2,
+      "game_type": "Base",
+      "foulbrood_side": 1,
+      "start": "Base;InProgress;White[5];wB1;bS1 wB1\\;wG1 wB1/;bQ /bS1;wQ wG1-;bS2 -bQ;wS1 \\wB1;bS2 bQ-",
+      "history": [
+        {
+          "move": "wA1 wQ-",
+          "foulbrood": false,
+          "wall_seconds": 0.5005808330000008
+        },
+        {
+          "move": "bS2 wQ\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49304283300000407,
+          "depth": 7,
+          "nodes": 4521494,
+          "score": -12,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA1 /bQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5011635420000005
+        },
+        {
+          "move": "bA1 bS2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49271245799999974,
+          "depth": 7,
+          "nodes": 4610791,
+          "score": -21,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wS1 -bQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5003179999999929
+        },
+        {
+          "move": "bA1 wQ/",
+          "foulbrood": true,
+          "wall_seconds": 0.4931684169999926,
+          "depth": 7,
+          "nodes": 4573775,
+          "score": -21,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA2 /wS1",
+          "foulbrood": false,
+          "wall_seconds": 0.5011634580000077
+        },
+        {
+          "move": "bG1 bS2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49273108299999535,
+          "depth": 6,
+          "nodes": 4431175,
+          "score": -170,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA3 wA1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5010026669999945
+        },
+        {
+          "move": "bG1 \\wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49295608399999935,
+          "depth": 6,
+          "nodes": 3939876,
+          "score": -230,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wA3 bS1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5007382499999977
+        },
+        {
+          "move": "bA2 bS2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49277208399999495,
+          "depth": 6,
+          "nodes": 4175756,
+          "score": -290,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wA3 /bA2",
+          "foulbrood": false,
+          "wall_seconds": 0.5010753329999886
+        },
+        {
+          "move": "bA3 \\bG1",
+          "foulbrood": true,
+          "wall_seconds": 0.4927534580000099,
+          "depth": 6,
+          "nodes": 4081500,
+          "score": -21,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wG2 -wG1",
+          "foulbrood": false,
+          "wall_seconds": 0.5011795000000063
+        },
+        {
+          "move": "bG2 bA1/",
+          "foulbrood": true,
+          "wall_seconds": 0.4930462499999919,
+          "depth": 6,
+          "nodes": 3895240,
+          "score": 27,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA2 -bA3",
+          "foulbrood": false,
+          "wall_seconds": 0.5011856670000014
+        },
+        {
+          "move": "bG3 bG1/",
+          "foulbrood": true,
+          "wall_seconds": 0.4926748339999989,
+          "depth": 6,
+          "nodes": 3970983,
+          "score": 51,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wS2 wA3\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5029021659999984
+        },
+        {
+          "move": "bG3 wQ-",
+          "foulbrood": true,
+          "wall_seconds": 0.4928966670000108,
+          "depth": 6,
+          "nodes": 3901937,
+          "score": 158,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA1 bG2/",
+          "foulbrood": false,
+          "wall_seconds": 0.5012491250000011
+        },
+        {
+          "move": "bB1 bS2-",
+          "foulbrood": true,
+          "wall_seconds": 0.4932106660000102,
+          "depth": 7,
+          "nodes": 3709738,
+          "score": 409,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wS2 bB1-",
+          "foulbrood": false,
+          "wall_seconds": 0.5011896250000092
+        },
+        {
+          "move": "bB2 bG1/",
+          "foulbrood": true,
+          "wall_seconds": 0.49279533300000367,
+          "depth": 6,
+          "nodes": 3808161,
+          "score": 290,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wG3 \\wS1",
+          "foulbrood": false,
+          "wall_seconds": 0.5012915419999899
+        },
+        {
+          "move": "bB2 bG1",
+          "foulbrood": true,
+          "wall_seconds": 0.4931361659999993,
+          "depth": 6,
+          "nodes": 4040677,
+          "score": 388,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wA2 bQ\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5006598330000003
+        },
+        {
+          "move": "bB2 wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.0030497500000024047,
+          "depth": 3,
+          "nodes": 2239,
+          "score": 99997,
+          "search_seconds": 0.000456
+        },
+        {
+          "move": "wG2 bS1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.0003330410000046413
+        },
+        {
+          "move": "bB2 /wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.0024549999999976535,
+          "depth": 1,
+          "nodes": 63,
+          "score": 99999,
+          "search_seconds": 0.000167
+        }
+      ],
+      "final": "Base;BlackWins;White[20];wB1;bS1 wB1\\;wG1 wB1/;bQ /bS1;wQ wG1-;bS2 -bQ;wS1 \\wB1;bS2 bQ-;wA1 wQ-;bS2 wQ\\;wA1 /bQ;bA1 bS2\\;wS1 -bQ;bA1 wQ/;wA2 /wS1;bG1 bS2\\;wA3 wA1\\;bG1 \\wQ;wA3 bS1\\;bA2 bS2\\;wA3 /bA2;bA3 \\bG1;wG2 -wG1;bG2 bA1/;wA2 -bA3;bG3 bG1/;wS2 wA3\\;bG3 wQ-;wA1 bG2/;bB1 bS2-;wS2 bB1-;bB2 bG1/;wG3 \\wS1;bB2 bG1;wA2 bQ\\;bB2 wQ;wG2 bS1\\;bB2 /wQ",
+      "outcome": "win"
+    },
+    {
+      "opening": 3,
+      "game_type": "Base+MLP",
+      "foulbrood_side": 1,
+      "start": "Base+MLP;InProgress;White[5];wA1;bP wA1\\;wL -wA1;bB1 bP\\;wA2 /wL;bM /bB1;wQ -wA2;bQ bB1-",
+      "history": [
+        {
+          "move": "wA3 -wQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5005457909999933
+        },
+        {
+          "move": "bA1 -bB1",
+          "foulbrood": true,
+          "wall_seconds": 0.4927182919999922,
+          "depth": 6,
+          "nodes": 4657435,
+          "score": -18,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA3 bQ-",
+          "foulbrood": false,
+          "wall_seconds": 0.5011645829999907
+        },
+        {
+          "move": "bM \\wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4932720829999937,
+          "depth": 6,
+          "nodes": 4419347,
+          "score": -37,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wM \\wA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5011672920000052
+        },
+        {
+          "move": "bA1 /wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49266887499999257,
+          "depth": 6,
+          "nodes": 4464120,
+          "score": -18,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wM bA1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5009056659999942
+        },
+        {
+          "move": "bB2 -bA1",
+          "foulbrood": true,
+          "wall_seconds": 0.4928687919999959,
+          "depth": 6,
+          "nodes": 4106935,
+          "score": 6,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wM \\wA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5011679999999927
+        },
+        {
+          "move": "bL bB2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49285224999999855,
+          "depth": 6,
+          "nodes": 4138583,
+          "score": 155,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wG1 wA3\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5034493750000024
+        },
+        {
+          "move": "bL wQ\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4926919589999983,
+          "depth": 6,
+          "nodes": 4262012,
+          "score": 192,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wG1 \\wA3",
+          "foulbrood": false,
+          "wall_seconds": 0.5011937919999951
+        },
+        {
+          "move": "bB2 -wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4928049589999972,
+          "depth": 6,
+          "nodes": 4430551,
+          "score": 275,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wG2 wA3/",
+          "foulbrood": false,
+          "wall_seconds": 0.5011493340000044
+        },
+        {
+          "move": "bG1 /bA1",
+          "foulbrood": true,
+          "wall_seconds": 0.49283154099998683,
+          "depth": 6,
+          "nodes": 4371355,
+          "score": 412,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA3 bG1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5034546669999997
+        },
+        {
+          "move": "bG2 \\bB2",
+          "foulbrood": true,
+          "wall_seconds": 0.03193516700000032,
+          "depth": 5,
+          "nodes": 265349,
+          "score": 99995,
+          "search_seconds": 0.029202
+        },
+        {
+          "move": "wM \\bG2",
+          "foulbrood": false,
+          "wall_seconds": 0.06786224999999035
+        },
+        {
+          "move": "bA2 bM/",
+          "foulbrood": true,
+          "wall_seconds": 0.0036107080000107317,
+          "depth": 3,
+          "nodes": 4692,
+          "score": 99997,
+          "search_seconds": 0.00077
+        },
+        {
+          "move": "wA3 wG1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.0003057919999918113
+        },
+        {
+          "move": "bG1 wQ/",
+          "foulbrood": true,
+          "wall_seconds": 0.0023030409999904577,
+          "depth": 1,
+          "nodes": 85,
+          "score": 99999,
+          "search_seconds": 0.000185
+        }
+      ],
+      "final": "Base+MLP;BlackWins;White[16];wA1;bP wA1\\;wL -wA1;bB1 bP\\;wA2 /wL;bM /bB1;wQ -wA2;bQ bB1-;wA3 -wQ;bA1 -bB1;wA3 bQ-;bM \\wQ;wM \\wA1;bA1 /wQ;wM bA1\\;bB2 -bA1;wM \\wA1;bL bB2\\;wG1 wA3\\;bL wQ\\;wG1 \\wA3;bB2 -wQ;wG2 wA3/;bG1 /bA1;wA3 bG1\\;bG2 \\bB2;wM \\bG2;bA2 bM/;wA3 wG1\\;bG1 wQ/",
+      "outcome": "win"
+    },
+    {
+      "opening": 3,
+      "game_type": "Base+MLP",
+      "foulbrood_side": 0,
+      "start": "Base+MLP;InProgress;White[5];wA1;bP wA1\\;wL -wA1;bB1 bP\\;wA2 /wL;bM /bB1;wQ -wA2;bQ bB1-",
+      "history": [
+        {
+          "move": "wM wA2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4925483749999984,
+          "depth": 6,
+          "nodes": 4797784,
+          "score": 0,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA1 bQ/",
+          "foulbrood": false,
+          "wall_seconds": 0.5011894159999883
+        },
+        {
+          "move": "wM /bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.493138665999993,
+          "depth": 6,
+          "nodes": 4439281,
+          "score": 40,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 /bP",
+          "foulbrood": false,
+          "wall_seconds": 0.5011732500000079
+        },
+        {
+          "move": "wM bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4928298330000018,
+          "depth": 6,
+          "nodes": 4391901,
+          "score": 6,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 \\wM",
+          "foulbrood": false,
+          "wall_seconds": 0.5008943750000014
+        },
+        {
+          "move": "wS1 wM\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49268545799999686,
+          "depth": 6,
+          "nodes": 4154861,
+          "score": 55,
+          "search_seconds": 0.490005
+        },
+        {
+          "move": "bB1 wM",
+          "foulbrood": false,
+          "wall_seconds": 0.5011755419999986
+        },
+        {
+          "move": "wA3 /wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.49321595899999693,
+          "depth": 6,
+          "nodes": 4362924,
+          "score": 113,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA3 bP\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5011758750000013
+        },
+        {
+          "move": "wA3 wS1/",
+          "foulbrood": true,
+          "wall_seconds": 0.49275604199999634,
+          "depth": 6,
+          "nodes": 4033860,
+          "score": 113,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 \\wQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5004333750000001
+        },
+        {
+          "move": "wB1 /wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.49286091600001214,
+          "depth": 6,
+          "nodes": 4119607,
+          "score": 113,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bS1 -bA2",
+          "foulbrood": false,
+          "wall_seconds": 0.5011680420000033
+        },
+        {
+          "move": "wS2 wS1-",
+          "foulbrood": true,
+          "wall_seconds": 0.4936653330000098,
+          "depth": 6,
+          "nodes": 4268581,
+          "score": 113,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 wA3/",
+          "foulbrood": false,
+          "wall_seconds": 0.5011829590000048
+        },
+        {
+          "move": "wB1 -wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.49274704199999064,
+          "depth": 6,
+          "nodes": 3722851,
+          "score": 137,
+          "search_seconds": 0.490002
+        },
+        {
+          "move": "bM bS1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5011648330000043
+        },
+        {
+          "move": "wG1 wS1\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49278712500000665,
+          "depth": 6,
+          "nodes": 3842771,
+          "score": 137,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bL /bM",
+          "foulbrood": false,
+          "wall_seconds": 0.501173209000001
+        },
+        {
+          "move": "wG2 /wB1",
+          "foulbrood": true,
+          "wall_seconds": 0.4935797079999986,
+          "depth": 6,
+          "nodes": 3751931,
+          "score": 161,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bL bA2/",
+          "foulbrood": false,
+          "wall_seconds": 0.5013256250000069
+        },
+        {
+          "move": "wG2 \\wA3",
+          "foulbrood": true,
+          "wall_seconds": 0.4836260830000043,
+          "depth": 7,
+          "nodes": 4158184,
+          "score": 99993,
+          "search_seconds": 0.48089
+        },
+        {
+          "move": "bA1 wG1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5012544999999875
+        },
+        {
+          "move": "wG3 wG2-",
+          "foulbrood": true,
+          "wall_seconds": 0.040608833000007394,
+          "depth": 5,
+          "nodes": 345975,
+          "score": 99995,
+          "search_seconds": 0.037599
+        },
+        {
+          "move": "bM wG3/",
+          "foulbrood": false,
+          "wall_seconds": 0.031057999999987373
+        },
+        {
+          "move": "wB2 \\wG2",
+          "foulbrood": true,
+          "wall_seconds": 0.003109833999999978,
+          "depth": 3,
+          "nodes": 1583,
+          "score": 99997,
+          "search_seconds": 0.000426
+        },
+        {
+          "move": "bL /wQ",
+          "foulbrood": false,
+          "wall_seconds": 0.0022127910000051543
+        },
+        {
+          "move": "wB2 -wG2",
+          "foulbrood": true,
+          "wall_seconds": 0.0031121250000012424,
+          "depth": 1,
+          "nodes": 20,
+          "score": 99999,
+          "search_seconds": 0.000171
+        }
+      ],
+      "final": "Base+MLP;WhiteWins;Black[19];wA1;bP wA1\\;wL -wA1;bB1 bP\\;wA2 /wL;bM /bB1;wQ -wA2;bQ bB1-;wM wA2\\;bA1 bQ/;wM /bQ;bA2 /bP;wM bQ;bA1 \\wM;wS1 wM\\;bB1 wM;wA3 /wS1;bA3 bP\\;wA3 wS1/;bA2 \\wQ;wB1 /wS1;bS1 -bA2;wS2 wS1-;bA1 wA3/;wB1 -wS1;bM bS1\\;wG1 wS1\\;bL /bM;wG2 /wB1;bL bA2/;wG2 \\wA3;bA1 wG1\\;wG3 wG2-;bM wG3/;wB2 \\wG2;bL /wQ;wB2 -wG2",
+      "outcome": "win"
+    },
+    {
+      "opening": 4,
+      "game_type": "Base",
+      "foulbrood_side": 0,
+      "start": "Base;InProgress;White[5];wG1;bS1 \\wG1;wS1 wG1-;bG1 bS1/;wB1 wS1/;bA1 \\bG1;wQ wB1/;bQ \\bA1",
+      "history": [
+        {
+          "move": "wA1 \\wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49266616600000646,
+          "depth": 7,
+          "nodes": 4828533,
+          "score": 46,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 bA1/",
+          "foulbrood": false,
+          "wall_seconds": 0.5011912909999978
+        },
+        {
+          "move": "wA1 \\bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49265233399999886,
+          "depth": 6,
+          "nodes": 4769338,
+          "score": -12,
+          "search_seconds": 0.490004
+        },
+        {
+          "move": "bA3 /bA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5009035000000068
+        },
+        {
+          "move": "wB2 -wA1",
+          "foulbrood": true,
+          "wall_seconds": 0.49275354199998844,
+          "depth": 6,
+          "nodes": 4327404,
+          "score": 7,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA2 /wB2",
+          "foulbrood": false,
+          "wall_seconds": 0.5012726249999986
+        },
+        {
+          "move": "wS2 wB2/",
+          "foulbrood": true,
+          "wall_seconds": 0.49341149999999345,
+          "depth": 6,
+          "nodes": 3732202,
+          "score": 12,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA3 bQ/",
+          "foulbrood": false,
+          "wall_seconds": 0.5011719170000077
+        },
+        {
+          "move": "wA2 /wG1",
+          "foulbrood": true,
+          "wall_seconds": 0.4926360420000009,
+          "depth": 6,
+          "nodes": 4111365,
+          "score": 79,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bS2 bG1/",
+          "foulbrood": false,
+          "wall_seconds": 0.5011992089999922
+        },
+        {
+          "move": "wA2 bA3/",
+          "foulbrood": true,
+          "wall_seconds": 0.492700499999998,
+          "depth": 6,
+          "nodes": 4010520,
+          "score": 82,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bG2 bA3\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5025847499999969
+        },
+        {
+          "move": "wA2 /bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49322587499999315,
+          "depth": 6,
+          "nodes": 4040026,
+          "score": 27,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 wQ-",
+          "foulbrood": false,
+          "wall_seconds": 0.5011859999999899
+        },
+        {
+          "move": "wA3 /wA2",
+          "foulbrood": true,
+          "wall_seconds": 0.4928244160000048,
+          "depth": 6,
+          "nodes": 4036411,
+          "score": 67,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bS2 \\bA3",
+          "foulbrood": false,
+          "wall_seconds": 0.5018774579999956
+        },
+        {
+          "move": "wA3 bG2-",
+          "foulbrood": true,
+          "wall_seconds": 0.49264704200000153,
+          "depth": 6,
+          "nodes": 3941552,
+          "score": 86,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bG3 bA3-",
+          "foulbrood": false,
+          "wall_seconds": 0.5028421250000008
+        },
+        {
+          "move": "wG2 wS2-",
+          "foulbrood": true,
+          "wall_seconds": 0.49269883399999514,
+          "depth": 6,
+          "nodes": 4081862,
+          "score": 152,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bG3 -wQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5011609999999962
+        },
+        {
+          "move": "wG2 wB2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.057380125000008775,
+          "depth": 5,
+          "nodes": 503735,
+          "score": 99995,
+          "search_seconds": 0.05434
+        },
+        {
+          "move": "bS2 wA3/",
+          "foulbrood": false,
+          "wall_seconds": 0.31867708400000083
+        },
+        {
+          "move": "wB2 wA1",
+          "foulbrood": true,
+          "wall_seconds": 0.003822792000008235,
+          "depth": 3,
+          "nodes": 7861,
+          "score": 99997,
+          "search_seconds": 0.001175
+        },
+        {
+          "move": "bA2 \\bA3",
+          "foulbrood": false,
+          "wall_seconds": 0.00030329200001233403
+        },
+        {
+          "move": "wB2 wA1-",
+          "foulbrood": true,
+          "wall_seconds": 0.0024419159999951034,
+          "depth": 1,
+          "nodes": 57,
+          "score": 99999,
+          "search_seconds": 0.000193
+        }
+      ],
+      "final": "Base;WhiteWins;Black[17];wG1;bS1 \\wG1;wS1 wG1-;bG1 bS1/;wB1 wS1/;bA1 \\bG1;wQ wB1/;bQ \\bA1;wA1 \\wQ;bA2 bA1/;wA1 \\bQ;bA3 /bA1;wB2 -wA1;bA2 /wB2;wS2 wB2/;bA3 bQ/;wA2 /wG1;bS2 bG1/;wA2 bA3/;bG2 bA3\\;wA2 /bQ;bA3 wQ-;wA3 /wA2;bS2 \\bA3;wA3 bG2-;bG3 bA3-;wG2 wS2-;bG3 -wQ;wG2 wB2\\;bS2 wA3/;wB2 wA1;bA2 \\bA3;wB2 wA1-",
+      "outcome": "win"
+    },
+    {
+      "opening": 4,
+      "game_type": "Base",
+      "foulbrood_side": 1,
+      "start": "Base;InProgress;White[5];wG1;bS1 \\wG1;wS1 wG1-;bG1 bS1/;wB1 wS1/;bA1 \\bG1;wQ wB1/;bQ \\bA1",
+      "history": [
+        {
+          "move": "wA1 wG1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5019246669999973
+        },
+        {
+          "move": "bB1 bG1/",
+          "foulbrood": true,
+          "wall_seconds": 0.4926548749999995,
+          "depth": 7,
+          "nodes": 4675998,
+          "score": 12,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wA2 wB1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5011777919999929
+        },
+        {
+          "move": "bS2 bB1/",
+          "foulbrood": true,
+          "wall_seconds": 0.49305533300000093,
+          "depth": 7,
+          "nodes": 4511524,
+          "score": 12,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA2 \\bS2",
+          "foulbrood": false,
+          "wall_seconds": 0.500469166000002
+        },
+        {
+          "move": "bA2 bS2-",
+          "foulbrood": true,
+          "wall_seconds": 0.4926537919999987,
+          "depth": 7,
+          "nodes": 4252590,
+          "score": 36,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA1 bA2-",
+          "foulbrood": false,
+          "wall_seconds": 0.5010700419999949
+        },
+        {
+          "move": "bA3 \\bS1",
+          "foulbrood": true,
+          "wall_seconds": 0.4927805410000019,
+          "depth": 7,
+          "nodes": 4391461,
+          "score": 60,
+          "search_seconds": 0.490005
+        },
+        {
+          "move": "wA3 wS1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5022050419999999
+        },
+        {
+          "move": "bA3 wQ/",
+          "foulbrood": true,
+          "wall_seconds": 0.49298670800000366,
+          "depth": 6,
+          "nodes": 4046132,
+          "score": -10,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wB1 wS1",
+          "foulbrood": false,
+          "wall_seconds": 0.5021657079999926
+        },
+        {
+          "move": "bG2 \\bS1",
+          "foulbrood": true,
+          "wall_seconds": 0.4931270419999976,
+          "depth": 7,
+          "nodes": 4102238,
+          "score": 29,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA1 \\bQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5021613340000073
+        },
+        {
+          "move": "bB2 bA2-",
+          "foulbrood": true,
+          "wall_seconds": 0.4926967090000005,
+          "depth": 6,
+          "nodes": 4102930,
+          "score": -33,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA2 /wA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5005619170000131
+        },
+        {
+          "move": "bB2 bA3",
+          "foulbrood": true,
+          "wall_seconds": 0.49277520800001184,
+          "depth": 5,
+          "nodes": 4891467,
+          "score": 29,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wG2 -wA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5022556659999964
+        },
+        {
+          "move": "bG2 -wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49268770900002323,
+          "depth": 6,
+          "nodes": 3410670,
+          "score": -167,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wQ bG2\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5022102919999725
+        },
+        {
+          "move": "bG1 wQ/",
+          "foulbrood": true,
+          "wall_seconds": 0.4931417500000066,
+          "depth": 6,
+          "nodes": 3544604,
+          "score": -86,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wG3 /wG2",
+          "foulbrood": false,
+          "wall_seconds": 0.501259417
+        },
+        {
+          "move": "bG3 bQ-",
+          "foulbrood": true,
+          "wall_seconds": 0.4926917079999953,
+          "depth": 6,
+          "nodes": 3770340,
+          "score": 33,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wS2 /wG3",
+          "foulbrood": false,
+          "wall_seconds": 0.5007820000000152
+        },
+        {
+          "move": "bA1 wQ\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49274908300000675,
+          "depth": 6,
+          "nodes": 3749455,
+          "score": 27,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wS2 bQ\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5023655829999996
+        },
+        {
+          "move": "bA1 wA3\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4929691250000019,
+          "depth": 6,
+          "nodes": 3613834,
+          "score": 12,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wG2 \\bG3",
+          "foulbrood": false,
+          "wall_seconds": 0.5022162919999857
+        },
+        {
+          "move": "bA2 /wG3",
+          "foulbrood": true,
+          "wall_seconds": 0.49319758300001126,
+          "depth": 6,
+          "nodes": 3863291,
+          "score": -9,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wB2 -wA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5021757089999994
+        },
+        {
+          "move": "bG3 wQ\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4928882090000002,
+          "depth": 6,
+          "nodes": 3885339,
+          "score": -3,
+          "search_seconds": 0.490011
+        },
+        {
+          "move": "wB2 wA2",
+          "foulbrood": false,
+          "wall_seconds": 0.5045941250000112
+        },
+        {
+          "move": "bB2 bG1",
+          "foulbrood": true,
+          "wall_seconds": 0.49321916700000656,
+          "depth": 6,
+          "nodes": 4249018,
+          "score": 89,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wB2 wA2\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5006842079999956
+        },
+        {
+          "move": "bA3 wQ-",
+          "foulbrood": true,
+          "wall_seconds": 0.07958816600000773,
+          "depth": 5,
+          "nodes": 718620,
+          "score": 99995,
+          "search_seconds": 0.076812
+        },
+        {
+          "move": "wB1 wA3",
+          "foulbrood": false,
+          "wall_seconds": 0.5021598749999896
+        },
+        {
+          "move": "bB2 wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.0038121249999960582,
+          "depth": 3,
+          "nodes": 9084,
+          "score": 99997,
+          "search_seconds": 0.001181
+        },
+        {
+          "move": "wA1 bG3\\",
+          "foulbrood": false,
+          "wall_seconds": 0.0011667920000206777
+        },
+        {
+          "move": "bB2 -wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.002872999999993908,
+          "depth": 1,
+          "nodes": 99,
+          "score": 99999,
+          "search_seconds": 0.000187
+        }
+      ],
+      "final": "Base;BlackWins;White[24];wG1;bS1 \\wG1;wS1 wG1-;bG1 bS1/;wB1 wS1/;bA1 \\bG1;wQ wB1/;bQ \\bA1;wA1 wG1\\;bB1 bG1/;wA2 wB1\\;bS2 bB1/;wA2 \\bS2;bA2 bS2-;wA1 bA2-;bA3 \\bS1;wA3 wS1\\;bA3 wQ/;wB1 wS1;bG2 \\bS1;wA1 \\bQ;bB2 bA2-;wA2 /wA1;bB2 bA3;wG2 -wA1;bG2 -wQ;wQ bG2\\;bG1 wQ/;wG3 /wG2;bG3 bQ-;wS2 /wG3;bA1 wQ\\;wS2 bQ\\;bA1 wA3\\;wG2 \\bG3;bA2 /wG3;wB2 -wA1;bG3 wQ\\;wB2 wA2;bB2 bG1;wB2 wA2\\;bA3 wQ-;wB1 wA3;bB2 wQ;wA1 bG3\\;bB2 -wQ",
+      "outcome": "win"
+    },
+    {
+      "opening": 5,
+      "game_type": "Base+MLP",
+      "foulbrood_side": 1,
+      "start": "Base+MLP;InProgress;White[5];wS1;bB1 \\wS1;wB1 wS1\\;bG1 bB1/;wM wS1-;bL bG1/;wQ wM/;bQ -bB1",
+      "history": [
+        {
+          "move": "wB1 wM",
+          "foulbrood": false,
+          "wall_seconds": 0.5011655000000133
+        },
+        {
+          "move": "bA1 bL-",
+          "foulbrood": true,
+          "wall_seconds": 0.4930278749999957,
+          "depth": 6,
+          "nodes": 4732409,
+          "score": 18,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA1 wB1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5021930830000088
+        },
+        {
+          "move": "bA1 wQ/",
+          "foulbrood": true,
+          "wall_seconds": 0.4933414160000211,
+          "depth": 6,
+          "nodes": 4275969,
+          "score": 21,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA2 wQ\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5021848330000012
+        },
+        {
+          "move": "bB2 bA1/",
+          "foulbrood": true,
+          "wall_seconds": 0.4928427920000047,
+          "depth": 6,
+          "nodes": 4443636,
+          "score": 34,
+          "search_seconds": 0.490008
+        },
+        {
+          "move": "wA3 wS1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5011239589999832
+        },
+        {
+          "move": "bM bB2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4926500830000009,
+          "depth": 6,
+          "nodes": 4220473,
+          "score": 21,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA2 \\bQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5021612500000003
+        },
+        {
+          "move": "bM wA1-",
+          "foulbrood": true,
+          "wall_seconds": 0.49264170899999726,
+          "depth": 5,
+          "nodes": 4612134,
+          "score": 46,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wG1 -wA2",
+          "foulbrood": false,
+          "wall_seconds": 0.5013276249999876
+        },
+        {
+          "move": "bL -wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49322737499997515,
+          "depth": 5,
+          "nodes": 4840152,
+          "score": 27,
+          "search_seconds": 0.490002
+        },
+        {
+          "move": "wL wA2/",
+          "foulbrood": false,
+          "wall_seconds": 0.5021845839999912
+        },
+        {
+          "move": "bA2 bG1/",
+          "foulbrood": true,
+          "wall_seconds": 0.4940514589999907,
+          "depth": 6,
+          "nodes": 3864798,
+          "score": -12,
+          "search_seconds": 0.490002
+        },
+        {
+          "move": "wS2 /wG1",
+          "foulbrood": false,
+          "wall_seconds": 0.5021678749999978
+        },
+        {
+          "move": "bA2 wQ\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4933919590000073,
+          "depth": 5,
+          "nodes": 4214944,
+          "score": 230,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wL wG1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.501465708000012
+        },
+        {
+          "move": "bM \\wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4935780000000136,
+          "depth": 5,
+          "nodes": 3868808,
+          "score": 212,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wG2 \\wA2",
+          "foulbrood": false,
+          "wall_seconds": 0.502208166999992
+        },
+        {
+          "move": "bP bB2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.004940624999989041,
+          "depth": 3,
+          "nodes": 14672,
+          "score": 99997,
+          "search_seconds": 0.002233
+        },
+        {
+          "move": "wG1 -bG1",
+          "foulbrood": false,
+          "wall_seconds": 0.004455625000019836
+        },
+        {
+          "move": "bP wQ-",
+          "foulbrood": true,
+          "wall_seconds": 0.002724374999985457,
+          "depth": 1,
+          "nodes": 108,
+          "score": 99999,
+          "search_seconds": 0.000228
+        }
+      ],
+      "final": "Base+MLP;BlackWins;White[16];wS1;bB1 \\wS1;wB1 wS1\\;bG1 bB1/;wM wS1-;bL bG1/;wQ wM/;bQ -bB1;wB1 wM;bA1 bL-;wA1 wB1\\;bA1 wQ/;wA2 wQ\\;bB2 bA1/;wA3 wS1\\;bM bB2\\;wA2 \\bQ;bM wA1-;wG1 -wA2;bL -wQ;wL wA2/;bA2 bG1/;wS2 /wG1;bA2 wQ\\;wL wG1\\;bM \\wQ;wG2 \\wA2;bP bB2\\;wG1 -bG1;bP wQ-",
+      "outcome": "win"
+    },
+    {
+      "opening": 5,
+      "game_type": "Base+MLP",
+      "foulbrood_side": 0,
+      "start": "Base+MLP;InProgress;White[5];wS1;bB1 \\wS1;wB1 wS1\\;bG1 bB1/;wM wS1-;bL bG1/;wQ wM/;bQ -bB1",
+      "history": [
+        {
+          "move": "wA1 /wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.4924545420000186,
+          "depth": 6,
+          "nodes": 4269723,
+          "score": -21,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA1 -bL",
+          "foulbrood": false,
+          "wall_seconds": 0.5021835420000116
+        },
+        {
+          "move": "wA1 -bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4928377919999889,
+          "depth": 6,
+          "nodes": 4243993,
+          "score": -3,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA1 bL\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5051843339999778
+        },
+        {
+          "move": "wM wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.49282254099998113,
+          "depth": 6,
+          "nodes": 4587082,
+          "score": 8,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bL bG1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5021873329999949
+        },
+        {
+          "move": "wQ bA1-",
+          "foulbrood": true,
+          "wall_seconds": 0.49337445800000523,
+          "depth": 6,
+          "nodes": 4564296,
+          "score": 11,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bL wQ/",
+          "foulbrood": false,
+          "wall_seconds": 0.5036513329999934
+        },
+        {
+          "move": "wM -wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.4929355419999979,
+          "depth": 6,
+          "nodes": 4693366,
+          "score": 65,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 -bG1",
+          "foulbrood": false,
+          "wall_seconds": 0.5035807499999976
+        },
+        {
+          "move": "wM bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4927484170000014,
+          "depth": 6,
+          "nodes": 4409630,
+          "score": 61,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 \\bG1",
+          "foulbrood": false,
+          "wall_seconds": 0.502174999999994
+        },
+        {
+          "move": "wB2 wA1\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49314429200001086,
+          "depth": 6,
+          "nodes": 4102037,
+          "score": 77,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 bG1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5021825420000141
+        },
+        {
+          "move": "wA2 -wA1",
+          "foulbrood": true,
+          "wall_seconds": 0.4931517079999992,
+          "depth": 5,
+          "nodes": 4074018,
+          "score": 260,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 \\wA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5021753749999789
+        },
+        {
+          "move": "wS2 -wB2",
+          "foulbrood": true,
+          "wall_seconds": 0.49295579099998577,
+          "depth": 5,
+          "nodes": 4207006,
+          "score": 379,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bG2 bL-",
+          "foulbrood": false,
+          "wall_seconds": 0.5008552080000186
+        },
+        {
+          "move": "wA2 wA1/",
+          "foulbrood": true,
+          "wall_seconds": 0.4926941660000068,
+          "depth": 5,
+          "nodes": 4105444,
+          "score": 358,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA2 \\bL",
+          "foulbrood": false,
+          "wall_seconds": 0.5022928750000233
+        },
+        {
+          "move": "wG1 \\wS2",
+          "foulbrood": true,
+          "wall_seconds": 0.49269741700001646,
+          "depth": 5,
+          "nodes": 4015514,
+          "score": 456,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bG1 bL\\",
+          "foulbrood": false,
+          "wall_seconds": 0.502183916000007
+        },
+        {
+          "move": "wM wA2-",
+          "foulbrood": true,
+          "wall_seconds": 0.12343366700000047,
+          "depth": 5,
+          "nodes": 1197153,
+          "score": 99995,
+          "search_seconds": 0.120631
+        },
+        {
+          "move": "bA2 /wS1",
+          "foulbrood": false,
+          "wall_seconds": 0.3355116250000094
+        },
+        {
+          "move": "wL wG1/",
+          "foulbrood": true,
+          "wall_seconds": 0.005243333000009898,
+          "depth": 3,
+          "nodes": 14508,
+          "score": 99997,
+          "search_seconds": 0.002141
+        },
+        {
+          "move": "bA2 bA1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.002804499999996324
+        },
+        {
+          "move": "wS2 -wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.0028485840000200824,
+          "depth": 1,
+          "nodes": 122,
+          "score": 99999,
+          "search_seconds": 0.000182
+        }
+      ],
+      "final": "Base+MLP;WhiteWins;Black[18];wS1;bB1 \\wS1;wB1 wS1\\;bG1 bB1/;wM wS1-;bL bG1/;wQ wM/;bQ -bB1;wA1 /wS1;bA1 -bL;wA1 -bQ;bA1 bL\\;wM wS1;bL bG1\\;wQ bA1-;bL wQ/;wM -wS1;bA2 -bG1;wM bQ;bA3 \\bG1;wB2 wA1\\;bA3 bG1\\;wA2 -wA1;bA2 \\wA1;wS2 -wB2;bG2 bL-;wA2 wA1/;bA2 \\bL;wG1 \\wS2;bG1 bL\\;wM wA2-;bA2 /wS1;wL wG1/;bA2 bA1\\;wS2 -wS1",
+      "outcome": "win"
+    },
+    {
+      "opening": 6,
+      "game_type": "Base",
+      "foulbrood_side": 0,
+      "start": "Base;InProgress;White[5];wS1;bB1 wS1\\;wA1 -wS1;bS1 bB1-;wQ -wA1;bA1 bS1-;wQ \\wA1;bQ bS1\\",
+      "history": [
+        {
+          "move": "wA2 wS1/",
+          "foulbrood": true,
+          "wall_seconds": 0.4926097499999855,
+          "depth": 7,
+          "nodes": 4684712,
+          "score": 0,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 \\bA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5022537920000048
+        },
+        {
+          "move": "wA2 bA1-",
+          "foulbrood": true,
+          "wall_seconds": 0.4928694169999801,
+          "depth": 6,
+          "nodes": 4652694,
+          "score": -18,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA2 /wQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5021775419999983
+        },
+        {
+          "move": "wQ \\bA2",
+          "foulbrood": true,
+          "wall_seconds": 0.4934317910000061,
+          "depth": 6,
+          "nodes": 4428578,
+          "score": -17,
+          "search_seconds": 0.490006
+        },
+        {
+          "move": "bA3 bQ\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5021759589999988
+        },
+        {
+          "move": "wA3 wA2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49286091700000156,
+          "depth": 6,
+          "nodes": 4251999,
+          "score": -12,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 /wA3",
+          "foulbrood": false,
+          "wall_seconds": 0.5035260410000149
+        },
+        {
+          "move": "wG1 \\wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.49316420799999605,
+          "depth": 7,
+          "nodes": 4108564,
+          "score": 58,
+          "search_seconds": 0.490004
+        },
+        {
+          "move": "bG1 /bA2",
+          "foulbrood": false,
+          "wall_seconds": 0.5022114999999872
+        },
+        {
+          "move": "wG2 \\wG1",
+          "foulbrood": true,
+          "wall_seconds": 0.4928539160000014,
+          "depth": 6,
+          "nodes": 3769434,
+          "score": -12,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bS2 -bG1",
+          "foulbrood": false,
+          "wall_seconds": 0.5021739590000038
+        },
+        {
+          "move": "wS2 wA2-",
+          "foulbrood": true,
+          "wall_seconds": 0.49281087500000353,
+          "depth": 6,
+          "nodes": 4334815,
+          "score": -27,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bS2 \\wQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5017636249999953
+        },
+        {
+          "move": "wS2 bA3\\",
+          "foulbrood": true,
+          "wall_seconds": 0.492735625000023,
+          "depth": 7,
+          "nodes": 3973969,
+          "score": 6,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bG2 bG1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5007938329999888
+        },
+        {
+          "move": "wS2 /bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49276004199998624,
+          "depth": 7,
+          "nodes": 3916416,
+          "score": 6,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bG2 /wQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5022268750000194
+        },
+        {
+          "move": "wG3 wA2-",
+          "foulbrood": true,
+          "wall_seconds": 0.4927232499999832,
+          "depth": 6,
+          "nodes": 3895589,
+          "score": -179,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bG3 /bA3",
+          "foulbrood": false,
+          "wall_seconds": 0.5021992499999897
+        },
+        {
+          "move": "wB1 -wS2",
+          "foulbrood": true,
+          "wall_seconds": 0.4932174999999859,
+          "depth": 7,
+          "nodes": 3601580,
+          "score": 21,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bG3 wG3/",
+          "foulbrood": false,
+          "wall_seconds": 0.5022208750000061
+        },
+        {
+          "move": "wB2 \\wG2",
+          "foulbrood": true,
+          "wall_seconds": 0.4930187079999939,
+          "depth": 6,
+          "nodes": 3311985,
+          "score": -125,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bG1 /wG2",
+          "foulbrood": false,
+          "wall_seconds": 0.502163290999988
+        },
+        {
+          "move": "wB1 wS2",
+          "foulbrood": true,
+          "wall_seconds": 0.49305637499998056,
+          "depth": 6,
+          "nodes": 3534297,
+          "score": -138,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bB2 /bB1",
+          "foulbrood": false,
+          "wall_seconds": 0.5021740409999893
+        },
+        {
+          "move": "wA1 /bA3",
+          "foulbrood": true,
+          "wall_seconds": 0.4928232920000255,
+          "depth": 6,
+          "nodes": 3768193,
+          "score": -12,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bB2 bB1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5021836250000149
+        },
+        {
+          "move": "wB1 bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4928824170000041,
+          "depth": 6,
+          "nodes": 3215072,
+          "score": 0,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bB2 wB1",
+          "foulbrood": false,
+          "wall_seconds": 0.5005442499999901
+        },
+        {
+          "move": "wB2 wG2",
+          "foulbrood": true,
+          "wall_seconds": 0.49287899999998785,
+          "depth": 6,
+          "nodes": 3857082,
+          "score": 15,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bG3 /wA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5016629579999972
+        },
+        {
+          "move": "wB2 bG1",
+          "foulbrood": true,
+          "wall_seconds": 0.4927657080000074,
+          "depth": 7,
+          "nodes": 3277520,
+          "score": 128,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 wG2/",
+          "foulbrood": false,
+          "wall_seconds": 0.5022251660000165
+        },
+        {
+          "move": "wB2 -wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.4927500829999758,
+          "depth": 7,
+          "nodes": 3428504,
+          "score": 137,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 bB1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5021794580000005
+        },
+        {
+          "move": "wB2 wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.493052917,
+          "depth": 7,
+          "nodes": 3312391,
+          "score": 146,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bS1 \\wG3",
+          "foulbrood": false,
+          "wall_seconds": 0.502183500000001
+        },
+        {
+          "move": "wB2 bB1",
+          "foulbrood": true,
+          "wall_seconds": 0.49343133299998954,
+          "depth": 7,
+          "nodes": 2596836,
+          "score": 259,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bS2 wG2/",
+          "foulbrood": false,
+          "wall_seconds": 0.5021959169999946
+        },
+        {
+          "move": "wG3 \\bS1",
+          "foulbrood": true,
+          "wall_seconds": 0.49328375000001756,
+          "depth": 8,
+          "nodes": 2763295,
+          "score": 149,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bB2 -bA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5021688749999953
+        },
+        {
+          "move": "wB2 bA2",
+          "foulbrood": true,
+          "wall_seconds": 0.49335895900000537,
+          "depth": 8,
+          "nodes": 2585975,
+          "score": 149,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bB2 bB1/",
+          "foulbrood": false,
+          "wall_seconds": 0.5021788329999879
+        },
+        {
+          "move": "wG3 wA2-",
+          "foulbrood": true,
+          "wall_seconds": 0.4932152080000094,
+          "depth": 8,
+          "nodes": 2584531,
+          "score": 149,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bG3 wG3/",
+          "foulbrood": false,
+          "wall_seconds": 0.5005300420000083
+        },
+        {
+          "move": "wG3 \\wB1",
+          "foulbrood": true,
+          "wall_seconds": 0.4929415000000006,
+          "depth": 6,
+          "nodes": 3264953,
+          "score": 269,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bB2 wG3",
+          "foulbrood": false,
+          "wall_seconds": 0.5021925419999889
+        },
+        {
+          "move": "wB1 /wA2",
+          "foulbrood": true,
+          "wall_seconds": 0.4928199169999914,
+          "depth": 6,
+          "nodes": 2916636,
+          "score": 272,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 -wQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5006140419999952
+        },
+        {
+          "move": "wA3 \\wB1",
+          "foulbrood": true,
+          "wall_seconds": 0.4927723750000155,
+          "depth": 6,
+          "nodes": 2967630,
+          "score": 275,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA1 wA1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5012874580000073
+        },
+        {
+          "move": "wB2 /bB1",
+          "foulbrood": true,
+          "wall_seconds": 0.4929439579999837,
+          "depth": 6,
+          "nodes": 3055296,
+          "score": 281,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bS2 \\wQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5021580419999907
+        },
+        {
+          "move": "wG2 wS2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49315287500002114,
+          "depth": 6,
+          "nodes": 3020975,
+          "score": 281,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 \\bG1",
+          "foulbrood": false,
+          "wall_seconds": 0.502163166999992
+        },
+        {
+          "move": "wB1 wS2-",
+          "foulbrood": true,
+          "wall_seconds": 0.49308587499999135,
+          "depth": 6,
+          "nodes": 3185508,
+          "score": 284,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA3 /wG2",
+          "foulbrood": false,
+          "wall_seconds": 0.000388666999981524
+        },
+        {
+          "move": "wB1 /wA2",
+          "foulbrood": true,
+          "wall_seconds": 0.4928948339999977,
+          "depth": 7,
+          "nodes": 2512681,
+          "score": 406,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bB2 \\wA3",
+          "foulbrood": false,
+          "wall_seconds": 0.5030050829999766
+        },
+        {
+          "move": "wB1 wS2-",
+          "foulbrood": true,
+          "wall_seconds": 0.49292245800000956,
+          "depth": 7,
+          "nodes": 2913939,
+          "score": 409,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 wA1/",
+          "foulbrood": false,
+          "wall_seconds": 0.5021692500000086
+        },
+        {
+          "move": "wA1 \\wA2",
+          "foulbrood": true,
+          "wall_seconds": 0.49289537500001757,
+          "depth": 6,
+          "nodes": 2761730,
+          "score": 299,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 wA2\\",
+          "foulbrood": false,
+          "wall_seconds": 0.0019492499999955726
+        },
+        {
+          "move": "wA1 /wS2",
+          "foulbrood": true,
+          "wall_seconds": 0.4928780830000221,
+          "depth": 6,
+          "nodes": 2659337,
+          "score": 299,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 wG2\\",
+          "foulbrood": false,
+          "wall_seconds": 0.00044512499999882493
+        },
+        {
+          "move": "wA1 wB1\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49283254200000215,
+          "depth": 6,
+          "nodes": 2646595,
+          "score": 299,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 /wG2",
+          "foulbrood": false,
+          "wall_seconds": 0.0008513329999857433
+        },
+        {
+          "move": "wA1 /wS2",
+          "foulbrood": true,
+          "wall_seconds": 0.49314287500001797,
+          "depth": 6,
+          "nodes": 2674325,
+          "score": 299,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 wG2\\",
+          "foulbrood": false,
+          "wall_seconds": 0.0003841250000107266
+        },
+        {
+          "move": "wA1 wB1\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4937123750000012,
+          "depth": 6,
+          "nodes": 2617598,
+          "score": 299,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 /wG2",
+          "foulbrood": false,
+          "wall_seconds": 0.0004021670000042832
+        },
+        {
+          "move": "wA1 bB2/",
+          "foulbrood": true,
+          "wall_seconds": 0.4928049579999936,
+          "depth": 6,
+          "nodes": 2520052,
+          "score": 293,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bS2 /bG2",
+          "foulbrood": false,
+          "wall_seconds": 0.5024601670000095
+        },
+        {
+          "move": "wA1 /wS2",
+          "foulbrood": true,
+          "wall_seconds": 0.4928698749999967,
+          "depth": 6,
+          "nodes": 2581568,
+          "score": 412,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA3 wG2\\",
+          "foulbrood": false,
+          "wall_seconds": 0.00037937499999429747
+        },
+        {
+          "move": "wA1 wB1\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4928397500000017,
+          "depth": 6,
+          "nodes": 2511568,
+          "score": 412,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bA3 /wG2",
+          "foulbrood": false,
+          "wall_seconds": 0.002888332999987142
+        },
+        {
+          "move": "wA1 /wS2",
+          "foulbrood": true,
+          "wall_seconds": 0.4927972500000237,
+          "depth": 6,
+          "nodes": 2577748,
+          "score": 412,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 wG2\\",
+          "foulbrood": false,
+          "wall_seconds": 0.00029591699998832155
+        },
+        {
+          "move": "wA1 wB1\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49383499999999003,
+          "depth": 6,
+          "nodes": 2494807,
+          "score": 412,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA3 /wG2",
+          "foulbrood": false,
+          "wall_seconds": 0.0002932919999807382
+        },
+        {
+          "move": "wA1 bS2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4929231669999865,
+          "depth": 6,
+          "nodes": 2486165,
+          "score": 379,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 /wA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5015292079999938
+        },
+        {
+          "move": "wG3 bB2/",
+          "foulbrood": true,
+          "wall_seconds": 0.49292483299998935,
+          "depth": 7,
+          "nodes": 2428256,
+          "score": 458,
+          "search_seconds": 0.490002
+        },
+        {
+          "move": "bA1 bG3\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5022465830000158
+        },
+        {
+          "move": "wA1 wB1/",
+          "foulbrood": true,
+          "wall_seconds": 0.03316254199998525,
+          "depth": 5,
+          "nodes": 166185,
+          "score": 99995,
+          "search_seconds": 0.030352
+        },
+        {
+          "move": "bA3 \\wG3",
+          "foulbrood": false,
+          "wall_seconds": 0.0014756669999940186
+        },
+        {
+          "move": "wB2 bA2",
+          "foulbrood": true,
+          "wall_seconds": 0.0033668340000190256,
+          "depth": 3,
+          "nodes": 3017,
+          "score": 99997,
+          "search_seconds": 0.000769
+        },
+        {
+          "move": "bA1 \\wQ",
+          "foulbrood": false,
+          "wall_seconds": 0.0011457090000135395
+        },
+        {
+          "move": "wB2 -wA3",
+          "foulbrood": true,
+          "wall_seconds": 0.0027583750000133023,
+          "depth": 1,
+          "nodes": 52,
+          "score": 99999,
+          "search_seconds": 0.000173
+        }
+      ],
+      "final": "Base;WhiteWins;Black[50];wS1;bB1 wS1\\;wA1 -wS1;bS1 bB1-;wQ -wA1;bA1 bS1-;wQ \\wA1;bQ bS1\\;wA2 wS1/;bA2 \\bA1;wA2 bA1-;bA2 /wQ;wQ \\bA2;bA3 bQ\\;wA3 wA2\\;bA3 /wA3;wG1 \\wS1;bG1 /bA2;wG2 \\wG1;bS2 -bG1;wS2 wA2-;bS2 \\wQ;wS2 bA3\\;bG2 bG1\\;wS2 /bQ;bG2 /wQ;wG3 wA2-;bG3 /bA3;wB1 -wS2;bG3 wG3/;wB2 \\wG2;bG1 /wG2;wB1 wS2;bB2 /bB1;wA1 /bA3;bB2 bB1\\;wB1 bQ;bB2 wB1;wB2 wG2;bG3 /wA1;wB2 bG1;bA2 wG2/;wB2 -wS1;bA2 bB1\\;wB2 wS1;bS1 \\wG3;wB2 bB1;bS2 wG2/;wG3 \\bS1;bB2 -bA1;wB2 bA2;bB2 bB1/;wG3 wA2-;bG3 wG3/;wG3 \\wB1;bB2 wG3;wB1 /wA2;bA1 -wQ;wA3 \\wB1;bA1 wA1\\;wB2 /bB1;bS2 \\wQ;wG2 wS2\\;bA3 \\bG1;wB1 wS2-;bA3 /wG2;wB1 /wA2;bB2 \\wA3;wB1 wS2-;bA1 wA1/;wA1 \\wA2;bA1 wA2\\;wA1 /wS2;bA3 wG2\\;wA1 wB1\\;bA3 /wG2;wA1 /wS2;bA3 wG2\\;wA1 wB1\\;bA3 /wG2;wA1 bB2/;bS2 /bG2;wA1 /wS2;bA3 wG2\\;wA1 wB1\\;bA3 /wG2;wA1 /wS2;bA3 wG2\\;wA1 wB1\\;bA3 /wG2;wA1 bS2\\;bA1 /wA1;wG3 bB2/;bA1 bG3\\;wA1 wB1/;bA3 \\wG3;wB2 bA2;bA1 \\wQ;wB2 -wA3",
+      "outcome": "win"
+    },
+    {
+      "opening": 6,
+      "game_type": "Base",
+      "foulbrood_side": 1,
+      "start": "Base;InProgress;White[5];wS1;bB1 wS1\\;wA1 -wS1;bS1 bB1-;wQ -wA1;bA1 bS1-;wQ \\wA1;bQ bS1\\",
+      "history": [
+        {
+          "move": "wA2 \\wS1",
+          "foulbrood": false,
+          "wall_seconds": 0.5018338750000169
+        },
+        {
+          "move": "bA1 \\wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4932706669999902,
+          "depth": 6,
+          "nodes": 4702991,
+          "score": 0,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wA1 bQ-",
+          "foulbrood": false,
+          "wall_seconds": 0.5004760420000025
+        },
+        {
+          "move": "bB2 -bA1",
+          "foulbrood": true,
+          "wall_seconds": 0.49280379100000005,
+          "depth": 6,
+          "nodes": 4943053,
+          "score": 0,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wA3 wA1/",
+          "foulbrood": false,
+          "wall_seconds": 0.5021651250000048
+        },
+        {
+          "move": "bB2 -wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4927712079999935,
+          "depth": 7,
+          "nodes": 4697043,
+          "score": 95,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wS2 wQ\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5022122910000064
+        },
+        {
+          "move": "bG1 -bB2",
+          "foulbrood": true,
+          "wall_seconds": 0.4927837079999904,
+          "depth": 6,
+          "nodes": 4035951,
+          "score": 0,
+          "search_seconds": 0.490006
+        },
+        {
+          "move": "wG1 wA1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5021730839999918
+        },
+        {
+          "move": "bA2 /bB1",
+          "foulbrood": true,
+          "wall_seconds": 0.49270729200000574,
+          "depth": 6,
+          "nodes": 4013009,
+          "score": -101,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wS2 /bA2",
+          "foulbrood": false,
+          "wall_seconds": 0.5021913749999953
+        },
+        {
+          "move": "bA3 /bB2",
+          "foulbrood": true,
+          "wall_seconds": 0.492708499999992,
+          "depth": 6,
+          "nodes": 4308003,
+          "score": 21,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA3 bQ\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5018593750000093
+        },
+        {
+          "move": "bS2 \\bB2",
+          "foulbrood": true,
+          "wall_seconds": 0.4927384590000088,
+          "depth": 6,
+          "nodes": 4247850,
+          "score": 24,
+          "search_seconds": 0.490002
+        },
+        {
+          "move": "wG2 wG1/",
+          "foulbrood": false,
+          "wall_seconds": 0.5021784999999852
+        },
+        {
+          "move": "bA3 /wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4927040839999961,
+          "depth": 6,
+          "nodes": 3753078,
+          "score": 24,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wG1 /bQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5011743750000051
+        },
+        {
+          "move": "bS2 wQ/",
+          "foulbrood": true,
+          "wall_seconds": 0.49294591700001433,
+          "depth": 6,
+          "nodes": 3884949,
+          "score": 281,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wG3 /wG1",
+          "foulbrood": false,
+          "wall_seconds": 0.5012036250000165
+        },
+        {
+          "move": "bG2 /bB2",
+          "foulbrood": true,
+          "wall_seconds": 0.038092124999991483,
+          "depth": 5,
+          "nodes": 332771,
+          "score": 99995,
+          "search_seconds": 0.035251
+        },
+        {
+          "move": "wA3 /bG2",
+          "foulbrood": false,
+          "wall_seconds": 0.0022689580000019305
+        },
+        {
+          "move": "bG3 \\bA1",
+          "foulbrood": true,
+          "wall_seconds": 0.0036320419999924525,
+          "depth": 3,
+          "nodes": 6894,
+          "score": 99997,
+          "search_seconds": 0.001007
+        },
+        {
+          "move": "wA3 \\wA1",
+          "foulbrood": false,
+          "wall_seconds": 0.0009309170000051381
+        },
+        {
+          "move": "bG2 wQ\\",
+          "foulbrood": true,
+          "wall_seconds": 0.0025349590000018907,
+          "depth": 1,
+          "nodes": 44,
+          "score": 99999,
+          "search_seconds": 0.000166
+        }
+      ],
+      "final": "Base;BlackWins;White[17];wS1;bB1 wS1\\;wA1 -wS1;bS1 bB1-;wQ -wA1;bA1 bS1-;wQ \\wA1;bQ bS1\\;wA2 \\wS1;bA1 \\wQ;wA1 bQ-;bB2 -bA1;wA3 wA1/;bB2 -wQ;wS2 wQ\\;bG1 -bB2;wG1 wA1\\;bA2 /bB1;wS2 /bA2;bA3 /bB2;wA3 bQ\\;bS2 \\bB2;wG2 wG1/;bA3 /wQ;wG1 /bQ;bS2 wQ/;wG3 /wG1;bG2 /bB2;wA3 /bG2;bG3 \\bA1;wA3 \\wA1;bG2 wQ\\",
+      "outcome": "win"
+    },
+    {
+      "opening": 7,
+      "game_type": "Base+MLP",
+      "foulbrood_side": 1,
+      "start": "Base+MLP;InProgress;White[5];wB1;bS1 -wB1;wS1 wB1/;bB1 \\bS1;wL wS1-;bB2 \\bB1;wQ wB1\\;bQ /bS1",
+      "history": [
+        {
+          "move": "wA1 wL/",
+          "foulbrood": false,
+          "wall_seconds": 0.5020690839999986
+        },
+        {
+          "move": "bA1 bB1/",
+          "foulbrood": true,
+          "wall_seconds": 0.5122739999999908,
+          "depth": 6,
+          "nodes": 4400405,
+          "score": -58,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA1 /bQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5011888749999969
+        },
+        {
+          "move": "bA1 wQ-",
+          "foulbrood": true,
+          "wall_seconds": 0.4929798750000032,
+          "depth": 6,
+          "nodes": 4064740,
+          "score": -43,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA2 wL-",
+          "foulbrood": false,
+          "wall_seconds": 0.5010674170000016
+        },
+        {
+          "move": "bM bA1\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4928537500000232,
+          "depth": 6,
+          "nodes": 4329863,
+          "score": -94,
+          "search_seconds": 0.490005
+        },
+        {
+          "move": "wG1 -wA1",
+          "foulbrood": false,
+          "wall_seconds": 0.5008536670000012
+        },
+        {
+          "move": "bM wQ\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4930945829999871,
+          "depth": 5,
+          "nodes": 4765342,
+          "score": 0,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA3 wG1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5012061670000207
+        },
+        {
+          "move": "bG1 bA1\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49278312499998833,
+          "depth": 5,
+          "nodes": 4492586,
+          "score": 0,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA3 -bQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5011875410000073
+        },
+        {
+          "move": "bP /bM",
+          "foulbrood": true,
+          "wall_seconds": 0.4929732500000057,
+          "depth": 5,
+          "nodes": 4892594,
+          "score": 3,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wG2 \\wL",
+          "foulbrood": false,
+          "wall_seconds": 0.5012154169999974
+        },
+        {
+          "move": "bP /wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.49326412499999606,
+          "depth": 5,
+          "nodes": 4633249,
+          "score": 110,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wG3 -wA3",
+          "foulbrood": false,
+          "wall_seconds": 0.5012111670000081
+        },
+        {
+          "move": "bS2 /bP",
+          "foulbrood": true,
+          "wall_seconds": 0.49378208299998505,
+          "depth": 5,
+          "nodes": 3574773,
+          "score": 218,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wS2 wG1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5012671670000088
+        },
+        {
+          "move": "bS2 -wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4930215839999903,
+          "depth": 6,
+          "nodes": 3649909,
+          "score": 245,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "wA2 bG1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5012344999999812
+        },
+        {
+          "move": "bL /bM",
+          "foulbrood": true,
+          "wall_seconds": 0.49282570799999803,
+          "depth": 6,
+          "nodes": 4091461,
+          "score": 140,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "wA3 bL\\",
+          "foulbrood": false,
+          "wall_seconds": 0.5002568330000088
+        },
+        {
+          "move": "bG2 -bL",
+          "foulbrood": true,
+          "wall_seconds": 0.0035442500000044674,
+          "depth": 3,
+          "nodes": 6361,
+          "score": 99997,
+          "search_seconds": 0.001029
+        },
+        {
+          "move": "wA3 /bB1",
+          "foulbrood": false,
+          "wall_seconds": 0.0003549159999920448
+        },
+        {
+          "move": "bG2 wQ/",
+          "foulbrood": true,
+          "wall_seconds": 0.002868457999994689,
+          "depth": 1,
+          "nodes": 79,
+          "score": 99999,
+          "search_seconds": 0.000204
+        }
+      ],
+      "final": "Base+MLP;BlackWins;White[17];wB1;bS1 -wB1;wS1 wB1/;bB1 \\bS1;wL wS1-;bB2 \\bB1;wQ wB1\\;bQ /bS1;wA1 wL/;bA1 bB1/;wA1 /bQ;bA1 wQ-;wA2 wL-;bM bA1\\;wG1 -wA1;bM wQ\\;wA3 wG1\\;bG1 bA1\\;wA3 -bQ;bP /bM;wG2 \\wL;bP /wQ;wG3 -wA3;bS2 /bP;wS2 wG1\\;bS2 -wQ;wA2 bG1\\;bL /bM;wA3 bL\\;bG2 -bL;wA3 /bB1;bG2 wQ/",
+      "outcome": "win"
+    },
+    {
+      "opening": 7,
+      "game_type": "Base+MLP",
+      "foulbrood_side": 0,
+      "start": "Base+MLP;InProgress;White[5];wB1;bS1 -wB1;wS1 wB1/;bB1 \\bS1;wL wS1-;bB2 \\bB1;wQ wB1\\;bQ /bS1",
+      "history": [
+        {
+          "move": "wA1 \\wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.49275712499999713,
+          "depth": 6,
+          "nodes": 4689139,
+          "score": 0,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA1 -bQ",
+          "foulbrood": false,
+          "wall_seconds": 0.5011822080000172
+        },
+        {
+          "move": "wA1 /bA1",
+          "foulbrood": true,
+          "wall_seconds": 0.4928832909999983,
+          "depth": 6,
+          "nodes": 4286543,
+          "score": 21,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 /bB2",
+          "foulbrood": false,
+          "wall_seconds": 0.5011860420000005
+        },
+        {
+          "move": "wA2 \\wS1",
+          "foulbrood": true,
+          "wall_seconds": 0.4928124169999819,
+          "depth": 5,
+          "nodes": 3960214,
+          "score": 122,
+          "search_seconds": 0.49
+        },
+        {
+          "move": "bB2 bA2",
+          "foulbrood": false,
+          "wall_seconds": 0.5006432909999887
+        },
+        {
+          "move": "wA2 bQ\\",
+          "foulbrood": true,
+          "wall_seconds": 0.49278658299999734,
+          "depth": 5,
+          "nodes": 4196389,
+          "score": 218,
+          "search_seconds": 0.490006
+        },
+        {
+          "move": "bB2 bB1",
+          "foulbrood": false,
+          "wall_seconds": 0.5031311660000028
+        },
+        {
+          "move": "wG1 wA2\\",
+          "foulbrood": true,
+          "wall_seconds": 0.4927982499999928,
+          "depth": 5,
+          "nodes": 4072282,
+          "score": 373,
+          "search_seconds": 0.490002
+        },
+        {
+          "move": "bB2 bS1",
+          "foulbrood": false,
+          "wall_seconds": 0.5024395410000011
+        },
+        {
+          "move": "wG1 \\bQ",
+          "foulbrood": true,
+          "wall_seconds": 0.4928609579999943,
+          "depth": 5,
+          "nodes": 4244567,
+          "score": 454,
+          "search_seconds": 0.490001
+        },
+        {
+          "move": "bA2 wQ-",
+          "foulbrood": false,
+          "wall_seconds": 0.5013084170000184
+        },
+        {
+          "move": "wL -wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.1116793330000121,
+          "depth": 5,
+          "nodes": 1135105,
+          "score": 99995,
+          "search_seconds": 0.109031
+        },
+        {
+          "move": "bA2 /wA1",
+          "foulbrood": false,
+          "wall_seconds": 0.501183707999985
+        },
+        {
+          "move": "wG2 /wQ",
+          "foulbrood": true,
+          "wall_seconds": 0.0044346250000160126,
+          "depth": 3,
+          "nodes": 12038,
+          "score": 99997,
+          "search_seconds": 0.001579
+        },
+        {
+          "move": "bA2 wS1\\",
+          "foulbrood": false,
+          "wall_seconds": 0.0015765839999914988
+        },
+        {
+          "move": "wG2 wA1-",
+          "foulbrood": true,
+          "wall_seconds": 0.002640999999982796,
+          "depth": 1,
+          "nodes": 120,
+          "score": 99999,
+          "search_seconds": 0.000179
+        }
+      ],
+      "final": "Base+MLP;WhiteWins;Black[13];wB1;bS1 -wB1;wS1 wB1/;bB1 \\bS1;wL wS1-;bB2 \\bB1;wQ wB1\\;bQ /bS1;wA1 \\wS1;bA1 -bQ;wA1 /bA1;bA2 /bB2;wA2 \\wS1;bB2 bA2;wA2 bQ\\;bB2 bB1;wG1 wA2\\;bB2 bS1;wG1 \\bQ;bA2 wQ-;wL -wQ;bA2 /wA1;wG2 /wQ;bA2 wS1\\;wG2 wA1-",
+      "outcome": "win"
+    }
+  ],
+  "binaries": {
+    "probe": {
+      "path": ".cache/compact-repetition/target/release/bench_search",
+      "sha256": "961964713bacf094fea491bd07e8cbd4dbadac6cd4d84764118176a8cacd3da1"
+    },
+    "referee": {
+      "path": ".cache/compact-repetition/target/release/foulbrood",
+      "sha256": "6068d5c2a50c152155e6570d8659f9d218512b954a015764cc3aaf2da8e94115"
+    },
+    "mzinga": {
+      "path": "Engines/Mzinga/MzingaEngine",
+      "sha256": "9156598a893225ba6a06eb00611d961e00cd1b24c5b57466a57f36f8ae9e3a70"
+    }
+  },
+  "startup": {
+    "foulbrood": [
+      "id FoulBrood v0.10.16",
+      "Mosquito;Ladybug;Pillbug"
+    ],
+    "mzinga": [
+      "id MzingaEngine v0.16.0",
+      "Mosquito;Ladybug;Pillbug"
+    ]
+  },
+  "mzinga_options": [
+    "MaxBranchingFactor;int;256;256;1;512",
+    "MaxHelperThreads;enum;None;Auto;Auto;None;1;2;3;4;5;6;7;8;9;10;11",
+    "PonderDuringIdle;enum;Disabled;SingleThreaded;Disabled;SingleThreaded;MultiThreaded",
+    "QuiescentSearchMaxDepth;int;6;6;0;12",
+    "ReportIntermediateBestMoves;bool;False;False",
+    "TranspositionTableSizeMB;int;32;32;0;1024",
+    "UseNullAspirationWindow;bool;True;True"
+  ],
+  "complete": true
+}

@@ -1,0 +1,40 @@
+[GameType "Base+MLP"]
+[Site "https://hivegame.com/game/Example12345"]
+[White "PlayerWhite"]
+[Black "PlayerBlack"]
+[Result "WhiteWins"]
+
+1. wL
+2. bL \wL
+3. wA1 wL\
+4. bQ bL/
+5. wQ wA1/
+6. bA1 bQ/
+7. wA1 \bA1
+8. bA2 \bL
+9. wP wQ-
+10. bA2 wP\
+11. wM \wP
+12. bB1 bA2-
+13. wM wQ\
+14. bM bA2\
+15. wM bA1\
+16. bB1 bA2
+17. wA2 wA1/
+18. bM bB1
+19. wA2 \bL
+20. bM wP
+21. wA3 -wA2
+22. bB1 wQ\
+23. wA1 bA1/
+24. bA2 wM\
+25. wA3 \bQ
+26. bL -wA2
+27. wL bQ\
+28. bA2 wA1/
+29. wB1 /wL
+30. bA2 -wB1
+31. wG1 wA1/
+32. bM wM\
+33. wG1 wA2\
+WhiteWins

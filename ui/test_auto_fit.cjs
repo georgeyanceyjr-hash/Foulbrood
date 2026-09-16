@@ -1,0 +1,16 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const src=fs.readFileSync(__dirname+'/app.js','utf8');
+let pressed='',renders=0,saves=0;
+const ctx=vm.createContext({boardAutoFit:false,autoFitKey:null,boardFrame:{x:0,y:0,w:480,h:340},boardZoom:2,panX:15,panY:30,lastBoardKey:'old',hideStack(){},renderBoard(){renders++},applyBoardView(){saves++},$:()=>({setAttribute:(key,value)=>pressed=value})});
+vm.runInContext(src.slice(src.indexOf('function updateAutoFit('),src.indexOf('function rotateBoard(')),ctx);
+const frame={x:100,y:50,w:900,h:500};
+ctx.updateAutoFit(frame,'move1');assert.equal(ctx.boardZoom,2);assert.equal(ctx.panX,15);
+ctx.setBoardAutoFit(true);assert.equal(pressed,'true');assert.equal(renders,1);assert.equal(ctx.boardFrame,null);
+ctx.updateAutoFit(frame,'move1');assert.equal(ctx.boardFrame,frame);assert.equal(ctx.boardZoom,1);assert.equal(ctx.panX,0);
+ctx.boardZoom=1.5;ctx.panX=20;ctx.updateAutoFit({x:999},'move1');assert.equal(ctx.boardFrame,frame);assert.equal(ctx.boardZoom,1.5,'polling and analysis updates must not refit unchanged game');
+ctx.updateAutoFit({...frame,w:1100},'move2');assert.equal(ctx.boardFrame.w,1100);assert.equal(ctx.boardZoom,1);assert.equal(ctx.panX,0);
+ctx.updateAutoFit({...frame,x:-100},'rotated');assert.equal(ctx.boardFrame.x,-100);
+ctx.setBoardAutoFit(false);const stopped=ctx.boardFrame;assert.equal(pressed,'false');assert.equal(saves,1);
+ctx.updateAutoFit(frame,'move3');assert.equal(ctx.boardFrame,stopped,'turning Auto off keeps the current viewport');
+ctx.fitBoard();assert.equal(ctx.boardAutoFit,false,'one-time Fit does not enable Auto');assert.equal(renders,2);
+console.log('PASS: Auto fits immediately and on position/orientation changes, ignores unchanged polling, stops on toggle, and preserves one-time Fit.');

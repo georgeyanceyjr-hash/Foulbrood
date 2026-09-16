@@ -1,0 +1,21 @@
+FoulBrood GUI Beta 3 — tester feedback
+
+Mac model / chip:
+macOS version:
+Browser / version:
+Engine / version (if relevant):
+
+Did the app launch? Were any approval steps needed?
+
+What were you trying to do?
+
+Steps to reproduce:
+1.
+2.
+3.
+
+What did you expect?
+What happened instead?
+Does it happen again after reopening?
+
+Optional: attach a screenshot and exported PGN/JSON.

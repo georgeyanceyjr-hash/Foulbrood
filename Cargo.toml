@@ -1,0 +1,28 @@
+[package]
+name = "foulbrood"
+version = "0.10.16"
+edition = "2021"
+description = "A fast, correctness-first Hive engine core"
+license = "MIT"
+
+[lib]
+name = "foulbrood"
+path = "src/lib.rs"
+
+[[bin]]
+name = "foulbrood"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.test]
+opt-level = 2
+
+[profile.profiling]
+inherits = "release"
+debug = 1
+strip = false
+
