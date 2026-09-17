@@ -37,4 +37,4 @@ Report bugs or suggest improvements on the [Issues page](https://github.com/geor
 
 ## License
 
-FoulBrood's original code is available under the [MIT license](LICENSE). Notices for third-party components are included with each download. The Analytic notation converter has a [separate notice](ui/vendor/README.md).
+FoulBrood's original code is available under the [MIT license](LICENSE). Notices for third-party components are included with each download.

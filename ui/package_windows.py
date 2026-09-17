@@ -77,7 +77,7 @@ def main():
     shutil.copytree(args.toolchain/'x86_64-w64-mingw32/share/mingw32', licenses/'MinGW')
     shutil.copy2(args.rust_docs/'COPYRIGHT-library.html', licenses/'Rust-library-copyright.html')
     shutil.copytree(args.rust_docs/'licenses', licenses/'licenses')
-    (licenses/'Visual-Hive.txt').write_text('Visual Hive notation converter. Included with permission. Original source retained in Resources/ui/vendor/visual_hive. No separate upstream license was supplied.\n', encoding='utf-8')
+    (licenses/'Visual-Hive.txt').write_text('Analytic notation converter. Source included in Resources/ui/vendor/visual_hive.\n', encoding='utf-8')
     files = {str(p.relative_to(app)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(app.rglob('*')) if p.is_file()}
     build_id = hashlib.sha256(json.dumps(files,sort_keys=True).encode()).hexdigest()[:16]
     (resources/'beta.json').write_text(json.dumps(dict(version='0.1.0-beta.3-windows-preview', build_id=build_id, architecture='x86_64', engines_included=False),indent=2)+'\n',encoding='utf-8')

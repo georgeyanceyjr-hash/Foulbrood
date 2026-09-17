@@ -46,7 +46,7 @@ if args.beta:
     shutil.copy2(root/'LICENSE',licenses/'FoulBrood-MIT.txt')
     shutil.copytree(distribution/'licenses',licenses/'Python')
     shutil.copy2(distribution/'PYTHON.json',licenses/'Python-distribution.json')
-    (licenses/'Visual-Hive.txt').write_text('Visual Hive notation converter. Included with permission. Original source retained in Resources/ui/vendor/visual_hive. No separate upstream license was supplied.\n')
+    (licenses/'Visual-Hive.txt').write_text('Analytic notation converter. Source included in Resources/ui/vendor/visual_hive.\n')
     (resources/'ui/index.html').write_text((resources/'ui/index.html').read_text().replace('<title>FoulBrood · Hive</title>','<title>FoulBrood GUI · Beta 3</title>'))
     files={str(p.relative_to(resources)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(resources.rglob('*')) if p.is_file()}
     build_id=hashlib.sha256(json.dumps(files,sort_keys=True).encode()).hexdigest()[:16]
