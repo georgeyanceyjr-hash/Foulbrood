@@ -31,8 +31,10 @@ The Rust rules helper is included to validate moves and maintain board state. It
 
 `ui/` contains the interface, Python service, engine adapters, launchers and packagers. `src/` contains the supporting Rust library and helper binaries. `tests/`, `ui/test_*` and their fixtures cover rules and viewer behavior.
 
-## Feedback and licensing
+## Feedback
 
-Please open an issue with your operating system, browser, engine version and steps to reproduce a problem. Avoid including private games or personal information unless you intend to share them publicly.
+Report bugs or suggest improvements on the [Issues page](https://github.com/georgeyanceyjr-hash/Foulbrood/issues). For a bug report, include whether you use Mac or Windows, what you were doing, and what went wrong. A screenshot can help.
 
-See [LICENSE](LICENSE) and [third-party notices](ui/vendor/README.md). Independent community software; not an official Hive or Gen42 product.
+## License
+
+FoulBrood's original code is available under the [MIT license](LICENSE). Notices for third-party components are included with each download. The Analytic notation converter has a [separate notice](ui/vendor/README.md).
