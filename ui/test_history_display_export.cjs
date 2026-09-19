@@ -15,7 +15,7 @@ for(const analytic of [false,true])for(const follow of [false,true])for(let t=0;
   const out=run(`historyFile(visibleHistory(),'${kind}')`);
   if(kind==='pgn')assert(out.includes('2. '+h.moves[1]));
   else {const j=JSON.parse(out);assert.equal(analytic?j.moves[1]:(j.nodes[2].move_delta.piece+' '+j.nodes[2].move_delta.position),h.moves[1])}
-  if(t===1&&mirror&&follow){const imported=JSON.parse(cp.execFileSync('python3',['-B','-c',"import sys,json;sys.path.insert(0,'ui');from import_game import read_export;print(json.dumps(read_export(sys.stdin.read())))"],{cwd:__dirname+'/..',input:out,encoding:'utf8'}));assert.equal(imported[1].length,2);assert.equal(imported[1][1],analytic?'bS1 wS1-':h.moves[1]);}
+  if(t===1&&mirror&&follow){const imported=JSON.parse(cp.execFileSync(process.env.FOULBROOD_TEST_PYTHON||'python3',['-B','-c',"import sys,json;sys.path.insert(0,'ui');from import_game import read_export;print(json.dumps(read_export(sys.stdin.read())))"],{cwd:__dirname+'/..',input:out,encoding:'utf8'}));assert.equal(imported[1].length,2);assert.equal(imported[1][1],analytic?'bS1 wS1-':h.moves[1]);}
  }
 }
 console.log('PASS: full history while reviewing earlier move; both notations; all12 orientations; follow toggle; PGN/JSON display and reimport.');
@@ -26,7 +26,7 @@ for(const result of ['WhiteWins','BlackWins','Draw']){
  const h=run('visibleHistory()');assert(h.result);
  for(const kind of ['pgn','json']){
   const out=run(`historyFile(visibleHistory(),'${kind}')`);
-  const parsed=JSON.parse(cp.execFileSync('python3',['-B','-c',"import sys,json;sys.path.insert(0,'ui');from import_game import reported_result;print(json.dumps(reported_result(sys.stdin.read())))"],{cwd:__dirname+'/..',input:out,encoding:'utf8'}));
+  const parsed=JSON.parse(cp.execFileSync(process.env.FOULBROOD_TEST_PYTHON||'python3',['-B','-c',"import sys,json;sys.path.insert(0,'ui');from import_game import reported_result;print(json.dumps(reported_result(sys.stdin.read())))"],{cwd:__dirname+'/..',input:out,encoding:'utf8'}));
   assert.equal(parsed,result);
  }
  assert(run('historyClipboardText(visibleHistory())').includes(h.result));

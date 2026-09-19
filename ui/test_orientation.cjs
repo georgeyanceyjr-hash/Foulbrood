@@ -2,8 +2,8 @@ const fs=require('fs'),vm=require('vm'),cp=require('child_process'),assert=requi
 const src=fs.readFileSync(__dirname+'/app.js','utf8');const code=src.slice(src.indexOf('let boardRotation='),src.indexOf('function xy('));
 const ctx=vm.createContext({notationMode:'traditional',state:{mode:'play'}});vm.runInContext(code,ctx);
 const call=(name,...args)=>{ctx.args=args;return vm.runInContext(name+'(...args)',ctx)};
-const snapshot=game=>JSON.parse(cp.execFileSync(__dirname+'/../target/release/board_view',['snapshot',game],{encoding:'utf8'}));
-const game=JSON.parse(cp.execFileSync('python3',['-c',"import sys,json;sys.path.insert(0,'ui');from import_game import read_export;v,m,_=read_export(open('ui/fixtures/hivegame.pgn').read());print(json.dumps(v+';InProgress;White[38];'+';'.join(m)))"],{cwd:__dirname+'/..',encoding:'utf8'}));
+const snapshot=game=>JSON.parse(cp.execFileSync(__dirname+'/../target/release/board_view'+(process.platform==='win32'?'.exe':''),['snapshot',game],{encoding:'utf8'}));
+const game=JSON.parse(cp.execFileSync(process.env.FOULBROOD_TEST_PYTHON||'python3',['-c',"import sys,json;sys.path.insert(0,'ui');from import_game import read_export;v,m,_=read_export(open('ui/fixtures/hivegame.pgn').read());print(json.dumps(v+';InProgress;White[38];'+';'.join(m)))"],{cwd:__dirname+'/..',encoding:'utf8'}));
 const base=snapshot(game),prefix=game.split(';').slice(0,3),moves=game.split(';').slice(3);
 const sort=pieces=>pieces.map(p=>[p.id,p.q||0,p.r||0,p.level]).sort((a,b)=>a[0].localeCompare(b[0]));
 for(let t=0;t<6;t++)for(const mirror of [false,true]){

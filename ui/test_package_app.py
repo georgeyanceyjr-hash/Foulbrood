@@ -10,6 +10,7 @@ import unittest
 import urllib.request
 
 
+@unittest.skipUnless(sys.platform == 'darwin', 'macOS app packaging requires Apple tools')
 class PackageAppTests(unittest.TestCase):
     def test_packaged_viewer_starts_and_serves_assets(self):
         root = Path(__file__).resolve().parents[1]

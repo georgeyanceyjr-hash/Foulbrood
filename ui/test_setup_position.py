@@ -1,6 +1,7 @@
 import unittest, subprocess
 from pathlib import Path
 from server import App, snapshot
+from platform_support import executable
 from import_game import read_export
 
 class SetupPositionTests(unittest.TestCase):
@@ -54,7 +55,7 @@ class SetupPositionTests(unittest.TestCase):
             text=self.app.command({'action':'export','format':fmt})['text']
             self.assertTrue('~' in read_export(text,'setup.'+fmt)[0])
             self.assertEqual(self.app.command({'action':'load','confirm_review_clear':True,'text':text,'filename':'setup.'+fmt})['game'],moved['game'])
-        engine=Path(__file__).resolve().parents[1]/'target/release/bench_search'
+        engine=executable(Path(__file__).resolve().parents[1], 'bench_search')
         p=subprocess.run([str(engine),root['game'],'50'],capture_output=True,text=True,timeout=5)
         self.assertEqual(p.returncode,0,p.stderr)
         move=p.stdout.strip().split('\t')[-1]

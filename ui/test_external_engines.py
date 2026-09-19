@@ -7,6 +7,7 @@ from unittest.mock import patch
 from external_engines import UHP,EngineLibrary,inspect_engine,parse_score,foulbrood_entry,discover_engines,exact_score_lines
 from server import App
 
+@unittest.skipIf(os.name == 'nt', 'mock engines use POSIX scripts and executable permissions')
 class ExternalTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name)
