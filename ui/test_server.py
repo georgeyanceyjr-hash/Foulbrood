@@ -349,7 +349,11 @@ class BoardTests(unittest.TestCase):
             self.app.tick()
             deadline=time.monotonic()+3
             while self.app.job and time.monotonic()<deadline:time.sleep(.02)
-            self.assertEqual(self.app.session.data['ply'],ply)
+            # The worker clears job while holding the lock, then commits the move.
+            # Read through view() so we wait for that entire transaction.
+            state=self.app.view()
+            self.assertIsNone(state['job'],state['error'])
+            self.assertEqual(state['ply'],ply,state['error'])
 
     def test_terminal_draw_disables_moves_and_allows_takeback(self):
         games=json.loads((ROOT/'docs/mzinga-strength-2026-09-11/matches-500.json').read_text())['games']
