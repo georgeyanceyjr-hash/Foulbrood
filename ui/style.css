@@ -636,3 +636,5 @@ input[type=checkbox]{accent-color:var(--ink)}[data-theme="dark"] input[type=chec
 [data-theme="dark"] .piece-art polygon[fill="#484b46"]{fill:#2f322c;stroke:#141614}
 [data-theme="dark"] .insect-art[style*="#272928"]{--insect-face:#1a1c1b!important}
 .reserve button.reserve-gap{visibility:hidden;pointer-events:none}
+
+.moves>p{grid-column:1/-1;margin:0;font:13px/1.5 -apple-system,BlinkMacSystemFont,sans-serif}

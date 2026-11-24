@@ -626,7 +626,6 @@ window.foulbroodSfx=(()=>{
  const stamp=make('div','fb-stamp'),names=make('div','fb-names'),line=make('div','fb-line'),buttons=make('div','fb-buttons');
  const open=make('button','go','Open in Analysis'),bury=make('button','','Bury game'),close=make('button','','Close');
  buttons.append(open,bury,close);over.append(stamp,names,line,buttons);wrap.append(over);
- const main=document.querySelector('main');if(main)main.append(make('div','fb-foot','Bees harmed in the making of this viewer: all of them.'));
  let dismissed='',shownKey='';
  const hide=()=>{dismissed=shownKey;over.hidden=true};
  close.onclick=hide;over.addEventListener('click',e=>{if(e.target===over)hide()});
