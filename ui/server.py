@@ -1,4 +1,3 @@
-from platform_support import executable, process_options, choose_engine
 from external_engines import EngineLibrary, UHP, inspect_engine, configure_reporting, parse_score, discover_engines, canonical_move
 from opening_book import OpeningBook
 from game_review import Review
@@ -6,6 +5,8 @@ from game_review import Review
 """Loopback-only local board. Python standard library; no accounts or services."""
 from import_game import read_export, reported_result, player_names
 from hivegame import fetch_game
+import hivebot
+import importlib
 from export_game import export_game
 from review_file import save_review, read_review, engine_matches, engine_identity, MAX_REVIEW_BYTES
 from live_analysis import capture, visible_history
@@ -24,13 +25,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
-TIMES = {'1+2': (60,2), '3+3': (180,3), '5+4': (300,4), '10+10': (600,10), '20+20': (1200,20)}
+TIMES = {'1+2': (60,2), '3+3': (180,3), '5+4': (300,4), '10+10': (600,10), '20+20': (1200,20), 'untimed': (None,0)}
 TERMINAL = ('WhiteWins','BlackWins','Draw')
 
 
 class Clock:
     def __init__(self, initial, increment, now=time.monotonic):
-        self.remaining = [float(initial),float(initial)]
+        self.untimed = initial is None
+        self.remaining = [None,None] if self.untimed else [float(initial),float(initial)]
         self.increment = increment
         self.started = None
         self.side = 0
@@ -38,7 +40,7 @@ class Clock:
 
     def values(self):
         out = self.remaining.copy()
-        if self.started is not None:
+        if not self.untimed and self.started is not None:
             out[self.side] = max(0, out[self.side] - (self.now()-self.started))
         return out
 
@@ -48,9 +50,10 @@ class Clock:
 
     def start(self, side):
         self.side = side
-        self.started = self.now()
+        self.started = None if self.untimed else self.now()
 
     def commit(self):
+        if self.untimed:return True
         values = self.values()
         if values[self.side] <= 0:
             self.remaining = values
@@ -63,6 +66,8 @@ class Clock:
 
 
 def budget_ms(remaining, increment):
+    # No game clock: keep computer turns bounded while humans have unlimited time.
+    if remaining is None:return 10000
     # Conservative first policy: spend a share of the reserve plus most of the
     # increment. Never consume the completion margin. This is not strength-tuned.
     margin = min(.25, max(.02, remaining*.05))
@@ -70,25 +75,37 @@ def budget_ms(remaining, increment):
     return max(0, int(1000*min(available, remaining/25 + .8*increment)))
 
 
+def finish_budget_ms(remaining, increment):
+    """Same whole-second soft/hard allocator as the unchanged Finish screen."""
+    if remaining is None:
+        # No bank: keep the existing ten-second hard bound, with a 2.5s soft goal.
+        return 2500, 10000
+    margin = min(.25, max(.02, remaining*.05))
+    available = max(0, remaining-margin)
+    soft = int(min(available, remaining/25 + .8*increment))*1000
+    hard = max(soft, int(min(4*soft/1000, available))*1000)
+    return soft, hard
+
+
 def snapshot(command, game, move=None):
-    args = [executable(ROOT, 'board_view'),command,game]
+    args = [str(ROOT/'target/release/board_view'),command,game]
     if move is not None: args.append(move)
-    p = subprocess.run(args, capture_output=True, text=True,encoding='utf-8',**process_options(), timeout=15)
+    p = subprocess.run(args, capture_output=True, text=True, timeout=15)
     if p.returncode: raise ValueError(p.stderr.strip() or 'Engine could not read this position.')
     return json.loads(p.stdout)
 
 
 @lru_cache(maxsize=32)
 def notation(game):
-    p=subprocess.run([sys.executable,'-X','utf8','-E','-s','-B',str(ROOT/'ui/notation.py')],input=game,
-                     capture_output=True,text=True,encoding='utf-8',**process_options(),timeout=45)
+    p=subprocess.run([sys.executable,'-E','-s','-B',str(ROOT/'ui/notation.py')],input=game,
+                     capture_output=True,text=True,timeout=45)
     if p.returncode:raise ValueError('The analytic translator could not read this history.')
     return json.loads(p.stdout)
 
 
 @lru_cache(maxsize=256)
 def notation_move(game,move):
-    p=subprocess.run([sys.executable,'-X','utf8','-E','-s','-B',str(ROOT/'ui/notation.py'),'--move'],input=json.dumps(dict(game=game,move=move)),capture_output=True,text=True,encoding='utf-8',**process_options(),timeout=15)
+    p=subprocess.run([sys.executable,'-E','-s','-B',str(ROOT/'ui/notation.py'),'--move'],input=json.dumps(dict(game=game,move=move)),capture_output=True,text=True,timeout=15)
     if p.returncode:raise ValueError('This move needs more notation detail.')
     return json.loads(p.stdout)
 
@@ -129,7 +146,11 @@ class App:
         self.engines = engines or EngineLibrary()
         self.lock = threading.RLock()
         self.play = Session(position if position is not None else snapshot('snapshot','Base+MLP'))
-        if not self.engines.builtin_connected:self.play.players=['Human','Human']
+        preferred = self.engines.get(self.engines.analysis_engine)
+        if preferred and preferred.get('connected') and preferred.get('finish_supported'):
+            self.play.players = ['Human', preferred['id']]
+        elif not self.engines.builtin_connected:
+            self.play.players = ['Human', 'Human']
         self.analysis = None
         self.review = None
         self.saved_reviews = {}
@@ -259,7 +280,7 @@ class App:
 
     def expired(self):
         s = self.session
-        if self.mode=='play' and s.running and s.data['ply'] >= 2 and s.clock.values()[s.data['side']] <= 0:
+        if self.mode=='play' and s.running and not s.clock.untimed and s.data['ply'] >= 2 and s.clock.values()[s.data['side']] <= 0:
             s.timeout_side = s.data['side']
             self.pause()
             return True
@@ -294,7 +315,7 @@ class App:
         key=self.engines.analysis_engine if kind=='hint' else self.session.players[self.session.data['side']]
         if not self.engines.connected(key):return
         self.search_milliseconds=milliseconds
-        if kind=='hint' and key!='Computer' and '~' in self.session.data.get('game','').split(';',1)[0]:
+        if kind=='hint' and not self.engines.supports_setup(key) and '~' in self.session.data.get('game','').split(';',1)[0]:
             self.hint_paused=True
             self.error="Arbitrary board positions can't be analyzed with this engine."
             return
@@ -316,8 +337,8 @@ class App:
         self.job = kind
         self.search_started = time.monotonic()
         self.search_finished = False
-        proc = subprocess.Popen([executable(ROOT, 'bench_search'),game,'infinite' if milliseconds==0 else str(milliseconds),'--progress'],
-                                stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,encoding='utf-8',**process_options())
+        proc = subprocess.Popen([str(ROOT/'target/release/bench_search'),game,'infinite' if milliseconds==0 else str(milliseconds),'--progress'],
+                                stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
         self.process = proc
         def work():
             result = None; error = None
@@ -378,8 +399,9 @@ class App:
                     candidate=None
                     if adapter=='mzinga' and not diagnostic and len(line.split(';'))>=3:candidate=line.split(';')[0]
                     elif adapter=='foulbrood' and diagnostic:
-                        match=re.fullmatch(r'FoulBroodScore v1;depth=\d+;score=-?\d+;move=(.+)',line)
-                        if match:candidate=match[1]
+                        from external_engines import foulbrood_v2_record
+                        record=foulbrood_v2_record(line)
+                        if record:candidate=record['move']
                     elif adapter=='nokamute' and diagnostic:
                         match=re.search(r'bestmove[= ]+([^;]+)',line)
                         if match:candidate=match[1].strip()
@@ -399,8 +421,17 @@ class App:
                         if kind=='computer':session.thoughts[side]['evaluation']=result
                         else:self.hint=result
                 engine.on_line=progress;engine.on_diagnostic=lambda line:progress(line,True)
-                seconds=max(1,int(milliseconds/1000));limit=f'{seconds//3600:02}:{seconds//60%60:02}:{seconds%60:02}'
-                lines=engine.command('bestmove time '+limit,seconds+3)
+                if kind=='computer' and entry.get('finish_supported') is True:
+                    # Re-read the live bank after startup/book setup, so those costs
+                    # reduce the same running clock. Analysis/review keep their
+                    # selected fixed limit and do not inherit a 4x allowance.
+                    with self.lock:
+                        if revision!=self.revision:return
+                        soft,hard=finish_budget_ms(session.clock.values()[side],session.clock.increment)
+                    lines=engine.command(f'bestmove finish_ms {soft} {hard}',hard/1000+3)
+                else:
+                    seconds=max(1,int(milliseconds/1000));limit=f'{seconds//3600:02}:{seconds//60%60:02}:{seconds%60:02}'
+                    lines=engine.command('bestmove time '+limit,seconds+3)
                 if not lines:raise ValueError('Engine returned no move.')
                 reported_move=lines[-1].split(';')[0];move=reported_move
                 # Validate with our rules engine; UHP permits equivalent reference strings.
@@ -418,7 +449,7 @@ class App:
                     if kind=='computer':self.pause()
                     return
                 if self.expired():return
-                result=dict(move=move,depth=None,nodes=0,score=None,seconds=time.monotonic()-started,side=side,source='external',engine=entry['name']);result.update(parse_score(adapter,lines,engine.diagnostics,side,reported_move))
+                result=dict(move=move,depth=None,nodes=0,score=None,seconds=time.monotonic()-started,side=side,source='external',engine=entry['name']);result.update(parse_score(adapter,lines,engine.diagnostics,side,reported_move,final=True))
                 if kind=='hint':
                     self.hint=result;self.search_finished=True;return
                 session.thoughts[side].update(status='played',evaluation=result)
@@ -475,7 +506,7 @@ class App:
             if action in ('analyze','hints','continuous_hints','calculate_instead') and not self.engines.connected(self.engines.analysis_engine):
                 raise ValueError('Connect an engine in Engine to use analysis.')
             if (action in ('analyze','calculate_instead') or action in ('hints','continuous_hints') and bool(payload.get('enabled'))):
-                if self.engines.analysis_engine!='Computer' and '~' in s.data.get('game','').split(';',1)[0]:
+                if not self.engines.supports_setup(self.engines.analysis_engine) and '~' in s.data.get('game','').split(';',1)[0]:
                     raise ValueError("Arbitrary board positions can't be analyzed with this engine.")
             warning=self.review_clear_warning(payload)
             if warning and payload.get('confirm_review_clear') is not True:
@@ -501,7 +532,7 @@ class App:
                 if connected and 'checked_entry' in payload:
                     checked=payload['checked_entry']
                     if checked['path']!=entry['path']:raise ValueError('Engine program changed. Connect it again.')
-                    for field in ('name','capabilities','score_adapter','score_format_check'):entry[field]=checked.get(field)
+                    for field in ('name','capabilities','score_adapter','score_format_check','setup_supported','finish_supported'):entry[field]=checked.get(field)
                     entry['review_supported']=entry.get('score_adapter') in ('foulbrood','mzinga','nokamute')
                 entry['connected']=connected
                 if not connected:
@@ -710,7 +741,7 @@ class App:
                 if (self.review or self.engines.analysis_engine!='Computer') and milliseconds==0:milliseconds=60000
                 if milliseconds==500:milliseconds=2000
                 if milliseconds==-1 and (self.mode!='play' or self.review):raise ValueError('Match timing is available only on Play.')
-                if milliseconds not in (-1,0,2000,5000,10000,60000,600000,3600000,86400000):raise ValueError('Invalid analysis duration.')
+                if milliseconds not in (-1,0,2000,5000,10000,30000,60000,600000,3600000,86400000):raise ValueError('Invalid analysis duration.')
                 if self.review and action=='insight_time':self.review.stop();self.review.status='ready'
                 if action=='analyze' and self.job=='computer' and not self.parallel_insight_allowed():raise ValueError('The selected engine is choosing its move.')
                 self.stop_insight_worker()
@@ -849,7 +880,7 @@ def main():
             elif path=='/api/state':self.send(200,json.dumps(app.view()).encode())
             elif path=='/health':self.send(200,json.dumps(dict(app='foulbrood-local-board',bundle_path=str(ROOT),build_id=os.environ.get('FOULBROOD_BUILD_ID','development'))).encode())
             elif path=='/foulbrood-hive.png':self.send(200,(ROOT/'ui/foulbrood-hive.png').read_bytes(),'image/png')
-            elif path in ('/app.js','/pieces.js','/review.js','/engines.js','/style.css'):
+            elif path in ('/app.js','/pieces.js','/review.js','/engines.js','/hivebot.js','/style.css'):
                 self.send(200,(ROOT/'ui'/path[1:]).read_bytes(),'text/javascript' if path.endswith('js') else 'text/css')
             else:self.send(404,b'{}')
         def do_POST(self):
@@ -861,10 +892,20 @@ def main():
                 size=int(self.headers.get('Content-Length','0'))
                 if not 0<size<=MAX_REVIEW_BYTES+200000:raise ValueError('Position text is too large.')
                 payload=json.loads(self.rfile.read(size))
+                if str(payload.get('action','')).startswith('hivebot_'):
+                    with app.lock:library=app.engines
+                    if payload.get('action')=='hivebot_reload':
+                        # Pick up an updated hivebot.py without restarting the board.
+                        hivebot.BOT.stop();importlib.reload(hivebot);payload={'action':'hivebot_status'}
+                    self.send(200,json.dumps(hivebot.hivebot_action(payload,library)).encode());return
                 if payload.get('action')=='engine_discover':
                     self.send(200,json.dumps(discover_engines()).encode());return
                 if payload.get('action')=='engine_browse':
-                    self.send(200,json.dumps(dict(path=choose_engine())).encode());return
+                    result=subprocess.run(['/usr/bin/osascript','-e','POSIX path of (choose file with prompt "Choose a UHP engine program")'],capture_output=True,text=True,timeout=120)
+                    if result.returncode:
+                        if '(-128)' in result.stderr:self.send(200,b'{"path":null}');return
+                        raise ValueError('Could not open the file chooser. Paste the engine path instead.')
+                    self.send(200,json.dumps(dict(path=result.stdout.strip())).encode());return
                 if payload.get('action')=='engine_toggle' and payload.get('connected') and payload.get('id')!='Computer':
                     with app.lock:entry=app.engines.get(payload.get('id'))
                     if not entry:raise ValueError('Engine not found.')

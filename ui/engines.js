@@ -73,10 +73,40 @@ if(state){syncEnginePlayers(state);renderEngines(state)}
 
 $('findEngines').onclick=()=>{const section=$('engineCatalog');section.hidden=!section.hidden;$('findEngines').setAttribute('aria-expanded',String(!section.hidden));if(!section.hidden)section.scrollIntoView({block:'nearest'})};
 
+// Viewer-only retirement policy. No executable is opened to infer its version.
+// Hotfrass/Antarchy and other engine families stay discoverable. Unknown raw
+// Foulbrood builds are hidden; Browse remains available for deliberate selection.
+function retiredFoulbroodDiscoveryCandidate(candidate, registeredEntries=[]) {
+ const normalize=value=>{
+  if(typeof value!=='string')return '';
+  const parts=value.split(String.fromCharCode(92)).join('/').split('/');
+  while(parts.length&&parts.at(-1)==='')parts.pop();
+  return parts.join('/');
+ };
+ const path=normalize(candidate?.path),name=typeof candidate?.name==='string'?candidate.name.trim():'';
+ if(/hotfrass|antarchy/i.test(path+' '+name))return false;
+ const base=path.split('/').at(-1)||'';
+ if(!/^foulbrood(?:[ _.-]|$)/i.test(name)&&!/^foulbrood(?:[_.-]|$)/i.test(base))return false;
+ const modernName=value=>{
+  if(typeof value!=='string')return false;
+  const label=value.trim();
+  const version=/^foulbrood[ _-]+v?([0-9]+)(?:[.][0-9]+)*(?:$|[ _-])/i.exec(label);
+  return !!version&&Number(version[1])>=5;
+ };
+ const modernPath=path.split('/').some(part=>{
+  return modernName(part);
+ });
+ if(modernName(name)||modernPath)return false;
+ if(registeredEntries.some(entry=>normalize(entry?.path)===path&&modernName(entry?.name)))return false;
+ return true;
+}
+
 function renderDiscoveredEngines(data){
  $('discoveredEngines').hidden=false;$('discoverEngines').setAttribute('aria-expanded','true');$('discoveryList').replaceChildren();
- const candidates=data.candidates||[];
- $('discoverySummary').textContent=(candidates.length?'Choose an engine to check and connect.':'No engines found. Try Browse this Mac, or download an engine below.')+(data.limited?' Search stopped at its limit; some folders were not checked.':'')+(data.skipped?' Some folders could not be read.':'');
+ const incoming=data.candidates||[],registered=serverState?.engines||state?.engines||[];
+ const candidates=incoming.filter(entry=>!retiredFoulbroodDiscoveryCandidate(entry,registered));
+ const retiredHidden=incoming.length-candidates.length+(Number.isInteger(data.retired_hidden)&&data.retired_hidden>=0?data.retired_hidden:0);
+ $('discoverySummary').textContent=(candidates.length?'Choose an engine to check and connect.':'No engines found. Try Browse this Mac, or download an engine below.')+(data.limited?' Search stopped at its limit; some folders were not checked.':'')+(data.skipped?' Some folders could not be read.':'')+(retiredHidden?' Retired or unversioned Foulbrood builds hidden: '+retiredHidden+'. Use Browse for deliberate selection.':'');
  for(const e of candidates){
   const row=document.createElement('div');row.className='engine-entry';
   const info=document.createElement('div'),name=document.createElement('strong'),path=document.createElement('small'),button=document.createElement('button');
@@ -202,28 +232,37 @@ function reviewThoughtFields(strip){
  for(const [key,label]of [['played','Played'],['preferred','Preferred']]){
   const box=document.createElement('div'),caption=document.createElement('span'),move=document.createElement('strong'),depth=document.createElement('small');
   box.className='review-thought-cell';caption.className='bot-field-label';caption.textContent=label;move.className='bot-field-value';depth.className='review-thought-depth';
-  const score=createPositionScore();box.append(caption,move,score.box,depth);strip.append(box);fields[key]={move,score,depth};
+  const score=createPositionScore();box.append(caption,move,score.box,depth);strip.append(box);fields[key]={box,move,score,depth};
  }
  return strip.reviewFields=fields;
 }
+function pendingReviewSide(s){
+ const review=s.game_review,ply=review?.working_ply;
+ if(review?.status!=='running'||ply<=review.rows.length||ply>review.total||![ply-1,ply].includes(s.ply))return null;
+ const root=(s.review_game||s.game).split(';')[0],first=root.includes('~')?Number(root.split('~')[1]):0;
+ return (first+ply-1)%2;
+}
 function renderReviewThought(strip,s,side,engine){
  const fields=reviewThoughtFields(strip),review=s.game_review;
+ const pending=pendingReviewSide(s)===side;
  const available=!!(review.rows.length||review.points.length)||!!engine?.connected&&engine.review_supported;
  const row=available?review.rows.filter(r=>r.side===side&&r.ply<=s.ply).at(-1):null;
  const point=available&&s.ply===0?review.points.find(p=>p.ply===0):null;
- fields.heading.textContent=!available?'Game review unavailable':row?`Move ${row.ply}\n${row.label}`:s.ply===0?'Starting position':'Not reviewed yet';
- fields.heading.classList.toggle('has-reviewed-move',!!row);
+ fields.heading.textContent=pending?`Move ${review.working_ply}\nReviewing…`:!available?'Game review unavailable':row?`Move ${row.ply}\n${row.label}`:s.ply===0?'Starting position':'Not reviewed yet';
+ fields.heading.classList.toggle('has-reviewed-move',!!row&&!pending);
+ fields.heading.classList.toggle('search-activity',pending);
  fields.heading.title=row?.label==='Uncertain'?'Comparison inconclusive at this depth.':row?.label==='Missed win'?'The preferred line retains a forced win.':'';
  const difference=reviewMoveDifference(row);
- fields.difference.hidden=difference==null;
+ fields.difference.hidden=pending||difference==null;
  fields.differenceValue.textContent=difference==null?'':String(difference);
  fields.difference.title='Difference from the player’s perspective: positive favors the preferred move; negative favors the played move.';
  const game=row?botThoughtGame({game:s.review_game||s.game},row):null;
  for(const [key,move,score,depth]of [['played',row?.move,row?.score??point?.score,row?.depth??point?.depth],['preferred',row?.alternative,row?.best_score,row?.best_depth]]){
   const field=fields[key];field.move.textContent=row&&move?insightMoveText(game,move,notationFollowsBoard()):'—';field.move.title=field.move.textContent;
   updatePositionScore(field.score,{score,side:0},null,{side});field.depth.textContent=depth==null?'Depth —':'Depth '+depth;
+  const book=row?.label==='Book move';field.box.hidden=pending||(book&&key==='preferred');field.score.box.hidden=book;field.depth.hidden=book;
  }
- return !!row&&row.ply===s.ply;
+ return !pending&&!!row&&row.ply===s.ply;
 }
 window.renderBotThoughts=s=>{
  renderReviewRanking(s);
@@ -251,7 +290,7 @@ window.renderBotThoughts=s=>{
   bar.classList.toggle('bot-thinking',thinking);
   fields.move.caption.textContent=data.caption;fields.move.value.textContent=data.moveText;
   fields.move.value.title=evaluation?.move?'Suggested move: '+data.moveText:'Waiting for a suggested move';fields.move.value.disabled=!data.preview;
-  fields.depth.value.textContent=evaluation?.depth??'—';fields.time.value.textContent=data.seconds==null?'—':Number(data.seconds||0).toFixed(1)+'s';
+  fields.depth.value.textContent=evaluation?.score_status==='book'?'Book':evaluation?.depth==null?'—':String(evaluation.depth)+(evaluation.score_status==='last_complete'?' +partial':'');fields.depth.value.title=evaluation?.score_status==='last_complete'?'Completed search depth. The chosen move came from the unfinished next depth.':evaluation?.score_status==='unverified'?'The older report cannot establish a valid final depth.':'Last fully completed search depth';fields.time.value.textContent=data.seconds==null?'—':Number(data.seconds||0).toFixed(1)+'s';
   const value=positionScoreValue(evaluation,engine),forced=value===100||value===-100;
   updatePositionScore(fields.score,evaluation,engine,{side,label:forced?positionAssessment(evaluation):'Position'});
  }

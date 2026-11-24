@@ -3,7 +3,7 @@ import copy
 import math
 from external_engines import review_score
 
-FIELDS=('move','depth','score','seconds','side','source','engine_score','engine_forced_winner')
+FIELDS=('move','depth','score','seconds','side','source','engine_score','engine_forced_winner','score_status','completed_depth','search_complete','evaluated_move','selected_move_score')
 
 def capture(session,engine,evaluation,milliseconds):
     if not evaluation or not evaluation.get('move'):return
@@ -45,10 +45,13 @@ def validate_history(history,game):
         engine=entry['engine'];e=entry['evaluation']
         if not isinstance(engine,dict) or set(engine)!={'name','builtin','adapter'} or not isinstance(engine['name'],str) or len(engine['name'])>500 or type(engine['builtin']) is not bool or engine['adapter'] not in (None,'foulbrood','mzinga','nokamute'):raise ValueError('Invalid recorded engine.')
         if not isinstance(e,dict) or not set(e)<=set(FIELDS) or not isinstance(e.get('move'),str) or len(e['move'])>40 or e.get('side')!=side:raise ValueError('Invalid recorded evaluation.')
-        if e.get('source') not in ('search','book','external'):raise ValueError('Invalid evaluation source.')
-        for key in ('score','engine_score','seconds','depth'):
+        if e.get('source') not in ('search','book','external','foulbrood'):raise ValueError('Invalid evaluation source.')
+        for key in ('score','engine_score','seconds','depth','completed_depth','selected_move_score'):
             n=e.get(key)
             if n is not None and (type(n) not in (int,float) or abs(n)>1e15 or not math.isfinite(n)):raise ValueError('Invalid evaluation number.')
         if e.get('engine_forced_winner') not in (None,'White','Black'):raise ValueError('Invalid forced result.')
+        if e.get('score_status') not in (None,'iteration','complete','last_complete','fallback','book','unverified'):raise ValueError('Invalid score provenance.')
+        if 'search_complete' in e and type(e['search_complete']) is not bool:raise ValueError('Invalid search completion flag.')
+        if e.get('evaluated_move') is not None and (not isinstance(e['evaluated_move'],str) or len(e['evaluated_move'])>40):raise ValueError('Invalid evaluated move.')
         result[ply]=copy.deepcopy(entry)
     return result

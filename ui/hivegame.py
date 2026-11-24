@@ -1,4 +1,4 @@
-"""Import a public, finished hivegame.com game without login or script execution."""
+"""Import a public hivegame.com snapshot without login or script execution."""
 import json
 import re
 from html.parser import HTMLParser
@@ -12,7 +12,7 @@ MAX_PAGE = 2_000_000
 
 def game_url(value):
     if not isinstance(value, str):
-        raise ValueError('Paste a finished hivegame.com game link.')
+        raise ValueError('Paste a hivegame.com game link.')
     value = value.strip()
     if value.startswith(('hivegame.com/', 'www.hivegame.com/')):
         value = 'https://' + value
@@ -56,8 +56,12 @@ def pgn_from_page(page, game_id):
                 continue
             if not isinstance(data, dict) or data.get('game_id') != game_id:
                 continue
-            if data.get('finished') is not True:
-                raise ValueError('This game is still in progress. Import it once it has finished.')
+            finished = data.get('finished')
+            status = data.get('game_status')
+            if type(finished) is not bool:
+                raise ValueError('The game link has no clear completion status.')
+            if not finished and status not in ('InProgress', 'NotStarted'):
+                raise ValueError('The game link has an inconsistent completion status.')
             history = data.get('history')
             if (not isinstance(history, list) or len(history) > 10000
                     or type(data.get('turn')) is not int or data['turn'] != len(history)):
@@ -68,8 +72,8 @@ def pgn_from_page(page, game_id):
                         or not all(isinstance(x, str) for x in pair)):
                     raise ValueError('The game link contains an invalid move.')
                 moves.append(' '.join(pair).strip())
-            result = data.get('game_status', {}).get('Finished')
-            result = ('Draw' if result == 'Draw' else
+            result = status.get('Finished') if isinstance(status, dict) else None
+            result = ('*' if not finished else 'Draw' if result == 'Draw' else
                       {'White': 'WhiteWins', 'Black': 'BlackWins'}.get(
                           result.get('Winner') if isinstance(result, dict) else None))
             if result is None:
@@ -81,6 +85,7 @@ def pgn_from_page(page, game_id):
                 return re.sub(r'[\x00-\x1f\x7f"\\]', '', value).strip()[:100]
             tags = {'GameType': variant(data.get('game_type')), 'Site': 'https://hivegame.com/game/' + game_id,
                     'White': name('white'), 'Black': name('black'), 'Result': result}
+            if not finished: tags['FoulBroodSnapshot'] = 'InProgress'
             pgn = '\n'.join('[%s "%s"]' % item for item in tags.items()) + '\n\n'
             pgn += '\n'.join(f'{i}. {m}' for i, m in enumerate(moves, 1)) + '\n' + result
             read_export(pgn, 'game.pgn')  # Validate notation before replay.
@@ -95,7 +100,7 @@ class NoRedirect(HTTPRedirectHandler):
 
 def fetch_game(value):
     url, game_id = game_url(value)
-    request = Request(url, headers={'User-Agent': 'FoulBrood/1.0 (finished-game import)',
+    request = Request(url, headers={'User-Agent': 'FoulBrood/1.0 (game snapshot import)',
                                     'Accept': 'text/html'})
     try:
         with build_opener(NoRedirect).open(request, timeout=15) as response:

@@ -1,0 +1,215 @@
+use config::{Config as ConfigBuilder, ConfigError, Environment, File};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, path::Path};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Config {
+    pub max_concurrent_processes: usize,
+    pub base_url: String,
+    pub bots: Vec<BotConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BotConfig {
+    pub name: String,
+    pub ai_command: String,
+    pub bestmove_command_args: String,
+    pub email: String,
+    pub password: String,
+    /// HotFrass patch: usernames whose open real-time challenges this bot accepts on its own,
+    /// one game at a time, while it has no game running.
+    #[serde(default)]
+    pub accept_open_from: Vec<String>,
+    /// Shortest base time (seconds) of an open challenge it will accept.
+    #[serde(default)]
+    pub min_base_secs: i64,
+    /// How many open challenges it accepts per run (0 = none).
+    #[serde(default)]
+    pub max_auto_games: usize,
+}
+
+impl Config {
+    pub fn load_from<P: AsRef<Path>>(config_path: P) -> Result<Self, ConfigError> {
+        let settings = ConfigBuilder::builder()
+            // 1. Default values
+            .set_default("max_concurrent_processes", 5)?
+            .set_default("base_url", "https://hivegame.com")?
+            // 2. Config file
+            .add_source(File::from(config_path.as_ref()))
+            .add_source(Environment::with_prefix("HIVE_HYDRA"))
+            .build()?;
+
+        // Load the main configuration
+        let mut config: Config = settings.try_deserialize()?;
+        config.base_url = config.base_url.trim_end_matches('/').to_string();
+
+        // Process bot-specific environment variables
+        let env_vars: HashMap<String, String> = std::env::vars().collect();
+        for bot in &mut config.bots {
+            let prefix = format!(
+                "HIVE_HYDRA_BOT_{}_",
+                bot.name.to_uppercase().replace('-', "_")
+            );
+
+            if let Some(value) = env_vars.get(&format!("{prefix}EMAIL")) {
+                bot.email = value.clone();
+            }
+            if let Some(value) = env_vars.get(&format!("{prefix}PASSWORD")) {
+                bot.password = value.clone();
+            }
+        }
+
+        Ok(config)
+    }
+
+    pub fn websocket_url(&self) -> Result<String, ConfigError> {
+        let address = if let Some(host) = self.base_url.strip_prefix("https://") {
+            format!("wss://{host}")
+        } else if let Some(host) = self.base_url.strip_prefix("http://") {
+            format!("ws://{host}")
+        } else {
+            return Err(ConfigError::Message(format!(
+                "base_url must start with http:// or https://, got {}",
+                self.base_url
+            )));
+        };
+        Ok(format!("{address}/ws/?format=json"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{env, fs};
+
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_env_override_with_custom_config() {
+        // Clear existing env vars
+        env::remove_var("HIVE_HYDRA_MAX_CONCURRENT_PROCESSES");
+        env::remove_var("HIVE_HYDRA_BOT_TESTBOT1_EMAIL");
+        env::remove_var("HIVE_HYDRA_BOT_TESTBOT1_PASSWORD");
+
+        // Set test env vars
+        env::set_var("HIVE_HYDRA_MAX_CONCURRENT_PROCESSES", "10");
+        env::set_var("HIVE_HYDRA_BOT_TESTBOT1_EMAIL", "test_email_1");
+        env::set_var("HIVE_HYDRA_BOT_TESTBOT1_PASSWORD", "test_password_1");
+
+        // Create test config file
+        let config_content = r#"
+max_concurrent_processes: 5
+base_url: "https://hivegame.com"
+bots:
+  - name: testbot1
+    ai_command: test_command
+    bestmove_command_args: depth 1
+    email: default_email1
+    password: default_password1
+"#;
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("config.yaml");
+        fs::write(&file_path, config_content).unwrap();
+
+        // Load config and test
+        let config = Config::load_from(&file_path).unwrap();
+        assert_eq!(
+            config.max_concurrent_processes, 10,
+            "max_concurrent_processes should be overridden by environment variable"
+        );
+        assert_eq!(
+            config.bots[0].email, "test_email_1",
+            "bot email should be overridden by environment variable"
+        );
+        assert_eq!(
+            config.bots[0].password, "test_password_1",
+            "bot password should be overridden by environment variable"
+        );
+
+        // Cleanup
+        env::remove_var("HIVE_HYDRA_MAX_CONCURRENT_PROCESSES");
+        env::remove_var("HIVE_HYDRA_BOT_TESTBOT1_EMAIL");
+        env::remove_var("HIVE_HYDRA_BOT_TESTBOT1_PASSWORD");
+    }
+
+    #[test]
+    fn test_env_var_with_hyphen_in_bot_name() {
+        // Clear existing env vars
+        env::remove_var("HIVE_HYDRA_BOT_TEST_BOT_EMAIL");
+        env::remove_var("HIVE_HYDRA_BOT_TEST_BOT_PASSWORD");
+
+        // Set test env var with underscore
+        env::set_var("HIVE_HYDRA_BOT_TEST_BOT_EMAIL", "test_email_1");
+        env::set_var("HIVE_HYDRA_BOT_TEST_BOT_PASSWORD", "test_password_1");
+
+        // Create test config file with hyphen in bot name
+        let config_content = r#"
+max_concurrent_processes: 5
+base_url: "https://hivegame.com"
+bots:
+  - name: test-bot
+    ai_command: test_command
+    bestmove_command_args: depth 1
+    email: default_email1
+    password: default_password1
+"#;
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("config.yaml");
+        fs::write(&file_path, config_content).unwrap();
+
+        // Load config and test
+        let config = Config::load_from(&file_path).unwrap();
+        assert_eq!(
+            config.bots[0].email, "test_email_1",
+            "bot email should be overridden by environment variable with underscore"
+        );
+        assert_eq!(
+            config.bots[0].password, "test_password_1",
+            "bot password should be overridden by environment variable with underscore"
+        );
+
+        // Cleanup
+        env::remove_var("HIVE_HYDRA_BOT_TEST_BOT_EMAIL");
+        env::remove_var("HIVE_HYDRA_BOT_TEST_BOT_PASSWORD");
+    }
+
+    fn with_base_url(base_url: &str) -> Config {
+        Config {
+            max_concurrent_processes: 1,
+            base_url: base_url.to_string(),
+            bots: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn websocket_url_follows_the_base_url_scheme() {
+        assert_eq!(
+            with_base_url("https://hivegame.com")
+                .websocket_url()
+                .unwrap(),
+            "wss://hivegame.com/ws/?format=json"
+        );
+        assert_eq!(
+            with_base_url("http://localhost:3999")
+                .websocket_url()
+                .unwrap(),
+            "ws://localhost:3999/ws/?format=json"
+        );
+        assert!(with_base_url("localhost:3999").websocket_url().is_err());
+    }
+
+    #[test]
+    fn base_url_loses_its_trailing_slash() {
+        let config_content = r#"
+base_url: "http://localhost:3999/"
+bots: []
+"#;
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("config.yaml");
+        fs::write(&file_path, config_content).unwrap();
+
+        let config = Config::load_from(&file_path).unwrap();
+
+        assert_eq!(config.base_url, "http://localhost:3999");
+    }
+}

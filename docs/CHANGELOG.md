@@ -1,3 +1,13 @@
+# Live tab (24 November 2026)
+
+- Added a **Live** tab between Play and Analysis for playing on hivegame.com with a bot account: log in (saved in the macOS Keychain), pick the engine, and watch the game on the board with clocks, sounds and the engine's thinking in the player bars.
+- Player bars show each player's hivegame.com rating, the rating change when the game ends, Bot or Human, and their record at that speed.
+- Three challenge boxes: accept a waiting challenge (or accept automatically), open a challenge to the lobby with a rating range, or send one to a player who is online. Colour, time control and rated/casual can be chosen.
+- "Open current position/game in Analysis" takes the Live board to the Analysis tab.
+- Every sidebar box folds, with one title style.
+- ThoraxRex engines are listed as "ThoraxRex" and "ThoraxRex Book".
+- Includes the viewer changes made since Beta 3.
+
 # Beta 3
 
 - Moved engine insights into the player bars above and below the board, with consistent position score bars.

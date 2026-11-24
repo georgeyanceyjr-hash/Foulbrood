@@ -191,8 +191,9 @@ function renderOpponentInsight(board,s,visibilityState=s){
  const ghost=node('g',{opacity:.55});ghost.append(artwork(move.piece,x,y));layer.append(ghost);
  layer.append(node('polygon',{points:hex(x,y,40),class:'opponent-insight-outline'}));board.append(layer);
 }
-function timeText(t){const v=Math.max(0,Math.ceil(t));return `${Math.floor(v/60).toString().padStart(2,'0')}:${(v%60).toString().padStart(2,'0')}`}
+function timeText(t){if(t==null)return '∞';const v=Math.max(0,Math.ceil(t));return `${Math.floor(v/60).toString().padStart(2,'0')}:${(v%60).toString().padStart(2,'0')}`}
 function playerClockStatus(s,side){
+ if(s.mode==='play'&&s.time_control==='untimed')return 'No clock';
  if(s.mode!=='play'||s.play_finished||s.timeout_side!=null||s.resigned_side!=null||['WhiteWins','BlackWins','Draw'].includes(s.completed_state||s.state))return 'Clock';
  if(side!==(s.live_side??s.side))return 'Clock';
  if(!s.running)return 'Paused';
@@ -217,26 +218,33 @@ function syncGameSettings(s){
  for(const id of ['whitePlayer','blackPlayer','time','variant']){$(id).disabled=locked;$(id).title=locked?'Reset the board to change game settings.':'';}
  if(locked){seatPreviewPlayers=null;$('whitePlayer').value=s.players[0];$('blackPlayer').value=s.players[1];$('time').value=s.time_control;$('variant').value=(s.live_game||s.game).split(';')[0];$('time').onchange();}
 }
-function render(s){window.observeHumanTurn?.(s);serverState=s;const playerThought=selectedPlayerThought(s);if(playerThought)s={...s,hint:playerThought.evaluation,insight_job:'hint',search_elapsed:playerThought.elapsed,search_finished:false,showing_player_thought:true};if(editorDraft&&s.mode==='analysis'){s={...s,pieces:editorDraft.pieces,reserve:setupInventory().filter(p=>!editorDraft.pieces.some(x=>x.id===p)),side:editorDraft.side,legal:[],hint:null,job:null,last_move:editorDraft.last&&(editorDraft.last.from||editorDraft.last.kind==='placed')?{...editorDraft.last,to:(()=>{const p=editorDraft.pieces.find(p=>p.id===editorDraft.last.piece);return p?[p.q,p.r]:null})()}:null};}const changed=state&&(state.game!==s.game||state.mode!==s.mode);state=s;if(changed){lastBoardKey='';pendingMove=null;pieceDrag=null;removeDragGhost();selected=null;}if(pendingMove&&!canMove()){pendingMove=null;selected=null;lastBoardKey='';}if(s.revision!==lastRevision){lastRevision=s.revision;lastBoardKey=''}
+// Release aliases also cover a server started before the registry migration.
+function normalizeEngineNames(s){
+ for(const e of s.engines||[]){
+  if(e.path==='/Applications/FoulBrood.app/Contents/Resources/target/release/foulbrood')e.name='Foulbrood Legacy (bundled)';
+  else if(e.path==='/Users/georgeyancey/Documents/Codex/FoulBroodData/Engines/FoulBrood-Pillbug-test/foulbrood')e.name='Foulbrood 2.0';
+ }
+}
+function render(s){normalizeEngineNames(s);window.observeHumanTurn?.(s);serverState=s;const playerThought=selectedPlayerThought(s);if(playerThought)s={...s,hint:playerThought.evaluation,insight_job:'hint',search_elapsed:playerThought.elapsed,search_finished:false,showing_player_thought:true};if(editorDraft&&s.mode==='analysis'){s={...s,pieces:editorDraft.pieces,reserve:setupInventory().filter(p=>!editorDraft.pieces.some(x=>x.id===p)),side:editorDraft.side,legal:[],hint:null,job:null,last_move:editorDraft.last&&(editorDraft.last.from||editorDraft.last.kind==='placed')?{...editorDraft.last,to:(()=>{const p=editorDraft.pieces.find(p=>p.id===editorDraft.last.piece);return p?[p.q,p.r]:null})()}:null};}const changed=state&&(state.game!==s.game||state.mode!==s.mode);state=s;if(changed){lastBoardKey='';pendingMove=null;pieceDrag=null;removeDragGhost();selected=null;}if(pendingMove&&!canMove()){pendingMove=null;selected=null;lastBoardKey='';}if(s.revision!==lastRevision){lastRevision=s.revision;lastBoardKey=''}
  const finished=s.play_finished||s.timeout_side!==null||s.resigned_side!=null||['WhiteWins','BlackWins','Draw'].includes(s.state);
  window.syncEnginePlayers?.(s);
  syncGameSettings(s);
  const shownPlayers=seatPreviewPlayers||s.players;
- $('countdownHelp').hidden=s.mode==='play'&&shownPlayers.every(p=>p!=='Human');
+ $('countdownHelp').hidden=s.mode==='play'&&($('time').value==='untimed'||shownPlayers.every(p=>p!=='Human'));
  for(const [id,side]of [['resignWhite',0],['resignBlack',1]]){$(id).hidden=s.mode!=='play'||shownPlayers[side]!=='Human'||finished;$(id).disabled=shownPlayers[side]!==s.players[side]||(!s.running&&s.ply===0)}
  $('perspectiveOption').hidden=s.mode!=='analysis'||notationMode!=='traditional';
  const importNotice=s.import_info==='Set-up position. Earlier repetitions are unknown.'?'':(s.import_info||'').replace('; board status is determined from the moves.','.');$('importStatus').hidden=!importNotice;$('importStatus').textContent=importNotice;
  $('analyzePosition').textContent=s.play_finished?'Open current game in Analysis':'Open current position in Analysis';$('analyzePosition').hidden=s.mode!=='play';$('undo').hidden=s.mode==='analysis'||finished;$('historyNav').hidden=false;$('historyFirst').disabled=$('historyPrevious').disabled=s.ply===0;$('historyNext').disabled=$('historyLast').disabled=s.ply===(s.review_total??s.ply);
  $('playTab').classList.toggle('active',s.mode==='play');$('analysisTab').classList.toggle('active',s.mode==='analysis');$('setup').hidden=s.mode!=='play';$('analysisSetup').hidden=s.mode!=='analysis';$('resetPlay').hidden=s.mode!=='play';$('playerActions').hidden=s.mode!=='play'||finished||s.reviewing||shownPlayers.every(p=>p!=='Human');$('pause').hidden=s.mode!=='play';$('pause').textContent=s.running?'Pause':'Resume';$('undo').disabled=!(s.play_finished?s.review_total:s.ply)&&s.resigned_side==null;
  arrangePlayerSeats(s);
- for(const [i,c]of [[0,'white'],[1,'black']]){$(c+'Name').textContent=s.player_names?.[i]||(i===0?'White':'Black');$(c+'Kind').textContent=s.mode==='analysis'?'Analysis':shownPlayers[i]==='Computer'?'FoulBrood':(s.engines?.find(e=>e.id===shownPlayers[i])?.name||shownPlayers[i]);$(c+'Clock').textContent=s.mode==='analysis'?'—':timeText(s.clocks[i]);$(c+'Clock').dataset.status=playerClockStatus(s,i);document.querySelector('.player.'+c).classList.toggle('opening-thinking',s.mode==='play'&&s.running&&s.job==='computer'&&(s.live_side??s.side)===i&&s.review_total<2&&!s.reviewing&&!finished);document.querySelector('.player.'+c).classList.toggle('active',s.running&&(s.live_side??s.side)===i)}
- let title=`${s.side===0?'White':'Black'} to move`;if(s.mode==='analysis')title+=' · Analysis';else if(!s.running)title+=' · Paused';if(s.job==='computer')title=`${s.side===0?'White':'Black'} is thinking…`;if(s.mode==='play'&&s.running&&s.review_total<2)title+=' · Clock starts after Black’s first move';
+ for(const [i,c]of [[0,'white'],[1,'black']]){$(c+'Name').textContent=s.player_names?.[i]||(i===0?'White':'Black');$(c+'Kind').textContent=s.mode==='analysis'?'Analysis':(s.engines?.find(e=>e.id===shownPlayers[i])?.name||shownPlayers[i]);$(c+'Clock').textContent=s.mode==='analysis'?'—':timeText(s.clocks[i]);$(c+'Clock').dataset.status=playerClockStatus(s,i);document.querySelector('.player.'+c).classList.toggle('opening-thinking',s.mode==='play'&&s.running&&s.job==='computer'&&(s.live_side??s.side)===i&&s.review_total<2&&!s.reviewing&&!finished);document.querySelector('.player.'+c).classList.toggle('active',s.running&&(s.live_side??s.side)===i)}
+ let title=`${s.side===0?'White':'Black'} to move`;if(s.mode==='analysis')title+=' · Analysis';else if(!s.running)title+=' · Paused';if(s.job==='computer')title=`${s.side===0?'White':'Black'} is thinking…`;if(s.mode==='play'&&s.running&&s.review_total<2&&s.time_control!=='untimed')title+=' · Clock starts after Black’s first move';
  if(s.state==='Draw')title='Draw';if(s.state==='WhiteWins')title='White wins';if(s.state==='BlackWins')title='Black wins';if(s.timeout_side!==null)title=`${s.timeout_side===0?'Black':'White'} wins on time`;$('turn').textContent=title;$('ply').textContent=(s.mode==='analysis'||s.play_finished||s.reviewing)?`Move ${s.ply} of ${s.review_total??s.ply}`:`${s.ply} moves`;$('hints').checked=s.hints;
  if(s.resigned_side!=null)$('turn').textContent=`${s.resigned_side===0?'Black':'White'} wins · ${s.resigned_side===0?'White':'Black'} resigned`;
  if(s.play_finished)$('turn').textContent=resultText(s);
  $('turn').classList.toggle('opening-thinking',s.mode==='play'&&s.job==='computer'&&s.side===1&&s.review_total<2&&!s.reviewing&&!finished);
  document.querySelector('.arena').classList.toggle('reviewing',!!s.reviewing);
- if(s.reviewing)$('turn').textContent=`Viewing move ${s.ply} of ${s.review_total} · ${s.running?'Live clocks are running':'History'}`;
+ if(s.reviewing)$('turn').textContent=`Viewing move ${s.ply} of ${s.review_total} · ${s.running?(s.time_control==='untimed'?'Live game':'Live clocks are running'):'History'}`;
  $('historyLast').textContent=s.reviewing&&s.running?'Live ⏭':'⏭';
  $('historyLast').title=s.reviewing&&s.running?'Return to live game':'End of game';
  $('historyLast').setAttribute('aria-label',$('historyLast').title);
@@ -256,7 +264,7 @@ function render(s){window.observeHumanTurn?.(s);serverState=s;const playerThough
 for(const id of ['whitePlayer','blackPlayer'])$(id).addEventListener('change',()=>{seatPreviewPlayers=[$('whitePlayer').value,$('blackPlayer').value];if(state)render(state)});
 $('bookEnabled').onchange=()=>action({action:'book_enabled',enabled:$('bookEnabled').checked});$('calculateInstead').onclick=()=>action({action:'calculate_instead'});
 $('new').onclick=()=>{const payload={action:'new',players:[$('whitePlayer').value,$('blackPlayer').value],time:$('time').value,variant:$('variant').value};if(state&&gameSettingsLocked(state))confirmViewerAction('Start a new game?','This will replace the game in progress.','Start new game',payload);else action(payload)};
-$('time').onchange=()=>{const [a,b]=$('time').value.split('+');$('timeHelp').textContent=`${a} minute${a==='1'?'':'s'} each, plus ${b} seconds per move.`;$('countdownHelp').textContent=`Spoken countdown: ${a==='1'?'10, 3, 2, 1':'30, 20, 10, 3, 2, 1'} seconds.`};
+$('time').onchange=()=>{if($('time').value==='untimed'){$('timeHelp').textContent='No game clocks. Computer turns use up to 10 seconds of thinking time.';$('countdownHelp').hidden=true;return;} $('countdownHelp').hidden=false;const [a,b]=$('time').value.split('+');$('timeHelp').textContent=`${a} minute${a==='1'?'':'s'} each, plus ${b} seconds per move.`;$('countdownHelp').textContent=`Spoken countdown: ${a==='1'?'10, 3, 2, 1':'30, 20, 10, 3, 2, 1'} seconds.`};
 let takebackConfirmation=true;
 try{takebackConfirmation=!document.cookie.split('; ').includes('foulbrood_takeback_confirm=off')}catch(e){}
 function syncTakebackLock(){const b=$('takebackLock');b.textContent=takebackConfirmation?'Confirm: on':'Confirm: off';b.setAttribute('aria-pressed',String(takebackConfirmation));b.setAttribute('aria-label',`Takeback confirmation ${takebackConfirmation?'on':'off'}`);b.title=takebackConfirmation?'Takeback confirmation on — click to skip warnings':'Takeback confirmation off — click to restore warnings';}
@@ -294,7 +302,9 @@ function updatePositionScore(fields,hint,engine,{side=hint?.side??0,label='Posit
  fields.box.classList.toggle('score-unavailable',value==null);fields.meter.hidden=value==null;
  if(value==null)fields.meter.removeAttribute('aria-valuenow');
  else {fields.meter.setAttribute('aria-valuenow',value);fields.marker.style.left=((value+100)/2)+'%';}
- fields.box.title=value==null?'This engine has not reported a position score.':'Approximate advantage, not a winning percentage. Negative favors Black; positive favors White. Only forced wins reach −100 or +100.';
+ fields.box.title=value==null?(hint?.score_status==='unverified'?'Older report: final score could not be verified.':hint?.score_status==='book'?'Opening-book choice: no position search was performed.':'This engine has not reported a verified position score.'):'Approximate advantage, not a winning percentage. Negative favors Black; positive favors White. This is the last completed POSITION assessment; a move selected in an unfinished deeper search has no verified move score. Only forced wins reach −100 or +100.';
+ if(hint?.score_status==='last_complete'){fields.caption.textContent='Position · depth '+hint.depth;fields.box.title+=' This is the last fully completed position assessment. The played move was selected in an unfinished deeper search; its exact score is unavailable.';}
+ if(hint?.score_status==='unverified')fields.caption.textContent='Unverified score';
 }
 function compactInsightNumber(value){return Number(value||0).toLocaleString(undefined,{notation:'compact',maximumFractionDigits:1})}
 function appendInsightStats(container,values){
@@ -574,7 +584,7 @@ async function applySetupPosition(){
  const warnings=[];
  if((serverState.review_total??0)>0)warnings.push('Rearranging the board will erase the current move history and create a new starting position.');
  // Match the setup-root support enforced by the server's search entry points.
- const canAnalyzeSetup=(serverState.engines||[]).some(engine=>engine.connected&&engine.id==='Computer');
+ const canAnalyzeSetup=(serverState.engines||[]).some(engine=>engine.connected&&(engine.id==='Computer'||engine.setup_supported===true));
  if(!canAnalyzeSetup)warnings.push('No connected engine can analyze arbitrary board positions without move history. You can still use this position.');
  if(serverState.analysis_review_available){warnings.push('This will replace the position associated with your game review. Its results will no longer be shown.');payload.confirm_review_clear=true;}
  if(warnings.length){
@@ -718,7 +728,7 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
   const eligible=playing&&s.players?.[s.live_side??s.side]==='Human';
   const pitch=s.players?.length===2&&s.players.every(p=>p==='Human')?((s.live_side??s.side)===0?1.25:.8):1;
   const speechPitch=s.players?.every(p=>p==='Human')&&(s.live_side??s.side)===1?.85:1;
-  const next={mode:s.mode,playing,eligible,result,speechPitch,untimed:s.review_total<2,running:s.running,key:(s.live_game||s.game)+'|'+(s.live_side??s.side),seconds:s.clocks?.[s.live_side??s.side],control:s.time_control};
+  const next={mode:s.mode,playing,eligible,result,speechPitch,untimed:s.time_control==='untimed'||s.review_total<2,running:s.running,key:(s.live_game||s.game)+'|'+(s.live_side??s.side),seconds:s.clocks?.[s.live_side??s.side],control:s.time_control};
   const scheduledTimeout=result==='timeout'&&timeoutCueKey===next.key;
   if(previous&&(previous.key!==next.key||previous.mode!==next.mode||!next.running)&&!scheduledTimeout){stop();timeoutCueKey=null;}
   if(previous?.mode==='play'&&previous.running&&!previous.result&&result){
@@ -727,7 +737,7 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
   }
   // Opening/reloading the page and browsing Analysis must not announce old turns.
   if(previous&&previous.mode==='play'&&playing&&(!previous.playing||previous.key!==next.key))chime(null,pitch);
-  if(previous?.eligible&&eligible&&previous.key===next.key&&previous.control===next.control&&next.seconds>0){
+  if(!next.untimed&&previous?.eligible&&eligible&&previous.key===next.key&&previous.control===next.control&&next.seconds>0){
    const thresholds=next.control==='1+2'?[10,3,2,1]:[30,20,10,3,2,1];
    const crossed=thresholds.filter(t=>t>3&&previous.seconds>t&&next.seconds<=t);
    if(crossed.length&&next.seconds>3){

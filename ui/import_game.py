@@ -79,6 +79,7 @@ def read_export(text, filename=''):
                 raise ValueError('Unsupported PGN move: '+move[:80])
             moves.append(move)
         note=f'PGN: imported {len(moves)} moves.'
+        if tags.get('FoulBroodSnapshot')=='InProgress':note+=' Snapshot of an in-progress game; later moves are not added automatically.'
         if result and result!='*':note+=' File reports '+result+'; board status is determined from the moves.'
         root=tags.get('FoulBroodRoot')
         if root and (';' in root or '~' not in root or root.split('~')[0]!=variant(tags.get('GameType','Base+MLP'))):raise ValueError('Invalid set-up position tag.')

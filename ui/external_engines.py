@@ -1,5 +1,4 @@
 """Local UHP engines: bounded protocol IO and an atomic saved engine list."""
-from platform_support import executable, process_options
 import json
 import os
 from pathlib import Path
@@ -15,10 +14,10 @@ from collections import deque
 class UHP:
     def __init__(self,path):
         env=os.environ.copy()
-        cache=Path(os.environ.get('FOULBROOD_ENGINE_CACHE',str(Path.home()/'Documents/FoulBroodData/engine-cache')))
+        cache=Path(os.environ.get('FOULBROOD_ENGINE_CACHE',str(Path.home()/'Documents/Codex/FoulBroodData/engine-cache')))
         cache.mkdir(parents=True,exist_ok=True);env['DOTNET_BUNDLE_EXTRACT_BASE_DIR']=str(cache)
-        self.on_line=None;self.on_diagnostic=None;self.deadline=None
-        self.proc=subprocess.Popen([path],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,encoding='utf-8',**process_options(),bufsize=1,env=env,cwd=str(Path(path).parent))
+        self.on_line=None;self.on_diagnostic=None;self.deadline=None;self.finish_supported=False
+        self.proc=subprocess.Popen([path],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,bufsize=1,env=env,cwd=str(Path(path).parent))
         self.lines=queue.Queue(maxsize=2048)
         self.diagnostics=deque(maxlen=2048)
         def read_errors():
@@ -46,6 +45,7 @@ class UHP:
             except queue.Empty:raise ValueError('Engine did not respond in time.')
             if line is None:raise ValueError('Engine closed unexpectedly.')
             if line=='ok':
+                if 'FoulBroodFinish' in ';'.join(out).split(';'):self.finish_supported=True
                 errors=[v for v in out if v.startswith(('err','invalidmove'))]
                 if errors:raise ValueError(errors[0][:250])
                 return out
@@ -59,10 +59,21 @@ class UHP:
     def close(self):
         if self.proc.poll() is None:
             self.proc.terminate()
-            try:self.proc.wait(timeout=.5)
+            try:self.proc.wait(timeout=2 if self.finish_supported else .5)
             except subprocess.TimeoutExpired:self.proc.kill();self.proc.wait()
         self.error_thread.join(timeout=1)
         self.proc.stdin.close();self.proc.stdout.close();self.proc.stderr.close()
+
+def release_display_name(path, name):
+    resolved = str(Path(path).expanduser().resolve())
+    if resolved == str(Path(__file__).resolve().parents[1]/'target/release/foulbrood'):
+        return 'Foulbrood Legacy (bundled)'
+    if resolved == str(Path.home()/'Documents/Codex/FoulBroodData/Engines/FoulBrood-Pillbug-test/foulbrood'):
+        return 'Foulbrood 2.0'
+    # ThoraxRex is shown without its net tag or build number: "ThoraxRex Book" or "ThoraxRex".
+    if isinstance(name, str) and name.startswith('ThoraxRex'):
+        return 'ThoraxRex Book' if ' Book' in name else 'ThoraxRex'
+    return name
 
 def inspect_engine(path):
     path=str(Path(path).expanduser().resolve())
@@ -74,18 +85,18 @@ def inspect_engine(path):
         engine.command('newgame Base');moves=engine.command('validmoves')
         if not moves:raise ValueError('This engine did not return legal moves.')
         flags=set(';'.join(v for v in info if not v.startswith('id ')).split(';'))
-        entry=dict(id='uhp:'+uuid.uuid4().hex,name=name[:100],path=path,capabilities=[v for v in ['Mosquito','Ladybug','Pillbug'] if v in flags])
+        entry=dict(id='uhp:'+uuid.uuid4().hex,name=release_display_name(path,name[:100]),path=path,capabilities=[v for v in ['Mosquito','Ladybug','Pillbug'] if v in flags],setup_supported='FoulBroodSetup' in flags,finish_supported='FoulBroodFinish' in flags)
     finally:engine.close()
     if path!=foulbrood_entry()['path']:
         entry.update(detect_score_format(path))
     return entry
 
 def foulbrood_entry():
-    return dict(id='Computer',name='FoulBrood',path=executable(Path(__file__).resolve().parents[1], 'foulbrood'),connected=True,score_adapter='foulbrood',review_supported=True,capabilities=['Mosquito','Ladybug','Pillbug'])
+    return dict(id='Computer',name='Foulbrood Legacy (bundled)',path=str(Path(__file__).resolve().parents[1]/'target/release/foulbrood'),connected=True,score_adapter='foulbrood',review_supported=True,capabilities=['Mosquito','Ladybug','Pillbug'])
 
 class EngineLibrary:
     def __init__(self,path=None):
-        self.path=Path(path or os.environ.get('FOULBROOD_ENGINES_FILE',str(Path.home()/'Documents/FoulBroodData/engines.json')))
+        self.path=Path(path or os.environ.get('FOULBROOD_ENGINES_FILE',str(Path.home()/'Documents/Codex/FoulBroodData/engines.json')))
         try:data=json.loads(self.path.read_text())
         except (OSError,ValueError):data={}
         self.entries=data if isinstance(data,list) else data.get('entries',[])
@@ -94,6 +105,7 @@ class EngineLibrary:
             if (not isinstance(data,dict) or data.get('builtin_present',True)) and not self.get('Computer') and Path(foulbrood_entry()['path']).is_file():
                 entry=foulbrood_entry();entry['connected']=True if isinstance(data,list) else data.get('builtin_connected',True);self.entries.insert(0,entry)
         for entry in self.entries:
+            entry['name']=release_display_name(entry['path'],entry['name'])
             entry.setdefault('connected',True);entry['review_supported']=entry['id']=='Computer' or entry.get('score_adapter') in ('foulbrood','mzinga','nokamute')
         self.analysis_engine='Computer' if isinstance(data,list) else data.get('analysis_engine','Computer')
         if not self.connected(self.analysis_engine):self.analysis_engine=next((e['id'] for e in self.entries if e['connected']),None)
@@ -105,10 +117,13 @@ class EngineLibrary:
         self.path.parent.mkdir(parents=True,exist_ok=True);temp=self.path.with_suffix('.tmp');temp.write_text(json.dumps(dict(version=2,entries=self.entries,analysis_engine=self.analysis_engine),indent=2));os.replace(temp,self.path)
     def connected(self,key):return bool(self.get(key) and self.get(key).get('connected'))
     def get(self,key):return next((e for e in self.entries if e['id']==key),None)
+    def supports_setup(self,key):
+        entry=self.get(key) or {}
+        return bool(entry and (key=='Computer' or entry.get('setup_supported') is True))
     def add(self,entry):
         # The shipped FoulBrood executable can be re-added with the same file picker.
         if Path(entry['path']).resolve()==Path(foulbrood_entry()['path']).resolve():
-            entry.update(id='Computer',review_supported=True,score_adapter='foulbrood',name='FoulBrood')
+            entry.update(id='Computer',review_supported=True,score_adapter='foulbrood',name='Foulbrood Legacy (bundled)')
         entry['review_supported']=entry.get('score_adapter') in ('foulbrood','mzinga','nokamute')
         previous=next((e for e in self.entries if e['path']==entry['path'] or e['id']==entry['id']),None)
         if previous:entry['id']=previous['id'];self.entries.remove(previous)
@@ -144,17 +159,46 @@ def configure_reporting(engine,entry,scoring=False,preserve_opening=False):
     return adapter
 
 
-def parse_score(adapter,lines,diagnostics,side,final_move):
+def foulbrood_v2_record(line):
+    if not line.startswith('FoulBroodScore v2;'):return None
+    try:
+        fields=[part.split('=',1) for part in line.split(';')[1:]]
+        if any(len(pair)!=2 for pair in fields):return None
+        data=dict(fields)
+        if len(data)!=len(fields) or not re.fullmatch(_MOVE,data.get('move','')):return None
+        kind=data.get('kind');depth=int(data['depth'])
+        if not 0<=depth<=64:return None
+        if kind=='iteration':
+            if set(data)!={'kind','depth','score','move'} or depth==0:return None
+        elif kind=='final':
+            if data.get('status')=='fallback':
+                if set(data)!={'kind','status','depth','move'} or depth!=0:return None
+                return dict(data,depth=depth,score=None)
+            if data.get('status') not in ('complete','partial') or set(data)!={'kind','status','depth','score','move','evalmove'} or depth==0:return None
+            if not re.fullmatch(_MOVE,data['evalmove']):return None
+            if data['status']=='complete' and data['evalmove']!=data['move']:return None
+        else:return None
+        value=int(data['score'])
+        if abs(value)>100000:return None
+        return dict(data,depth=depth,score=value)
+    except (ValueError,KeyError):return None
+
+
+def parse_score(adapter,lines,diagnostics,side,final_move,final=False):
     """Return native units from White's perspective; never reuse FoulBrood's scale."""
     candidate=None
     if adapter=='foulbrood':
-        for line in diagnostics:
-            if not exact_score_lines(adapter,[],[line],final_move):continue
-            match=re.fullmatch(r'FoulBroodScore v1;depth=([1-9]\d*);score=(-?\d+);move=(.+)',line)
-            depth,value=int(match[1]),int(match[2])
-            if depth>64 or abs(value)>100000:continue
-            candidate=dict(depth=depth,score=value,source='foulbrood',engine_score=value*(1 if side==0 else -1),engine_forced_winner=None)
-        return candidate or {}
+        records=[r for line in diagnostics if (r:=foulbrood_v2_record(line)) is not None]
+        committed=[r for r in records if r['kind']=='final']
+        if final and not committed:
+            if any(line=='TopBotBook v3;move='+final_move for line in diagnostics):
+                return dict(depth=None,score=None,source='foulbrood',engine_score=None,score_status='book',search_complete=False)
+            return dict(depth=None,score=None,source='foulbrood',engine_score=None,score_status='unverified',search_complete=False)
+        record=(committed or records)[-1] if (committed or records) else None
+        if not record or record['move']!=final_move:return {}
+        status=record.get('status');value=record['score']
+        label='last_complete' if status=='partial' else 'fallback' if status=='fallback' else 'complete' if status=='complete' else 'iteration'
+        return dict(depth=record['depth'],completed_depth=record['depth'],score=value,source='foulbrood',engine_score=None if value is None else value*(1 if side==0 else -1),engine_forced_winner=None,score_status=label,search_complete=status=='complete',evaluated_move=record.get('evalmove',record['move']),selected_move_score=None if status=='partial' else value)
     if adapter=='mzinga':
         for line in lines:
             if not exact_score_lines(adapter,[line],[],final_move):continue
@@ -182,25 +226,44 @@ def parse_score(adapter,lines,diagnostics,side,final_move):
                 engine_forced_winner=('White' if white>0 else 'Black') if math.isinf(white) else None)
 
 
-def discover_engines(roots=None, seconds=8, max_files=60000):
+def retired_foulbrood_discovery_candidate(candidate, registered_entries=()):
+    """Pure metadata filter; Browse remains the deliberate path for unknown builds."""
+    path=candidate.get('path','')
+    path=path.replace(chr(92),'/').rstrip('/') if isinstance(path,str) else ''
+    name=candidate.get('name','')
+    name=name.strip() if isinstance(name,str) else ''
+    if re.search(r'hotfrass|antarchy',path+' '+name,re.I):return False
+    base=path.rsplit('/',1)[-1]
+    if not re.match(r'^foulbrood(?:[ _.-]|$)',name,re.I) and not re.match(r'^foulbrood(?:[_.-]|$)',base,re.I):return False
+    def modern_name(value):
+        if not isinstance(value,str):return False
+        label=value.strip()
+        version=re.match(r'^foulbrood[ _-]+v?([0-9]+)(?:[.][0-9]+)*(?:$|[ _-])',label,re.I)
+        return bool(version and int(version[1])>=5)
+    if modern_name(name):return False
+    for part in path.split('/'):
+        if modern_name(part):return False
+    for entry in registered_entries:
+        saved_path=entry.get('path','')
+        if isinstance(saved_path,str) and saved_path.replace(chr(92),'/').rstrip('/')==path and modern_name(entry.get('name')):return False
+    return True
+
+
+def discover_engines(roots=None, seconds=8, max_files=60000, registered_entries=None):
     """Find likely programs by name; never execute a discovered file automatically."""
     if roots is None:
         home=Path.home()
         # Check dedicated engine folders before broad trees can exhaust the budget.
         roots=list(dict.fromkeys([
-            Path(os.environ.get('FOULBROOD_DATA_DIR',str(home/'Documents/FoulBroodData')))/'Engines',
-            home/'Documents/FoulBroodData/Engines',
+            Path(os.environ.get('FOULBROOD_DATA_DIR',str(home/'Documents/Codex/FoulBroodData')))/'Engines',
+            home/'Documents/Codex/FoulBroodData/Engines',
             home/'Library/Application Support/FoulBrood GUI Beta/Engines',
             home/'Documents/Engines',home/'Downloads',home/'Desktop',home/'Applications',Path('/Applications'),
             home/'Documents',Path('/usr/local/bin'),Path('/opt/homebrew/bin')]))
-        if os.name == 'nt':
-            roots = list(dict.fromkeys([
-                Path(os.environ.get('FOULBROOD_DATA_DIR', str(home/'AppData/Local/FoulBrood GUI Beta')))/'Engines',
-                home/'Documents/Engines', home/'Downloads', home/'Desktop', home/'Documents',
-                Path(os.environ.get('ProgramFiles', 'C:/Program Files')),
-                Path(os.environ.get('ProgramFiles(x86)', 'C:/Program Files (x86)'))]))
     names={'foulbrood':'FoulBrood','mzingaengine':'Mzinga','mzingacpp':'MzingaCpp',
            'nokamute':'Nokamute','hivemind':'Hivemind'}
+    if registered_entries is None:registered_entries=EngineLibrary().entries
+    retired=set()
     found={};skipped=0;count=0;limited=False;deadline=time.monotonic()+seconds
     def inaccessible(error):
         nonlocal skipped
@@ -218,16 +281,19 @@ def discover_engines(roots=None, seconds=8, max_files=60000):
                 if count>max_files or time.monotonic()>deadline:
                     limited=True;break
                 if filename=='FoulBrood' and Path(folder).name=='MacOS':continue
-                name=names.get(filename.lower().removesuffix('.exe') if os.name=='nt' else filename.lower())
+                name=names.get(filename.lower())
                 if not name:continue
                 path=Path(folder)/filename
                 if not path.is_file() or not os.access(path,os.X_OK):continue
                 resolved=str(path.resolve())
-                found[resolved]=dict(name=name,path=resolved)
+                candidate=dict(name=name,path=resolved)
+                if retired_foulbrood_discovery_candidate(candidate,registered_entries):
+                    retired.add(resolved);continue
+                found[resolved]=candidate
             if limited:break
         if limited:break
     return dict(candidates=sorted(found.values(),key=lambda e:(e['name'],e['path'])),
-                limited=limited,skipped=skipped)
+                limited=limited,skipped=skipped,retired_hidden=len(retired))
 
 
 # Display/annotation heuristics in each engine's own units, not fitted win odds.
@@ -262,7 +328,7 @@ _NK_SCORE=r'(?:-?\d+|-?∞)'
 def exact_score_lines(adapter,lines,diagnostics,move):
     if not re.fullmatch(_MOVE,move):return False
     if adapter=='foulbrood':
-        return any(re.fullmatch(rf'FoulBroodScore v1;depth=[1-9]\d*;score=-?\d+;move={re.escape(move)}',line) for line in diagnostics)
+        return any((r:=foulbrood_v2_record(line)) is not None and r['move']==move for line in diagnostics)
     if adapter=='mzinga':
         pattern=rf'{re.escape(move)};[1-9]\d*;{_MZ_SCORE}(?:;{_MOVE})*'
         return any(re.fullmatch(pattern,line) for line in lines)
@@ -277,7 +343,9 @@ def probe_score_format(path,adapter):
     engine=None
     try:
         engine=UHP(path);engine.deadline=time.monotonic()+6
-        engine.reply();configure_reporting(engine,dict(score_adapter=adapter),True)
+        info=engine.reply();configure_reporting(engine,dict(score_adapter=adapter),True)
+        if adapter=='foulbrood' and 'FoulBroodReviewSearch' in ';'.join(info).split(';'):
+            engine.command('options set ReviewSearch True')
         for game,side in [('Base',0),('Base;InProgress;Black[1];wS1',1)]:
             engine.command('newgame '+game)
             legal=set(';'.join(engine.command('validmoves')).split(';'))
@@ -294,7 +362,7 @@ def probe_score_format(path,adapter):
                 if exact or adapter not in ('nokamute','foulbrood') or time.monotonic()>=deadline:break
                 time.sleep(.01)
             if move not in legal or not exact:return False
-            if not parse_score(adapter,lines,diagnostics,side,move):return False
+            if not parse_score(adapter,lines,diagnostics,side,move,final=True):return False
         return True
     except (OSError,ValueError,subprocess.SubprocessError):return False
     finally:

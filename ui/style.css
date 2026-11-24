@@ -508,3 +508,51 @@ header{padding-inline:calc(max(0px, (100% - 1480px) / 2) + 4%)}
 #reviewFileActions{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(44px,1fr);gap:8px;margin-top:16px}#reviewFileActions button{min-width:0;margin:0;padding:10px 6px;font-size:13px;line-height:1.3}
 
 .zoom-controls #zoomAuto[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* hivegame.com bot panel */
+.hivebot-panel details{margin-top:0;font-size:13px;color:var(--ink)}.hivebot-panel summary{cursor:pointer}.hivebot-panel summary span{color:var(--muted)}
+.hivebot-panel input[type=text],.hivebot-panel input[type=password],.hivebot-panel select{width:100%}
+.hb-accept{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:8px}.hb-accept .switch{margin-bottom:0}.hb-accept input[type=number]{width:64px;margin-left:6px}
+.hb-game{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:12px 0}.hb-game .muted{margin-left:8px}.hb-game a{align-self:center}
+.hb-log{white-space:pre-wrap;word-break:break-word}.hivebot-panel[data-state=connected] summary span{color:var(--ink)}
+.hb-challenge{border-top:1px solid var(--line);margin-top:12px;padding-top:4px}.hb-challenge input[type=text]{width:100%}.hb-challenge select{width:auto;margin-left:6px}
+.hb-challenge h3{margin:10px 0 0;font-size:14px}.hivebot-panel label{margin-top:10px}
+.hb-clocks{display:grid;gap:6px;margin-top:10px}.hb-clocks>div{display:flex;align-items:center;gap:8px}.hb-clock{margin-left:auto;font-variant-numeric:tabular-nums;font-size:16px;color:var(--muted)}.hb-clock.ticking{color:var(--ink)}
+.hb-thought{display:grid;grid-template-columns:auto auto 1fr;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.hb-thought>div{display:grid;gap:2px}.hb-thought span{font-size:11px;color:var(--muted)}.hb-thought strong{font-size:15px}.hb-thought.stale strong{color:var(--muted)}
+.hb-lobby{display:grid;gap:6px;margin-top:6px;max-height:220px;overflow:auto}.hb-lobby-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:6px 10px}.hb-lobby-row button{margin-left:auto}.hb-lobby .caption{margin:0}.hb-auto{margin-top:12px}
+.hivebot-panel{grid-column:1/-1;align-self:start}.analysis-modes{align-self:start}
+.hb-bar-clock{font-variant-numeric:tabular-nums;font-size:20px;margin-right:12px;color:var(--muted)}.hb-bar-clock.ticking{color:var(--ink)}
+.hb-bar-clock{flex:0 0 auto;white-space:nowrap}
+.player.analysis-insight.hb-live-clock .clock{visibility:visible;color:var(--muted)}.player.analysis-insight.hb-live-clock .clock.hb-ticking{color:var(--ink)}
+body.hb-live #analysisSetup,body.hb-live #engineInsightPanel{display:none!important}
+body.hb-live #analysisModes{display:none!important}
+body.hb-live .hivebot-panel{order:-2}body.hb-live #historyPanel{order:-1;grid-column:1/-1}
+body.hb-live .player.bot-duel .player-identity>.insight-source{white-space:pre-line;overflow:visible;text-overflow:clip;overflow-wrap:normal}
+.hb-accept[hidden]{display:none}
+.hb-chal-wrap,.hb-chal-wrap>.hb-challenge{display:contents}.hb-chal-wrap[hidden],.hb-chal-wrap>.hb-challenge[hidden]{display:none}
+body.hb-live details.hb-sub.hivebot-panel{order:-2;margin-top:0}
+details.hivebot-panel{font-size:13px;color:var(--ink)}
+.hivebot-panel .switch{margin-bottom:0}.hivebot-panel label[hidden]{display:none}.hivebot-panel label{margin-top:12px}.hivebot-panel summary+label,.hivebot-panel summary+p{margin-top:10px}
+#hbAcceptTime{display:block;width:100%;margin:4px 0 0}
+body.hb-live .player .insight-source:not(.hb-id){visibility:hidden!important}
+
+/* Sidebar boxes: one title style, one fold arrow. */
+aside section.panel h2.hb-fold-title{cursor:pointer;user-select:none}
+aside section.panel h2.hb-fold-title::before,.hivebot-panel>details>summary::before,details.hivebot-panel>summary::before{content:'\25BE';display:inline-block;width:1.1em;color:var(--muted);font-size:.9em}
+aside section.panel.hb-folded h2.hb-fold-title::before,.hivebot-panel>details:not([open])>summary::before,details.hivebot-panel:not([open])>summary::before{content:'\25B8'}
+aside section.panel.hb-folded>*:not(.hb-fold-head),aside section.panel.hb-folded>.hb-fold-head>*:not(h2){display:none!important}
+aside section.panel.hb-folded h2.hb-fold-title{margin:0}
+.hivebot-panel>details>summary,details.hivebot-panel>summary{list-style:none;font-size:17px;font-weight:600;letter-spacing:-.3px;color:var(--ink)}
+.hivebot-panel>details>summary::-webkit-details-marker,details.hivebot-panel>summary::-webkit-details-marker{display:none}
+.hivebot-panel>details>summary strong,details.hivebot-panel>summary strong{font-weight:600}
+.hivebot-panel>details>summary span{font-size:13px;font-weight:400;letter-spacing:0}
+.hivebot-panel>details[open]>summary,details.hivebot-panel[open]>summary{margin-bottom:10px}
+.hb-pick{display:flex;gap:8px;align-items:center;margin-top:6px}.hb-pick select{flex:1;min-width:0}
+details.hivebot-panel,section.hivebot-panel{min-width:0;max-width:100%;box-sizing:border-box}.hivebot-panel select{min-width:0;max-width:100%}
+details.hivebot-panel,section.hivebot-panel{width:100%}
+.hb-row{align-items:flex-end}.hb-row .switch{margin:0 0 9px}.hivebot-panel button.wide{margin-top:12px}.hb-pick button{margin:0}
+.hb-row .switch{margin:0 0 11px}#hbOpponent{display:block;width:100%;margin:4px 0 0}.hb-row select{margin-left:0}
+.hb-game{border:0;border-radius:0;padding:0;margin:10px 0 0;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;font-size:12px}.hb-game>div{display:contents}.hb-game strong{font-weight:400;color:var(--ink)}.hb-game .muted{margin-left:0}.hb-game a{white-space:nowrap;color:var(--muted);text-decoration:underline}.hb-game a:hover{color:var(--ink)}.hb-game #hbShow{display:none}.hb-game [hidden]{display:none}
+.hb-game[hidden]{display:none}
+.hb-game a,.hb-game a:hover{color:#3b82f6}
+#hbStatus{white-space:pre-line}.hb-log[hidden]{display:none}

@@ -13,7 +13,7 @@ from live_analysis import validate_history
 
 MAX_REVIEW_BYTES=8_000_000
 MARKER='FoulBroodReview'
-TIMES=(500,2000,5000,10000,60000,600000,3600000,86400000)
+TIMES=(500,2000,5000,10000,30000,60000,600000,3600000,86400000)
 MOVE=re.compile(r'(?:pass|[wb][QABGSLMP][123]?(?:\s+[-/\\]?[wb][QABGSLMP][123]?[-/\\]?)?)\Z')
 
 def engine_identity(engine):
@@ -97,7 +97,8 @@ def validate_review(value,game):
     for i,row in enumerate(rows,1):
         require(isinstance(row,dict) and set(row)=={'ply','move','side','label','symbol','score','best_score','alternative','reply','depth','best_depth'})
         require(type(row['ply']) is int and row['ply']==i and row['move']==moves[i-1] and row['side']==(first_side+i-1)%2)
-        require(row['label'] in ('Best move','Uncertain','Blunder','Missed win','Mistake','Inaccuracy','No clear error') and row['symbol'] in ('','??','∅','?','?!'))
+        require(row['label'] in ('Book move','Best move','Uncertain','Blunder','Missed win','Mistake','Inaccuracy','No clear error') and row['symbol'] in ('','??','∅','?','?!'))
+        if row['label']=='Book move':require(row['symbol']=='' and all(row[k] is None for k in ('score','best_score','alternative','reply')) and row['depth']==row['best_depth']==0)
         require(score(row['score']) and score(row['best_score']) and move(row['alternative']) and move(row['reply']))
         require(integer(row['depth'],0,10000) and integer(row['best_depth'],0,10000))
     for i,point in enumerate(points):

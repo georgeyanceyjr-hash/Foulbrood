@@ -1,5 +1,6 @@
 """Cancellable full-history review, using equal budgets for compared continuations."""
 import subprocess
+import math
 import threading
 import time
 from external_engines import UHP, configure_reporting, parse_score, review_score, canonical_move
@@ -27,6 +28,7 @@ class Review:
         self.game=app.session.review_game;self.rows=[];self.points=[];self.status='ready';self.error='';self.total=len(self.game.split(';')[3:]);self.milliseconds=app.analysis_ms
         self.engine=dict(app.engines.get(app.engines.analysis_engine) or {});self.generation=0;self.process=None;self.stage='';self.working_ply=0;self.phase_started=None;self.remaining_units=2*self.total+1;self.saved_hints=app.hints;self.before=None;self.pending_played=None
         self.portable_engine=None
+        self.book_review_supported=None
         self.in_game_history=app.session.analysis_history
         self.source='in_game' if self.in_game_history else 'review'
 
@@ -114,7 +116,9 @@ class Review:
             with self.app.lock:
                 self.check(generation)
                 engine=UHP(self.engine['path']);self.process=engine.proc;self.phase_started=time.monotonic()
-            engine.reply();adapter=configure_reporting(engine,self.engine,True)
+            info=engine.reply();adapter=configure_reporting(engine,self.engine,True)
+            flags=set(';'.join(info).split(';'))
+            if 'FoulBroodReviewSearch' in flags:engine.command('options set ReviewSearch True')
             engine.command('newgame '+data['game'])
             seconds=max(1,int(self.milliseconds/1000))
             limit=f'{seconds//3600:02}:{seconds//60%60:02}:{seconds%60:02}'
@@ -124,23 +128,57 @@ class Review:
             move=canonical_move(self.snapshot,data,reported)
             # Drain diagnostic scores before interpreting them (Nokamute uses stderr).
             engine.close()
-            report=parse_score(adapter,lines,engine.diagnostics,data['side'],reported)
+            report=parse_score(adapter,lines,engine.diagnostics,data['side'],reported,final=True)
             if not report:raise ValueError(self.engine['name']+' did not report a score. Try a longer thinking time.')
             white=review_score(report,adapter)
+            if adapter=='foulbrood' and report.get('score_status')=='last_complete':
+                # The completed score belongs to evalmove, not a later partial choice.
+                evaluated=report.get('evaluated_move')
+                move=evaluated if evaluated in {m['move'] for m in data['legal']} else None
+                if move is None:white=None
             with self.app.lock:
                 self.check(generation);self.remaining_units=max(0,self.remaining_units-1);self.phase_started=None
             return dict(score=white*(1 if data['side']==0 else -1) if white is not None else None,
-                        side=data['side'],depth=report['depth'],move=move,terminal=False)
+                        side=data['side'],depth=report['depth'] if report['depth'] is not None and move is not None else 0,move=move,terminal=False)
         finally:
             if engine:engine.close()
             with self.app.lock:
                 if engine and self.process is engine.proc:self.process=None;self.phase_started=None
+
+    def book_moves(self,data,generation):
+        """Ask this profile for repertoire membership, never for a random choice."""
+        if self.engine.get('id')=='Computer' or self.engine.get('score_adapter')!='foulbrood' or self.book_review_supported is False:return []
+        engine=None
+        try:
+            with self.app.lock:
+                self.check(generation)
+                engine=UHP(self.engine['path']);self.process=engine.proc
+            info=engine.reply();flags=set(';'.join(info).split(';'))
+            self.book_review_supported='FoulBroodBookMoves' in flags
+            if not self.book_review_supported:return []
+            engine.command('newgame '+data['game'])
+            lines=engine.command('bookmoves')
+            moves=[m for line in lines for m in line.split(';') if m]
+            legal={m['move'] for m in data['legal']}
+            if any(m not in legal for m in moves):raise ValueError('Book returned an unavailable move.')
+            with self.app.lock:self.check(generation)
+            return moves
+        finally:
+            if engine:engine.close()
+            with self.app.lock:
+                if engine and self.process is engine.proc:self.process=None
 
     def start(self):
         resume=self.can_resume()
         self.stop()
         if not resume:self.rows=[];self.points=[];self.before=None;self.pending_played=None
         self.engine=dict(self.app.engines.get(self.app.engines.analysis_engine) or {});self.error='';self.status='running';self.milliseconds=self.app.analysis_ms
+        self.book_review_supported=None
+        def usable(result):
+            return result and (result['terminal'] or (type(result['depth']) is int and result['depth']>0 and type(result['score']) in (int,float) and math.isfinite(result['score']) and result['move'] is not None))
+        if self.before and not usable(self.before):
+            self.before=dict(score=None,side=self.before['side'],depth=0,move=None,terminal=False)
+        if self.pending_played and not usable(self.pending_played):self.pending_played=None
         self.portable_engine=None
         self.source='review'
         completed=len(self.rows)
@@ -156,13 +194,31 @@ class Review:
                     data=self.snapshot('undo',data['game'])
                 with self.app.lock:self.check(generation);before=self.before
                 self.show_position(data,generation)
-                if before is None:
-                    before=self.evaluate(data,generation)
-                    with self.app.lock:
-                        self.check(generation);self.before=before
-                        if not completed:self.points=[dict(ply=0,score=white_score(before))]
                 for i,move in enumerate(self.game.split(';')[3+completed:],completed+1):
                     after=self.snapshot('play',data['game'],move)
+                    with self.app.lock:
+                        self.check(generation);self.working_ply=i;self.stage=f'Move {i} of {self.total} · book check'
+                    if move in self.book_moves(data,generation):
+                        # A repertoire decision has no searched score or depth.
+                        checkpoint=dict(score=None,side=after['side'],depth=0,move=None,terminal=False)
+                        row=dict(ply=i,move=move,side=data['side'],label='Book move',symbol='',score=None,best_score=None,alternative=None,reply=None,depth=0,best_depth=0)
+                        with self.app.lock:
+                            self.check(generation)
+                            if not self.points:self.points=[dict(ply=0,score=None)]
+                            self.rows.append(row);self.points.append(dict(ply=i,score=None));self.before=checkpoint;self.pending_played=None
+                            self.remaining_units=2*(self.total-i)+(1 if i<self.total else 0)
+                        self.show_position(after,generation)
+                        data=after;before=checkpoint
+                        continue
+                    # Following a skipped book move, search the parent lazily.
+                    # Keep its unscored checkpoint unchanged until this row commits.
+                    if before is None or (not before['terminal'] and before['move'] is None):
+                        with self.app.lock:
+                            self.check(generation);self.stage=f'Move {i} of {self.total} · evaluating out-of-book move'
+                        before=self.evaluate(data,generation)
+                        with self.app.lock:
+                            self.check(generation)
+                            if not self.rows:self.before=before;self.points=[dict(ply=0,score=white_score(before))]
                     with self.app.lock:
                         self.check(generation);self.working_ply=i;self.stage=f'Move {i} of {self.total} · {move} · played move'
                         self.show_position(after,generation)
@@ -186,7 +242,7 @@ class Review:
                         with self.app.lock:self.check(generation);self.remaining_units=max(0,self.remaining_units-1)
                     mover=data['side'];sign=1 if mover==0 else -1
                     best_score=white_score(best);played_score=white_score(played)
-                    reliable=all(r['terminal'] or r['depth']>=3 for r in [before,best,played])
+                    reliable=all(r['terminal'] or (type(r['depth']) is int and r['depth']>=3) for r in [before,best,played])
                     label,symbol=classify(None if best_score is None else best_score*sign,None if played_score is None else played_score*sign,same) if reliable else ('Uncertain','')
                     row=dict(ply=i,move=move,side=mover,label=label,symbol=symbol,score=played_score,best_score=best_score,alternative=alternative,reply=best['move'],depth=played['depth'],best_depth=best['depth'])
                     with self.app.lock:

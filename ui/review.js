@@ -7,11 +7,18 @@ function reviewPoint(score){return score==null?null:Math.abs(score)>99000?Math.s
 function reviewBannerText(s){
  const review=s.game_review,row=review.rows.find(r=>r.ply===s.ply),point=review.points.find(p=>p.ply===s.ply);
  const name=s.ply?`Move ${s.ply}`:'Starting position',score=row?.score??point?.score;
+ if(row?.label==='Book move')return `${name} · Book move`;
  if(score==null)return `${name} · ${review.status==='running'&&review.working_ply===s.ply?'Reviewing…':review.status==='ready'?'Start review to assess this position':'Not reviewed yet'}`;
  const rating=reviewPoint(score),description=review.external&&Math.abs(score)>99000?(score>0?'White':'Black')+' has a forced win':positionAssessment({score,side:0,depth:row?.depth||0});
  return [name,row?.symbol?`${row.label} ${row.symbol}`:null,description,`${rating>0?'+':''}${rating}`].filter(Boolean).join(' · ');
 }
 let reviewGraphKey='';
+function reviewActivityText(review){
+ // Older running backends leave this phase set during the next parent search.
+ // The actual working move, rather than its previous completed card, is active.
+ if(review.stage?.endsWith(' · book check'))return `Reviewing move ${review.working_ply} of ${review.total}`;
+ return review.stage||'Starting review…';
+}
 const reviewMarksCache=new Map(),reviewMarksPending=new Set();
 function renderReviewMarks(s){
  const board=$('board');board.querySelectorAll('.review-marks').forEach(e=>e.remove());
@@ -59,7 +66,7 @@ window.renderGameReview=s=>{
  $('analysisSetup').hidden=false;$('historyPanel').hidden=false;
  $('analyze').disabled=!review.total;$('stopAnalysis').hidden=true;
  $('hintsLabel').hidden=true;$('bookEnabled').closest('label').hidden=true;$('calculateInstead').hidden=true;
- $('reviewProgress').textContent=review.source==='in_game'?`${review.recorded_count} positions with in-game analysis`:review.resume_engine_missing?`Saved results loaded. Connect ${review.engine} to continue reviewing.`:review.error||(!review.total?'Import a game to get started.':review.status==='running'?`${review.stage||'Starting review…'} · ${review.rows.length} reviewed`:review.status==='complete'?`${review.total} moves reviewed`:review.status==='stopped'?`Stopped · ${review.rows.length} of ${review.total} reviewed`:`${review.total} moves · Click Start review`);
+ $('reviewProgress').textContent=review.source==='in_game'?`${review.recorded_count} positions with in-game analysis`:review.resume_engine_missing?`Saved results loaded. Connect ${review.engine} to continue reviewing.`:review.error||(!review.total?'Import a game to get started.':review.status==='running'?`${reviewActivityText(review)} · ${review.rows.length} reviewed`:review.status==='complete'?`${review.total} moves reviewed`:review.status==='stopped'?`Stopped · ${review.rows.length} of ${review.total} reviewed`:`${review.total} moves · Click Start review`);
  const remaining=review.status==='ready'||review.status==='complete'?(review.status==='complete'?0:(2*review.total+1)*s.analysis_ms/1000):review.remaining_seconds;
  $('reviewRemaining').hidden=!review.total||review.source==='in_game';$('reviewProgressBar').hidden=review.source==='in_game';
  const minutes=Math.max(1,Math.ceil(remaining/60));
@@ -92,7 +99,7 @@ window.renderGameReview=s=>{
    const detail=document.createElement('small');detail.textContent=row.label==='Uncertain'?'Comparison inconclusive at this depth.':'The preferred line retains a forced win.';insight.append(detail);
   }
  }
- const issues=review.rows.filter(r=>r.symbol);$('reviewSummary').textContent=review.source==='in_game'?'Original suggestions and scores recorded during play.':(review.engine?review.engine+' · ':'')+(issues.length?`${issues.length} flagged ${issues.length===1?'move':'moves'}`:'No moves flagged');$('reviewSummary').title=review.source==='in_game'?'Scores may come from different engines and thinking times.':'Move labels use approximate engine-specific score-loss thresholds, not calibrated winning probabilities.';
+ const issues=review.rows.filter(r=>r.symbol),books=review.rows.filter(r=>r.label==='Book move').length;$('reviewSummary').textContent=review.source==='in_game'?'Original suggestions and scores recorded during play.':(review.engine?review.engine+' · ':'')+(books?`${books} book ${books===1?'move':'moves'} · `:'')+(issues.length?`${issues.length} flagged ${issues.length===1?'move':'moves'}`:'No moves flagged');$('reviewSummary').title=review.source==='in_game'?'Scores may come from different engines and thinking times.':'Move labels use approximate engine-specific score-loss thresholds, not calibrated winning probabilities.';
  $('previousIssue').disabled=!issues.some(r=>r.ply<s.ply);$('nextIssue').disabled=!issues.some(r=>r.ply>s.ply);
  const key=JSON.stringify([review.points,s.ply,review.status,review.working_ply,review.rows.map(r=>r.symbol),$('reviewGraph').clientWidth]);if(key===reviewGraphKey)return;reviewGraphKey=key;
  const graph=$('reviewGraph'),width=Math.max(300,graph.clientWidth),span=width-24;graph.setAttribute('viewBox',`0 0 ${width} 160`);graph.replaceChildren();graph.append(node('line',{x1:12,y1:80,x2:width-12,y2:80,class:'review-zero'}));
