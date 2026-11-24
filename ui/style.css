@@ -571,3 +571,67 @@ body.history-open main,body.history-open #enginePage{display:none!important}
 .hist-buttons{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.hist-buttons button{margin:0}
 #perspectiveOption{display:none!important}
 .sfx-row{display:block}.sfx-try{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.sfx-try button{margin:0}
+
+/* ===== FoulBrood look, November 2026: flat, hard-edged, hazard yellow. Pieces, board controls and the
+   gold/blue move highlights are untouched. Everything below only restyles; nothing is removed. ===== */
+:root{--bg:#eceae1;--paper:#ffffff;--ink:#14150f;--muted:#5b5e52;--accent:#14150f;--line:#d0ccbd;--gold:#f2c20a;--hazard:#f2c20a;--pitch:#0d0e0c}
+:root[data-theme="dark"]{--bg:#0d0e0c;--paper:#181a16;--ink:#eeecdf;--muted:#a6a897;--accent:#f2c20a;--line:#2c3028;--gold:#f2c20a}
+body{font-family:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+header,[data-theme="dark"] header{background:var(--paper);color:var(--ink);border-bottom:8px solid;border-image:repeating-linear-gradient(-45deg,var(--hazard) 0 14px,var(--pitch) 14px 28px) 8}
+.brand h1,.brand h1{font-family:'Archivo Black','Arial Black',Impact,'Helvetica Neue',sans-serif;font-weight:900;font-size:32px;letter-spacing:.04em;line-height:1;color:var(--ink)}
+header .brand .tagline,.brand .tagline{font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--pitch);background:var(--hazard);padding:2px 6px;margin-top:6px;display:inline-block}
+[data-theme="dark"] header .brand .tagline{color:var(--hazard);background:none;padding:0}
+nav,[data-theme="dark"] nav{border:0;background:none;border-radius:0;padding:0;gap:22px}
+.tab{border-radius:0;padding:14px 4px;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border-bottom:3px solid transparent}
+.tab:hover,[data-theme="dark"] .tab:hover{background:none;color:var(--ink)}
+.tab.active,[data-theme="dark"] .tab.active{background:none;color:var(--ink);border-bottom-color:var(--hazard)}
+.panel,.player,button,select,textarea,input[type=text],input[type=password],input[type=search],input[type=number],input[type=url],.board-wrap,.hist-row,.sound-panel,dialog,.history-move,.move-row{border-radius:2px}
+.panel,.player{box-shadow:none}
+button{border-color:var(--line);font-weight:600}
+button:hover{background:var(--bg)}
+[data-theme="dark"] button:hover{background:#262a22}
+.primary,[data-theme="dark"] .primary{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+[data-theme="dark"] .primary{color:var(--pitch)}
+.primary:hover{background:#33352c}[data-theme="dark"] .primary:hover{background:#ffd633}
+button:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--hazard);outline-offset:2px}
+[data-theme="dark"] select,[data-theme="dark"] textarea,[data-theme="dark"] input{background:#101210;color:var(--ink);border-color:#3a3f34}
+#themeToggle,#themeToggle[aria-pressed="true"]{background:var(--paper);color:var(--ink);border-color:var(--line)}
+h2,aside section.panel h2.hb-fold-title,.hivebot-panel>details>summary,details.hivebot-panel>summary{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.hivebot-panel>details>summary span{text-transform:none;letter-spacing:0}
+.player.active,[data-theme="dark"] .player.active{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
+[data-theme="dark"] .player.active{border-color:var(--hazard);box-shadow:0 0 0 1px var(--hazard)}
+.player.active .clock{color:var(--pitch);background:var(--hazard);padding:0 8px;font-weight:700}
+[data-theme="dark"] .player.active .clock{color:var(--hazard);background:none;padding:0}
+.board-wrap{background:#f7f5ee;border-color:var(--line)}
+[data-theme="dark"] .board-wrap{background:#101210;border-color:var(--line)}
+input[type=checkbox]{accent-color:var(--ink)}[data-theme="dark"] input[type=checkbox]{accent-color:var(--hazard)}
+.hist-row.starred{border-color:var(--hazard)}.hist-row.starred .hist-star{color:#b48d00}[data-theme="dark"] .hist-row.starred .hist-star{color:var(--hazard)}
+.hb-game a,.hb-game a:hover{color:#1c5fa8}[data-theme="dark"] .hb-game a,[data-theme="dark"] .hb-game a:hover{color:#7dbcff}
+/* board furniture: targeting brackets, status tag, game-over stamp */
+.fb-corner{position:absolute;width:22px;height:22px;pointer-events:none;border:0 solid var(--ink);z-index:2}
+[data-theme="dark"] .fb-corner{border-color:var(--hazard)}
+.fb-corner.tl{top:8px;left:8px;border-top-width:3px;border-left-width:3px}.fb-corner.bl{bottom:8px;left:8px;border-bottom-width:3px;border-left-width:3px}.fb-corner.br{bottom:8px;right:8px;border-bottom-width:3px;border-right-width:3px}
+.fb-tag{position:absolute;top:16px;left:40px;z-index:2;display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--hazard);color:var(--pitch);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;pointer-events:none}
+.fb-tag::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--pitch)}
+.fb-tag[hidden],.fb-over[hidden]{display:none}
+.fb-over{position:absolute;inset:0;z-index:5;background:rgba(13,14,12,.78);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center}
+.fb-stamp{transform:rotate(-5deg);border:6px solid var(--hazard);padding:6px 30px 2px;font-family:'Archivo Black','Arial Black',Impact,sans-serif;font-weight:900;font-size:clamp(40px,7vw,84px);line-height:1.05;letter-spacing:.03em;color:var(--hazard)}
+.fb-names{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;justify-content:center;font-family:'Archivo Black','Arial Black',Impact,sans-serif;font-weight:900;font-size:clamp(20px,3vw,30px);letter-spacing:.03em;text-transform:uppercase}
+.fb-names .won{color:var(--hazard)}.fb-names .lost{color:#a6a897;text-decoration:line-through;text-decoration-thickness:3px}.fb-names .plain{color:#eeecdf}
+.fb-names i{font:700 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;letter-spacing:.16em;color:#eeecdf;font-style:normal}
+.fb-line{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#eeecdf}
+.fb-over .fb-buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.fb-over button{min-height:44px;padding:0 18px;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:#181a16;color:#eeecdf;border-color:#3a3f34}
+.fb-over button.go{background:var(--hazard);color:var(--pitch);border-color:var(--hazard)}
+.fb-foot{grid-column:1/-1;text-align:center;padding:4px 0 8px;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.analysis-modes,.analysis-modes button,.header-tools>button,.header-tools .sound-settings>summary,.sound-settings summary,.zoom-controls button,.review-ranking-panel button{border-radius:2px}
+.analysis-modes button{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.analysis-modes button[aria-pressed=true],[data-theme="dark"] .analysis-modes button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+[data-theme="dark"] .analysis-modes button[aria-pressed=true]{background:var(--hazard);color:var(--pitch)}
+/* Dark mode: the same pieces, a shade darker (tiles only; the insects keep their colours). */
+[data-theme="dark"] .piece-art polygon[fill="#e7d69a"]{fill:#c9b982;stroke:#ddd09c}
+[data-theme="dark"] .piece-art polygon[fill="#b9ac78"]{fill:#8d8257;stroke:#776d48}
+[data-theme="dark"] .insect-art[style*="#e7d69a"]{--insect-face:#c9b982!important}
+[data-theme="dark"] .piece-art polygon[fill="#272928"]{fill:#1a1c1b;stroke:#565b52}
+[data-theme="dark"] .piece-art polygon[fill="#484b46"]{fill:#2f322c;stroke:#141614}
+[data-theme="dark"] .insect-art[style*="#272928"]{--insect-face:#1a1c1b!important}

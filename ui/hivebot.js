@@ -169,7 +169,7 @@
   let summary={stopped:'Not running',building:'Building…',starting:'Connecting…',connected:'Connected',error:'Needs attention'}[bot.state]||bot.state;
   let status=bot.message||'';
   if(connected){
-   if(g){summary='Playing';status='';}
+   if(g){summary='Hunting';status='';}
    else if(last){status=`Connected as ${bot.user}.\nLast game: ${names(last)} — ${last.result||'finished'}.\nWaiting for the next game.`;}
   }
   el('hbSummary').textContent=summary;el('hbStatus').textContent=status;el('hbStatus').hidden=!status;
@@ -182,7 +182,7 @@
   }
   // Same button as on the Play page: take what is on the Live board over to Analysis.
   el('hbToAnalysis').hidden=false;{const some=typeof state!=='undefined'&&state&&hasGame(state.game);el('hbClear').disabled=!!g||!some;el('hbToAnalysis').disabled=!some} // nothing to clear mid-game, nothing to open or clear on an empty board
-  el('hbToAnalysis').textContent=g?'Open current position in Analysis':'Open current game in Analysis';
+  el('hbToAnalysis').textContent='Open in Analysis';
   clockCard=card||null;clockFetched=Date.now();drawClocks();drawThought(card);
   if(connected){
    const who=bot.anyone?'anyone':(bot.accept||[]).join(', ');
@@ -365,7 +365,7 @@
  };
  el('hbClear').onclick=()=>{
   if(bot&&bot.current)return;if(typeof state==='undefined'||!state||state.mode!=='analysis')return;
-  if(hasGame(state.game))ask('Clear game and history?','This will clear the board and the game history. Continue?','Clear game',clearBoard);
+  if(hasGame(state.game))ask('Bury this game?','This will clear the board and the game history. Continue?','Bury game',clearBoard);
  };
 
  const toAnalysis=async()=>{
@@ -614,4 +614,61 @@ window.foulbroodSfx=(()=>{
  const earlier=window.renderBotThoughts;
  window.renderBotThoughts=s=>{if(earlier)earlier(s);try{watch(s)}catch(e){}};
  return sfx;
+})();
+
+// ---- The FoulBrood look: board tag, targeting brackets and the game-over stamp ----
+(()=>{
+ const wrap=document.querySelector('.board-wrap');if(!wrap)return;
+ const make=(tag,cls,text)=>{const e=document.createElement(tag);e.className=cls;if(text)e.textContent=text;return e};
+ for(const c of ['tl','bl','br'])wrap.append(make('div','fb-corner '+c));
+ const tag=make('div','fb-tag');tag.hidden=true;wrap.append(tag);
+ const over=make('div','fb-over');over.hidden=true;over.setAttribute('role','status');
+ const stamp=make('div','fb-stamp'),names=make('div','fb-names'),line=make('div','fb-line'),buttons=make('div','fb-buttons');
+ const open=make('button','go','Open in Analysis'),bury=make('button','','Bury game'),close=make('button','','Close');
+ buttons.append(open,bury,close);over.append(stamp,names,line,buttons);wrap.append(over);
+ const main=document.querySelector('main');if(main)main.append(make('div','fb-foot','Bees harmed in the making of this viewer: all of them.'));
+ let dismissed='',shownKey='';
+ const hide=()=>{dismissed=shownKey;over.hidden=true};
+ close.onclick=hide;over.addEventListener('click',e=>{if(e.target===over)hide()});
+ open.onclick=()=>{hide();const b=document.getElementById(document.body.classList.contains('hb-live')?'hbToAnalysis':'analyzePosition');if(b)b.click()};
+ bury.onclick=()=>{hide();const b=document.getElementById('hbClear');if(b)b.click()};
+ const around=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
+ const boxed=(s,id)=>{const taken=new Set((s.pieces||[]).map(p=>p.q+','+p.r)),q=(s.pieces||[]).find(p=>p.id===id);return !!q&&around.every(([dq,dr])=>taken.has((q.q+dq)+','+(q.r+dr)))};
+ const span=(cls,text)=>{const e=document.createElement(cls==='i'?'i':'span');if(cls!=='i')e.className=cls;e.textContent=text;return e};
+ const look=s=>{
+  if(!s||over.dataset.demo)return; // data-demo: a preview is being shown
+  const L=window.foulbroodLive,live=document.body.classList.contains('hb-live'),card=live&&L&&L.card?L.card():null;
+  const play=s.mode==='play'&&!document.body.classList.contains('history-open');
+  let state=null; // {key, moves, white, black, winner (0|1|null), how}
+  if(play){
+   const who=i=>{const p=(s.players||[])[i];if(!p||p==='Human')return (s.player_names||[])[i]||(i?'Black':'White');const e=(s.engines||[]).find(x=>x.id===p);return e?e.name:String(p)};
+   const moves=s.review_total||0,base={key:'play|'+s.review_game,moves,white:who(0),black:who(1)};
+   if(s.play_finished&&!s.reviewing){
+    if(s.resigned_side!=null)state={...base,winner:1-s.resigned_side,how:'resign'};
+    else if(s.timeout_side!=null)state={...base,winner:1-s.timeout_side,how:'time'};
+    else if(s.completed_state==='WhiteWins'||s.completed_state==='BlackWins')state={...base,winner:s.completed_state==='WhiteWins'?0:1,how:'queen'};
+    else if(s.completed_state==='Draw')state={...base,winner:null,how:boxed(s,'wQ')&&boxed(s,'bQ')?'both':'repeat'};
+   }else if(s.running)state={...base,progress:true,moves:(s.ply||0)+1};
+  }else if(card&&s.mode==='analysis'){
+   const base={key:'live|'+card.id,moves:card.turn||0,white:card.white||'White',black:card.black||'Black'};
+   if(!card.finished)state={...base,progress:true,moves:(card.turn||0)+1};
+   else if(card.result==='White won'||card.result==='Black won'){const winner=card.result==='White won'?0:1;state={...base,winner,how:boxed(s,winner?'wQ':'bQ')?'queen':'other'}}
+   else if(card.result==='Draw')state={...base,winner:null,how:boxed(s,'wQ')&&boxed(s,'bQ')?'both':'repeat'};
+  }
+  if(!state){tag.hidden=true;over.hidden=true;return}
+  if(state.progress){tag.hidden=false;tag.textContent='Outbreak in progress · move '+state.moves;over.hidden=true;return}
+  const side=['White','Black'],w=state.winner,winName=w==null?'':[state.white,state.black][w],loseName=w==null?'':[state.white,state.black][1-w];
+  tag.hidden=false;tag.textContent=(state.how==='both'?'Mutual destruction':state.how==='repeat'?'Standoff':'Colony collapsed')+' · move '+state.moves;
+  shownKey=state.key;
+  if(dismissed===state.key){over.hidden=true;return}
+  stamp.textContent={queen:'QUEEN DOWN',both:'QUEENS DOWN',repeat:'STANDOFF',resign:'SURRENDER',time:'OUT OF TIME',other:'FLATLINED'}[state.how];
+  names.replaceChildren();
+  if(w==null){const c=state.how==='both'?'lost':'plain';names.append(span(c,state.white),span('i',state.how==='both'?'and':'vs'),span(c,state.black))}
+  else names.append(span('won',winName),span('i',state.how==='resign'?'broke':state.how==='time'?'outlasted':'killed'),span('lost',loseName));
+  line.textContent={queen:`${side[w]} wins in ${state.moves} moves · no survivors`,other:`${side[w]} wins in ${state.moves} moves`,resign:`${side[1-(w??0)]} gave up on move ${state.moves}`,time:`${side[1-(w??0)]} ran out of time on move ${state.moves}`,both:`Draw in ${state.moves} moves · they took each other out`,repeat:`Draw by repetition in ${state.moves} moves · nobody blinked`}[state.how];
+  bury.hidden=!live;over.hidden=false;
+ };
+ const earlier=window.renderBotThoughts;
+ window.renderBotThoughts=s=>{if(earlier)earlier(s);try{look(s)}catch(e){}};
+ setInterval(()=>{try{if(typeof state!=='undefined'&&state)look(state)}catch(e){}},1000);
 })();

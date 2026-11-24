@@ -1,3 +1,10 @@
+# New look (24 November 2026)
+
+- A flatter, harder-edged look in black, bone and hazard yellow, in both dark and light mode: block-capital wordmark, hazard stripe under the header, underlined tab row, square corners.
+- The pieces, the board controls and the gold/blue move highlights are unchanged; in dark mode the tiles are a shade darker.
+- On the board: targeting brackets, a status tag ("Outbreak in progress · move N"), and a game-over stamp naming the winner and loser (QUEEN DOWN, QUEENS DOWN for a double kill, STANDOFF for a draw by repetition, SURRENDER, OUT OF TIME).
+- No option was removed.
+
 # Sound effects, built-in engine, history follows the board (24 November 2026)
 
 - New generated sound effects: a swarm and a splat when you win, a dying bee when you lose, a rattle when a queen has five of six sides covered, a swarm swell at game start, a heartbeat under the last ten seconds, and a stinger when the bot finds a game. Try-out buttons are in the sound settings.
