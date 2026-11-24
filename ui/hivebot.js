@@ -23,11 +23,19 @@
    const flip=()=>{const v=!section.classList.contains('hb-folded');set(v);folded[section.id]=v;try{localStorage.setItem('foulbrood_folded',JSON.stringify(folded))}catch(e){}};
    title.addEventListener('click',flip);title.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();flip()}});
   }}
+ // The move list always follows the board, on Play, Live and Analysis: flip or rotate the board and the
+ // notation turns with it. (Play already did; this makes Analysis and Live the same and drops the checkbox.)
+ const followOnLive=()=>{
+  try{
+   if(analysisFollowsBoard!==true){analysisFollowsBoard=true;el('followBoard').checked=true;if(typeof serverState!=='undefined'&&serverState&&typeof window.render==='function')setTimeout(()=>window.render(serverState),0)}
+  }catch(e){}
+ };
+ followOnLive();
  // "Live" is its own workspace tab: the analysis board with only the hivegame.com bot's panels.
  let live=false;try{live=localStorage.getItem('foulbrood_live_tab')==='1'}catch(e){}
  const liveOn=()=>live&&typeof state!=='undefined'&&state&&state.mode==='analysis'&&!(typeof enginePageOpen!=='undefined'&&enginePageOpen);
  const fixTabs=()=>{
-  const on=liveOn();document.body.classList.toggle('hb-live',on);
+  const on=liveOn();document.body.classList.toggle('hb-live',on);followOnLive(on);
   el('liveTab').classList.toggle('active',on&&!document.body.classList.contains('history-open'));
   if(on||document.body.classList.contains('history-open'))el('analysisTab').classList.remove('active');
   el('hivebotPanel').hidden=!on;el('hbChallengesPanel').hidden=!on||el('hbChallenges').hidden;
@@ -311,6 +319,7 @@
   const turnKey=card.id+'|'+(card.turn||0);if(soundTurn.key!==turnKey){soundTurn.key=turnKey;soundTurn.clocks=live}
   const ending=done?({'White won':'WhiteWins','Black won':'BlackWins','Draw':'Draw'}[card.result]||null):null;
   nativeObserve({mode:'play',running:!done,timeout_side:null,resigned_side:null,completed_state:ending,state:'InProgress',
+   live_bot:true,bot_won:done?(card.result==='White won')===(card.white===bot.user):null,
    players:['Human','Human'],side,live_side:side,game:card.id,live_game:card.id+';InProgress',
    clocks:soundTurn.clocks,time_control:'10+10',review_total:99});
  };
@@ -401,7 +410,7 @@
  });
  el('hbLogin').addEventListener('input',render);
  // What the History tab needs from Live.
- window.foulbroodLive={ask,setLive:v=>{setLive(v);fixTabs()},boardIsLive:()=>botBoard(),hasStash:()=>hasGame(stash()),dropStash:()=>{stash(null);botBoard(false);shown={id:null,turn:-1}}};
+ window.foulbroodLive={ask,card:()=>soundCard(),setLive:v=>{setLive(v);fixTabs()},boardIsLive:()=>botBoard(),hasStash:()=>hasGame(stash()),dropStash:()=>{stash(null);botBoard(false);shown={id:null,turn:-1}}};
  setTimeout(()=>{if(typeof state==='undefined'||!state||state.mode!=='analysis')return;(live?takeBoard():releaseBoard()).catch(()=>{})},1500);
  el('hbFollow').addEventListener('change',()=>{if(el('hbFollow').checked)shown={id:null,turn:-1};render()});
  el('hivebotDetails').addEventListener('toggle',()=>{refresh();schedule()});
@@ -523,4 +532,86 @@
  };
  const earlier=window.renderBotThoughts;
  window.renderBotThoughts=s=>{if(earlier)earlier(s);try{observe(s)}catch(e){}};
+})();
+
+// ---- Sound effects with the FoulBrood attitude (all generated here, no audio files) ----
+window.foulbroodSfx=(()=>{
+ const A=()=>typeof window.foulbroodAudio==='function'?window.foulbroodAudio():null;
+ const noise=(ctx,seconds)=>{const b=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*seconds),ctx.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const n=ctx.createBufferSource();n.buffer=b;return n};
+ const env=(ctx,out,t,points)=>{const g=ctx.createGain();g.gain.setValueAtTime(0.0001,t);for(const [dt,v] of points)g.gain.linearRampToValueAtTime(Math.max(0.0001,v),t+dt);g.connect(out);return g};
+ // A buzzing bee: a sawtooth with a fast wing-beat tremolo, through a low-pass.
+ const bee=(ctx,out,t,dur,from,to,level,beat=27)=>{
+  const o=ctx.createOscillator(),lp=ctx.createBiquadFilter(),trem=ctx.createGain(),lfo=ctx.createOscillator(),depth=ctx.createGain();
+  o.type='sawtooth';o.frequency.setValueAtTime(from,t);o.frequency.exponentialRampToValueAtTime(Math.max(20,to),t+dur);
+  lp.type='lowpass';lp.frequency.value=1400;trem.gain.value=0.6;lfo.frequency.value=beat;depth.gain.value=0.4;
+  lfo.connect(depth);depth.connect(trem.gain);o.connect(lp);lp.connect(trem);trem.connect(env(ctx,out,t,[[0.04,level],[dur*0.8,level],[dur,0]]));
+  o.start(t);lfo.start(t);o.stop(t+dur+0.05);lfo.stop(t+dur+0.05);return trem;
+ };
+ const swarm=(ctx,out,t,dur,level,rise=1)=>{for(const [f,b] of [[150,23],[187,29],[221,26],[263,31],[305,24]])bee(ctx,out,t+Math.random()*0.05,dur,f,f*rise,level/3,b)};
+ const splat=(ctx,out,t)=>{
+  const n=noise(ctx,0.3),lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(2200,t);lp.frequency.exponentialRampToValueAtTime(180,t+0.22);
+  n.connect(lp);lp.connect(env(ctx,out,t,[[0.005,0.5],[0.25,0]]));n.start(t);n.stop(t+0.3);
+  const o=ctx.createOscillator();o.type='sine';o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(38,t+0.2);o.connect(env(ctx,out,t,[[0.005,0.6],[0.24,0]]));o.start(t);o.stop(t+0.3);
+ };
+ const sfx={
+  // Win: the swarm closes in, rising, then the queen goes splat.
+  win(){const a=A();if(!a)return false;const t=a.context.currentTime+0.02;swarm(a.context,a.out,t,0.95,0.16,1.7);splat(a.context,a.out,t+0.97);return true},
+  // Loss: one bee sputters, drops in pitch and dies.
+  loss(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02,g=c.createGain();g.connect(a.out);
+   for(const [at,v] of [[0,1],[0.45,1],[0.5,0.15],[0.62,1],[0.9,1],[0.95,0.1],[1.02,0.9],[1.2,0.1],[1.27,0.7],[1.6,0]])g.gain.linearRampToValueAtTime(v,t+at);
+   bee(c,g,t,1.65,230,48,0.2,25);return true},
+  // Queen in danger: a low warning rattle.
+  rattle(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02,o=c.createOscillator(),am=c.createGain(),lfo=c.createOscillator(),d=c.createGain();
+   o.type='square';o.frequency.value=58;am.gain.value=0.5;lfo.type='square';lfo.frequency.value=17;d.gain.value=0.5;lfo.connect(d);d.connect(am.gain);
+   const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=420;o.connect(lp);lp.connect(am);am.connect(env(c,a.out,t,[[0.02,0.13],[0.5,0.13],[0.62,0]]));
+   o.start(t);lfo.start(t);o.stop(t+0.7);lfo.stop(t+0.7);return true},
+  // Game start: the hive notices you.
+  start(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02,g=env(c,a.out,t,[[0.45,1],[0.9,0]]);swarm(c,g,t,0.9,0.12,1.15);return true},
+  // Low on time: a heartbeat.
+  thump(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.01;
+   for(const [at,v] of [[0,0.5],[0.16,0.35]]){const o=c.createOscillator();o.type='sine';o.frequency.setValueAtTime(70,t+at);o.frequency.exponentialRampToValueAtTime(42,t+at+0.12);o.connect(env(c,a.out,t+at,[[0.008,v],[0.14,0]]));o.start(t+at);o.stop(t+at+0.18)}return true},
+  // Game found: one sharp stinger note.
+  stinger(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.01,o=c.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(1175,t);o.frequency.exponentialRampToValueAtTime(880,t+0.18);
+   const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=500;o.connect(hp);hp.connect(env(c,a.out,t,[[0.004,0.2],[0.22,0]]));o.start(t);o.stop(t+0.25);return true},
+  // Called by the viewer when a game ends on the board. true = handled here; false = play the usual chime.
+  ending(result,s){
+   if(result!=='win')return false;
+   let won=true;
+   if(s&&s.live_bot)won=s.bot_won!==false;
+   else if(s&&Array.isArray(s.players)){const humans=s.players.map((p,i)=>p==='Human'?i:-1).filter(i=>i>=0);if(humans.length===1){const winner=(s.completed_state||'')==='WhiteWins'?0:1;won=winner===humans[0]}}
+   return won?sfx.win():sfx.loss();
+  },
+ };
+ // Triggers that are not game endings: watched from what the viewer shows.
+ const around=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
+ let danger={key:'',w:0,b:0},wasPlaying=false,lastSecond=null,liveId=null;
+ const watch=s=>{
+  if(!s)return;
+  const L=window.foulbroodLive,card=L&&L.card?L.card():null,liveActive=!!(card&&!card.finished&&s.mode==='analysis');
+  const playing=s.mode==='play'&&s.running&&!s.reviewing&&s.timeout_side==null&&s.resigned_side==null&&!/Wins|Draw/.test(s.completed_state||'');
+  // game start / game found
+  if(playing&&!wasPlaying&&!(s.review_total>0))sfx.start();
+  wasPlaying=playing;
+  if(card&&!card.finished&&card.id!==liveId){if(liveId!==null||(card.turn||0)<=1)sfx.stinger();liveId=card.id}else if(card&&liveId===null)liveId=card.id;
+  // queen in danger: five of the six hexes around a queen are taken
+  if((playing||liveActive)&&Array.isArray(s.pieces)){
+   const key=liveActive?'live:'+card.id:'play:'+String(s.live_game||s.game||'').split(';')[0],taken=new Set(s.pieces.map(p=>p.q+','+p.r));
+   const count=id=>{const q=s.pieces.find(p=>p.id===id);return q?around.filter(([dq,dr])=>taken.has((q.q+dq)+','+(q.r+dr))).length:0};
+   const w=count('wQ'),b=count('bQ');
+   if(danger.key===key&&((w===5&&danger.w<5)||(b===5&&danger.b<5)))sfx.rattle();
+   danger={key,w,b};
+  }
+  // low on time: a heartbeat under the last ten seconds of a human's clock
+  const side=s.live_side??s.side,seconds=playing&&(s.players||[])[side]==='Human'&&s.time_control!=='untimed'?(s.clocks||[])[side]:null;
+  if(typeof seconds==='number'&&seconds>0&&seconds<=10){const whole=Math.ceil(seconds);if(lastSecond!==null&&whole<lastSecond)sfx.thump();lastSecond=whole}else lastSecond=null;
+ };
+ // Try-out buttons in the sound settings.
+ const tryBox=document.getElementById('sfxTry');
+ if(tryBox)for(const [label,name] of [['Win','win'],['Loss','loss'],['Queen in danger','rattle'],['Game start','start'],['Low time','thump'],['Game found','stinger']]){
+  const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;
+  b.onclick=()=>{if(!sfx[name]()&&typeof toast==='function')toast('Turn sound on to hear it.')};tryBox.append(b);
+ }
+ const earlier=window.renderBotThoughts;
+ window.renderBotThoughts=s=>{if(earlier)earlier(s);try{watch(s)}catch(e){}};
+ return sfx;
 })();

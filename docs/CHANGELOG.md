@@ -1,3 +1,9 @@
+# Sound effects, built-in engine, history follows the board (24 November 2026)
+
+- New generated sound effects: a swarm and a splat when you win, a dying bee when you lose, a rattle when a queen has five of six sides covered, a swarm swell at game start, a heartbeat under the last ten seconds, and a stinger when the bot finds a game. Try-out buttons are in the sound settings.
+- The move list always flips and rotates with the board, on Play, Live and Analysis.
+- The FoulBrood engine is built in: it cannot be disconnected or removed, and is put back if missing.
+
 # History tab (24 November 2026)
 
 - Added a **History** tab (Play, Live, Analysis, History, Engine): every game played in the viewer, played by the bot on hivegame.com, or imported is saved automatically when it ends or is brought in.

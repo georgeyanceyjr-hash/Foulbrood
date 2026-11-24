@@ -544,6 +544,32 @@ except Exception:
     pass
 
 
+BUILT_IN = [Path.home() / 'Documents/Codex/FoulBroodData/Engines/ThoraxRex/thoraxrex',
+            Path.home() / 'Documents/Codex/FoulBroodData/Engines/ThoraxRex-NoBook/thoraxrex']
+_built_in_checked = False
+
+
+def _ensure_built_in(engines):
+    """The FoulBrood engine is part of the viewer: put it back if it is missing, reconnect it if it was disconnected."""
+    global _built_in_checked
+    if _built_in_checked or engines is None:
+        return
+    _built_in_checked = True
+    try:
+        import external_engines
+        for path in BUILT_IN:
+            if not path.is_file():
+                continue
+            entry = next((e for e in engines.entries if e.get('path') == str(path)), None)
+            if entry is None:
+                engines.add(external_engines.inspect_engine(str(path)))
+            elif not entry.get('connected'):
+                entry['connected'] = True
+                engines.save()
+    except Exception:
+        pass
+
+
 def hivebot_action(payload, engines):
     """Handle the bot panel's actions. `engines` is the viewer's EngineLibrary."""
     # Show the engine under the FoulBrood name, without net tag or build number (the viewer does the same when it starts).
@@ -552,6 +578,7 @@ def hivebot_action(payload, engines):
         if isinstance(name, str) and name.startswith(('ThoraxRex', 'FoulBrood ')) and not name.startswith('FoulBrood Legacy') \
                 and name not in ('FoulBrood', 'FoulBrood Book'):
             entry['name'] = 'FoulBrood Book' if ' Book' in name else 'FoulBrood'
+    _ensure_built_in(engines)
     action = payload.get('action')
     if isinstance(action, str) and action.startswith('hivebot_library_'):
         # Bridge for the History tab until the viewer has been restarted with its own library route.

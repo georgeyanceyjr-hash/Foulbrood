@@ -569,3 +569,5 @@ body.history-open main,body.history-open #enginePage{display:none!important}
 .hist-star{border:0;background:none;font-size:20px;line-height:1;padding:4px;cursor:pointer;color:var(--muted)}.hist-row.starred .hist-star{color:var(--gold)}
 .hist-text{display:grid;gap:2px;min-width:0}.hist-text strong{font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}.hist-text .caption{margin:0}
 .hist-buttons{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.hist-buttons button{margin:0}
+#perspectiveOption{display:none!important}
+.sfx-row{display:block}.sfx-try{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.sfx-try button{margin:0}

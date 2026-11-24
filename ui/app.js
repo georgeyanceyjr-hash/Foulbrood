@@ -722,6 +722,8 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
  }
  button.onclick=()=>{enabled=!enabled;try{document.cookie=`foulbrood_sound=${enabled?'on':'off'}; Max-Age=31536000; Path=/; SameSite=Strict`}catch(e){}sync();if(enabled){unlock();if(context)context.resume().then(chime).catch(()=>{})}else stop()};
  document.addEventListener('pointerdown',unlock,{capture:true});document.addEventListener('keydown',unlock,{capture:true});
+ // The extra sound effects (hivebot.js) play through the same output and volume as the game sounds.
+ window.foulbroodAudio=()=>enabled&&context&&context.state==='running'&&channels.game.value>0?{context,out:gameGain}:null;
  window.observeHumanTurn=s=>{
   const result=s.mode==='play'?(s.timeout_side!=null?'timeout':s.resigned_side!=null?'resignation':({Draw:'draw',WhiteWins:'win',BlackWins:'win'}[s.completed_state||s.live_game?.split(';')[1]||s.state]||null)):null;
   const playing=!result&&s.mode==='play'&&s.running&&s.timeout_side==null&&s.resigned_side==null;
@@ -733,7 +735,7 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
   if(previous&&(previous.key!==next.key||previous.mode!==next.mode||!next.running)&&!scheduledTimeout){stop();timeoutCueKey=null;}
   if(previous?.mode==='play'&&previous.running&&!previous.result&&result){
    const endings={resignation:[[0,523.25],[.24,392],[.48,261.63]],draw:[[0,392],[.24,523.25],[.48,392]],win:[[0,523.25],[.18,659.25],[.36,783.99],[.6,1046.5]]};
-   if(result==='timeout'){if(!scheduledTimeout){timeoutSound();timeoutCueKey=next.key;}}else chime(endings[result]);
+   if(result==='timeout'){if(!scheduledTimeout){timeoutSound();timeoutCueKey=next.key;}}else if(!(window.foulbroodSfx&&window.foulbroodSfx.ending(result,s)))chime(endings[result]);
   }
   // Opening/reloading the page and browsing Analysis must not announce old turns.
   if(previous&&previous.mode==='play'&&playing&&(!previous.playing||previous.key!==next.key))chime(null,pitch);

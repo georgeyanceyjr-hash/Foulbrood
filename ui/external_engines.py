@@ -128,7 +128,10 @@ class EngineLibrary:
         previous=next((e for e in self.entries if e['path']==entry['path'] or e['id']==entry['id']),None)
         if previous:entry['id']=previous['id'];self.entries.remove(previous)
         entry['connected']=True;self.entries.append(entry);self.save();return entry
-    def remove(self,key):self.entries=[e for e in self.entries if e['id']!=key];self.save()
+    def remove(self,key):
+        # The FoulBrood engine is part of the viewer and stays installed.
+        if (self.get(key) or {}).get('name') in ('FoulBrood','FoulBrood Book'):raise ValueError('FoulBrood is built in and cannot be removed.')
+        self.entries=[e for e in self.entries if e['id']!=key];self.save()
     def check_variant(self,key,variant):
         e=self.get(key)
         if not e:raise ValueError('That engine is no longer available.')
