@@ -638,3 +638,4 @@ input[type=checkbox]{accent-color:var(--ink)}[data-theme="dark"] input[type=chec
 .reserve button.reserve-gap{visibility:hidden;pointer-events:none}
 
 .moves>p{grid-column:1/-1;margin:0;font:13px/1.5 -apple-system,BlinkMacSystemFont,sans-serif}
+.moves:not(:has(*)){display:block;font:13px/1.5 -apple-system,BlinkMacSystemFont,sans-serif;color:var(--muted)}
