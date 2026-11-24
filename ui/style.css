@@ -640,3 +640,4 @@ input[type=checkbox]{accent-color:var(--ink)}[data-theme="dark"] input[type=chec
 .moves>p{grid-column:1/-1;margin:0;font:13px/1.5 -apple-system,BlinkMacSystemFont,sans-serif}
 .moves:not(:has(*)){display:block;font:13px/1.5 -apple-system,BlinkMacSystemFont,sans-serif;color:var(--muted)}
 #setupFromPlay,.setup-help{display:none!important}
+.analysis-modes{width:max-content;max-width:100%}.analysis-modes button{flex:0 0 auto;padding:10px 14px;white-space:nowrap}
