@@ -484,11 +484,12 @@ BOT = HiveBot()
 
 def hivebot_action(payload, engines):
     """Handle the bot panel's actions. `engines` is the viewer's EngineLibrary."""
-    # Show ThoraxRex without its net tag or build number (the viewer does the same when it starts).
+    # Show the engine under the FoulBrood name, without net tag or build number (the viewer does the same when it starts).
     for entry in getattr(engines, 'entries', None) or []:
         name = entry.get('name') if isinstance(entry, dict) else None
-        if isinstance(name, str) and name.startswith('ThoraxRex') and name not in ('ThoraxRex', 'ThoraxRex Book'):
-            entry['name'] = 'ThoraxRex Book' if ' Book' in name else 'ThoraxRex'
+        if isinstance(name, str) and name.startswith(('ThoraxRex', 'FoulBrood ')) and not name.startswith('FoulBrood Legacy') \
+                and name not in ('FoulBrood', 'FoulBrood Book'):
+            entry['name'] = 'FoulBrood Book' if ' Book' in name else 'FoulBrood'
     action = payload.get('action')
     if action == 'hivebot_status':
         if payload.get('lobby'):

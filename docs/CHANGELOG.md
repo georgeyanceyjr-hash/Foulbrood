@@ -5,7 +5,7 @@
 - Three challenge boxes: accept a waiting challenge (or accept automatically), open a challenge to the lobby with a rating range, or send one to a player who is online. Colour, time control and rated/casual can be chosen.
 - "Open current position/game in Analysis" takes the Live board to the Analysis tab.
 - Every sidebar box folds, with one title style.
-- ThoraxRex engines are listed as "ThoraxRex" and "ThoraxRex Book".
+- The FoulBrood engine is listed as "FoulBrood" and "FoulBrood Book".
 - Live keeps its own board: the game in Analysis is set aside when Live opens and put back when you return to Analysis.
 - "Open current game in Analysis" asks before replacing a game already in Analysis; "Clear game" clears the Live board and history, also after asking.
 - The bot's status shows on three lines, and a sent challenge is only shown while it is waiting.

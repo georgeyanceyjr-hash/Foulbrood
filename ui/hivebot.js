@@ -50,7 +50,7 @@
   if(select.dataset.engines===key)return;
   const wanted=select.value||saved.engine||'';select.replaceChildren();
   for(const e of list){const o=document.createElement('option');o.value=e.id;o.textContent=e.name;select.append(o)}
-  const preferred=list.find(e=>e.id===wanted)||list.find(e=>/thoraxrex.* book/i.test(e.name))||list.find(e=>/thoraxrex/i.test(e.name))||list[0];
+  const preferred=list.find(e=>e.id===wanted)||list.find(e=>/^(foulbrood|thoraxrex) book$/i.test(e.name))||list.find(e=>/^(foulbrood|thoraxrex)$/i.test(e.name))||list[0];
   if(preferred)select.value=preferred.id;select.dataset.engines=key;
  };
  // Challenge rules as the server wants them.

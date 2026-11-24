@@ -70,9 +70,9 @@ def release_display_name(path, name):
         return 'Foulbrood Legacy (bundled)'
     if resolved == str(Path.home()/'Documents/Codex/FoulBroodData/Engines/FoulBrood-Pillbug-test/foulbrood'):
         return 'Foulbrood 2.0'
-    # ThoraxRex is shown without its net tag or build number: "ThoraxRex Book" or "ThoraxRex".
-    if isinstance(name, str) and name.startswith('ThoraxRex'):
-        return 'ThoraxRex Book' if ' Book' in name else 'ThoraxRex'
+    # The engine is shown under the FoulBrood name, without net tag or build number: "FoulBrood Book" or "FoulBrood".
+    if isinstance(name, str) and name.startswith(('ThoraxRex', 'FoulBrood')) and not name.startswith('FoulBrood Legacy'):
+        return 'FoulBrood Book' if ' Book' in name else 'FoulBrood'
     return name
 
 def inspect_engine(path):
