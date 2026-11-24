@@ -16,6 +16,13 @@ import threading
 import time
 from pathlib import Path
 
+try:  # the History tab's store; refreshed whenever this module is reloaded
+    import importlib
+    import library
+    importlib.reload(library)
+except Exception:  # pragma: no cover - history must never stop the bot
+    library = None
+
 BOT_DIR = Path(os.environ.get('FOULBROOD_BOT_DIR', str(Path.home() / 'Documents/Codex/FoulBroodData/hivegame-bot')))
 CLIENT_DIR = BOT_DIR / 'client'
 BINARY = CLIENT_DIR / 'target' / 'release' / 'hive-hydra'
@@ -456,6 +463,20 @@ class HiveBot:
             BOT_DIR.mkdir(parents=True, exist_ok=True)
             with (BOT_DIR / 'games.jsonl').open('a') as out:
                 out.write(json.dumps(row) + '\n')
+            # The viewer's History tab.
+            import library
+            n = len(moves)
+            cards = [game.get('white_card') or {}, game.get('black_card') or {}]
+            clock = '%d+%d' % (int(game['base']) // 60, int(game.get('increment') or 0)) if game.get('base') else ''
+            library.add(dict(
+                game='Base+MLP;InProgress;%s[%d];%s' % ('White' if n % 2 == 0 else 'Black', n // 2 + 1, ';'.join(moves)),
+                white=game.get('white'), black=game.get('black'), result=game.get('result') or 'Finished', source='Live',
+                time_control=(clock + (' rated' if game.get('rated') else ' casual' if game.get('rated') is False else '')).strip(),
+                played=time.strftime('%Y-%m-%dT%H:%M:%S'), url='https://hivegame.com/game/' + str(game['id']),
+                white_rating=cards[0].get('rating'), black_rating=cards[1].get('rating'),
+                white_change=cards[0].get('change'), black_change=cards[1].get('change'),
+                white_kind='Bot' if cards[0].get('bot') else 'Human', black_kind='Bot' if cards[1].get('bot') else 'Human',
+                note=('Played by ' + self.engine_name) if self.engine_name else ''))
         except Exception as exc:  # never let record-keeping disturb play
             self.log.append('Could not save the game record: %s' % str(exc)[:120])
 
@@ -482,6 +503,47 @@ class HiveBot:
 BOT = HiveBot()
 
 
+def _backfill_history():
+    """First run of the History tab: bring in the bot games recorded before it existed."""
+    if library is None or library.INDEX.exists():
+        return
+    try:
+        rows = [json.loads(line) for line in (BOT_DIR / 'games.jsonl').read_text().splitlines() if line.strip()]
+    except (OSError, ValueError):
+        return
+    for row in rows:
+        try:
+            moves = [m for m in row.get('moves') or [] if isinstance(m, str) and m]
+            if not moves or not row.get('result'):
+                continue  # aborted before it got going
+            n = len(moves)
+            cards = [row.get('white_card') or {}, row.get('black_card') or {}]
+            clock = '%d+%d' % (int(row['base']) // 60, int(row.get('increment') or 0)) if row.get('base') else ''
+            played = ''
+            try:
+                played = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(__import__('calendar').timegm(time.strptime(row['finished'], '%Y-%m-%dT%H:%M:%SZ'))))
+            except (KeyError, ValueError):
+                pass
+            library.add(dict(
+                game='Base+MLP;InProgress;%s[%d];%s' % ('White' if n % 2 == 0 else 'Black', n // 2 + 1, ';'.join(moves)),
+                white=row.get('white'), black=row.get('black'), result=row.get('result'), source='Live',
+                time_control=(clock + (' rated' if row.get('rated') else ' casual' if row.get('rated') is False else '')).strip(),
+                played=played, url='https://hivegame.com/game/' + str(row.get('id')),
+                white_rating=cards[0].get('rating'), black_rating=cards[1].get('rating'),
+                white_change=cards[0].get('change'), black_change=cards[1].get('change'),
+                white_kind='Bot' if cards[0].get('bot') else ('Human' if cards[0] else ''),
+                black_kind='Bot' if cards[1].get('bot') else ('Human' if cards[1] else ''),
+                note=('Played by ' + str(row.get('engine'))) if row.get('engine') else ''))
+        except Exception:
+            continue
+
+
+try:
+    _backfill_history()
+except Exception:
+    pass
+
+
 def hivebot_action(payload, engines):
     """Handle the bot panel's actions. `engines` is the viewer's EngineLibrary."""
     # Show the engine under the FoulBrood name, without net tag or build number (the viewer does the same when it starts).
@@ -491,6 +553,10 @@ def hivebot_action(payload, engines):
                 and name not in ('FoulBrood', 'FoulBrood Book'):
             entry['name'] = 'FoulBrood Book' if ' Book' in name else 'FoulBrood'
     action = payload.get('action')
+    if isinstance(action, str) and action.startswith('hivebot_library_'):
+        # Bridge for the History tab until the viewer has been restarted with its own library route.
+        import library
+        return library.library_action(dict(payload, action=action[len('hivebot_'):]))
     if action == 'hivebot_status':
         if payload.get('lobby'):
             BOT.refresh_lobby()

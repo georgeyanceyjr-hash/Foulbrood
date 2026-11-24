@@ -898,6 +898,10 @@ def main():
                         # Pick up an updated hivebot.py without restarting the board.
                         hivebot.BOT.stop();importlib.reload(hivebot);payload={'action':'hivebot_status'}
                     self.send(200,json.dumps(hivebot.hivebot_action(payload,library)).encode());return
+                if str(payload.get('action','')).startswith('library_'):
+                    # Game history (History tab): its own small store, no board state involved.
+                    import library
+                    self.send(200,json.dumps(library.library_action(payload)).encode());return
                 if payload.get('action')=='engine_discover':
                     self.send(200,json.dumps(discover_engines()).encode());return
                 if payload.get('action')=='engine_browse':

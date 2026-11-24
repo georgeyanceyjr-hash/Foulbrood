@@ -557,3 +557,15 @@ details.hivebot-panel,section.hivebot-panel{width:100%}
 .hb-game a,.hb-game a:hover{color:#3b82f6}
 #hbStatus{white-space:pre-line}.hb-log[hidden]{display:none}
 .hb-two{margin-top:12px;gap:8px}.hb-two button{margin:0;white-space:normal;line-height:1.2;padding-top:8px;padding-bottom:8px}
+
+/* History tab */
+#historyPage{display:none;max-width:980px;margin:26px auto;padding:0 4%}
+body.history-open #historyPage{display:block}
+body.history-open main,body.history-open #enginePage{display:none!important}
+.history-library{padding:28px}.history-library input[type=search]{width:100%;margin-top:6px}
+.hist-list{display:grid;gap:8px;margin-top:10px}
+.hist-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.hist-row.starred{border-color:var(--gold)}
+.hist-star{border:0;background:none;font-size:20px;line-height:1;padding:4px;cursor:pointer;color:var(--muted)}.hist-row.starred .hist-star{color:var(--gold)}
+.hist-text{display:grid;gap:2px;min-width:0}.hist-text strong{font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}.hist-text .caption{margin:0}
+.hist-buttons{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.hist-buttons button{margin:0}

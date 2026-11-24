@@ -28,8 +28,8 @@
  const liveOn=()=>live&&typeof state!=='undefined'&&state&&state.mode==='analysis'&&!(typeof enginePageOpen!=='undefined'&&enginePageOpen);
  const fixTabs=()=>{
   const on=liveOn();document.body.classList.toggle('hb-live',on);
-  el('liveTab').classList.toggle('active',on);
-  if(on)el('analysisTab').classList.remove('active');
+  el('liveTab').classList.toggle('active',on&&!document.body.classList.contains('history-open'));
+  if(on||document.body.classList.contains('history-open'))el('analysisTab').classList.remove('active');
   el('hivebotPanel').hidden=!on;el('hbChallengesPanel').hidden=!on||el('hbChallenges').hidden;
  };
  const setLive=v=>{live=v;try{localStorage.setItem('foulbrood_live_tab',v?'1':'0')}catch(e){}};
@@ -400,9 +400,127 @@
   try{bot=await post({action:'hivebot_accept',...rules()})}catch(e){el('hbStatus').textContent=e.message}render();
  });
  el('hbLogin').addEventListener('input',render);
+ // What the History tab needs from Live.
+ window.foulbroodLive={ask,setLive:v=>{setLive(v);fixTabs()},boardIsLive:()=>botBoard(),hasStash:()=>hasGame(stash()),dropStash:()=>{stash(null);botBoard(false);shown={id:null,turn:-1}}};
  setTimeout(()=>{if(typeof state==='undefined'||!state||state.mode!=='analysis')return;(live?takeBoard():releaseBoard()).catch(()=>{})},1500);
  el('hbFollow').addEventListener('change',()=>{if(el('hbFollow').checked)shown={id:null,turn:-1};render()});
  el('hivebotDetails').addEventListener('toggle',()=>{refresh();schedule()});
  el('hbPassword').addEventListener('keydown',e=>{if(e.key==='Enter')el('hbStart').click()});
  setTimeout(()=>{refresh().then(()=>{if(bot&&bot.running)el('hivebotDetails').open=true;schedule()})},600);
+})();
+
+// ---- History tab: every game played, played by the bot, or imported, saved automatically ----
+(()=>{
+ const el=id=>document.getElementById(id),L=()=>window.foulbroodLive;
+ const call=async(name,payload={})=>{
+  const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Board-Token':window.BOARD_TOKEN},body:JSON.stringify({...payload,action:'hivebot_library_'+name})});
+  const d=await r.json();if(!r.ok)throw Error(d.error||'The game history is not available.');return d;
+ };
+ let open=false,timer=null;
+ const tabs=['playTab','liveTab','analysisTab','engineTab'];
+ const show=v=>{
+  open=v;document.body.classList.toggle('history-open',v);el('historyTab').classList.toggle('active',v);
+  if(v){for(const id of tabs)el(id).classList.remove('active');refresh()}
+ };
+ // Other scripts re-mark their own tab on every redraw; keep History the only marked one while it is open.
+ setInterval(()=>{if(open)for(const id of tabs)el(id).classList.remove('active')},200);
+ el('historyTab').onclick=()=>show(true);
+ for(const id of tabs)el(id).addEventListener('click',()=>show(false));
+
+ const when=text=>{const d=new Date(text);return isNaN(d)?'':d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})+' · '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})};
+ const player=(g,side)=>{
+  let text=g[side]||(side==='white'?'White':'Black');const r=g[side+'_rating'],c=g[side+'_change'];
+  if(r!=null){text+=' '+Math.round(r);if(c!=null){const d=Math.round(c);text+=' ('+(d>0?'+':d<0?'−':'±')+Math.abs(d)+')'}}
+  return text;
+ };
+ const draw=data=>{
+  const list=el('histList');list.replaceChildren();
+  el('histCount').textContent=data.total?`${data.total} game${data.total===1?'':'s'}`+(data.total>data.games.length?` · showing the first ${data.games.length}`:''):(el('histSearch').value.trim()?'No games match.':'No games yet. Finished games appear here on their own.');
+  for(const g of data.games){
+   const row=document.createElement('div');row.className='hist-row'+(g.starred?' starred':'');
+   const star=document.createElement('button');star.className='hist-star';star.textContent=g.starred?'★':'☆';star.title=g.starred?'Remove the star':'Star: keep at the top of the list';star.setAttribute('aria-pressed',String(!!g.starred));
+   star.onclick=async()=>{try{await call('star',{id:g.id,starred:!g.starred});refresh()}catch(e){toast(e.message)}};
+   const text=document.createElement('div');text.className='hist-text';
+   const title=document.createElement('strong');title.textContent=`${player(g,'white')}  vs  ${player(g,'black')}`;
+   const bits=[g.result||'',g.moves?`${g.moves} moves`:'',g.time_control||'',g.source||'',when(g.played||g.saved)];
+   if(g.review)bits.push(g.review.total&&g.review.reviewed<g.review.total?`Review ${g.review.reviewed} of ${g.review.total} moves`:'Reviewed'+(g.review.engine?' by '+g.review.engine:''));
+   const meta=document.createElement('span');meta.className='caption';meta.textContent=bits.filter(Boolean).join(' · ');
+   const kinds=[g.white_kind,g.black_kind].filter(Boolean).join(' vs ');
+   const extra=document.createElement('span');extra.className='caption';extra.textContent=[kinds,g.note].filter(Boolean).join(' · ');
+   text.append(title,meta);if(extra.textContent)text.append(extra);
+   const buttons=document.createElement('div');buttons.className='hist-buttons';
+   const openButton=document.createElement('button');openButton.textContent='Open in Analysis';openButton.onclick=()=>openGame(g.id).catch(e=>toast(e.message));
+   const del=document.createElement('button');del.textContent='Delete';
+   del.onclick=()=>L().ask('Delete this game?',`${g.white||'White'} vs ${g.black||'Black'} will be removed from the history`+(g.review?', with its review results':'')+'. Continue?','Delete',async()=>{try{await call('delete',{id:g.id});refresh()}catch(e){toast(e.message)}});
+   buttons.append(openButton,del);row.append(star,text,buttons);list.append(row);
+  }
+ };
+ const refresh=async()=>{try{draw(await call('list',{query:el('histSearch').value}))}catch(e){el('histCount').textContent=e.message}};
+ el('histSearch').addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(refresh,200)});
+
+ const free=async()=>{for(let i=0;i<40&&typeof busy!=='undefined'&&busy;i++)await new Promise(r=>setTimeout(r,100))};
+ const openGame=async id=>{
+  const g=await call('get',{id});
+  const loads=[];
+  if(g.review_text)loads.push({action:'review_load',text:g.review_text,filename:'history.pgn'});
+  if(g.url&&/;InProgress;/.test(g.game||'')&&g.result&&g.result!=='In progress')loads.push({action:'load_link',url:g.url}); // the site's record carries the result
+  loads.push({action:'load',text:g.game});
+  const go=async confirmed=>{
+   show(false);if(typeof enginePageOpen!=='undefined')enginePageOpen=false;L().setLive(false);
+   await free();await action({action:'mode',mode:'analysis'});
+   for(const payload of loads){
+    await free();
+    const done=await action(confirmed?{...payload,confirm_review_clear:true}:payload); // unconfirmed: the viewer asks by itself if Analysis holds a game
+    if(done||document.getElementById('resignDialog').open)break;
+   }
+  };
+  // Live may be holding the board with the Analysis game set aside: that set-aside game is what would be replaced.
+  if(L().boardIsLive()){
+   if(L().hasStash())L().ask('Replace game and history?','This will replace the current Analysis position and game history. Continue?','Open in Analysis',()=>{L().dropStash();go(true)});
+   else{L().dropStash();go(true)}
+  }else go(false);
+ };
+
+ // ---- automatic saving, driven by what the viewer shows ----
+ const now=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`};
+ const save=fields=>call('save',fields).then(()=>{if(open)refresh()}).catch(()=>{});
+ let lastPlay='',lastImport='',lastLive='',lastReview='',reviewBusy=false;
+ const outcome=s=>{
+  const lost=s.resigned_side!=null?s.resigned_side:s.timeout_side;
+  if(lost!=null)return (lost===0?'Black':'White')+' won'+(s.resigned_side!=null?' by resignation':' on time');
+  return {WhiteWins:'White won',BlackWins:'Black won',Draw:'Draw','1-0':'White won','0-1':'Black won','1/2-1/2':'Draw'}[s.reported_result]||{WhiteWins:'White won',BlackWins:'Black won',Draw:'Draw'}[s.completed_state]||'In progress';
+ };
+ const observe=s=>{
+  if(!s||!s.review_game)return;
+  const names=s.player_names||[];
+  if(s.mode==='play'&&s.play_finished&&s.review_game!==lastPlay){
+   lastPlay=s.review_game;
+   const who=i=>{const p=(s.players||[])[i];if(!p||p==='Human')return names[i]||'Human';const e=(s.engines||[]).find(x=>x.id===p);return e?e.name:String(p)};
+   const kind=i=>((s.players||[])[i]==='Human'?'Human':'Engine');
+   save({game:s.review_game,white:who(0),black:who(1),white_kind:kind(0),black_kind:kind(1),result:outcome(s),source:'Play',time_control:String(s.time_control||''),played:now()});
+  }
+  if(s.mode!=='analysis'||!s.review_total)return;
+  if(L()&&L().boardIsLive()){
+   // A bot game on the Live board: once it is over, keep the viewer's exact record of it.
+   if(s.review_game!==lastLive&&!/^(InProgress|NotStarted)$/.test(s.completed_state||'')){lastLive=s.review_game;save({game:s.review_game})}
+   return;
+  }
+  const importKey=(s.import_info||'')+'|'+s.review_total;
+  if(s.import_info&&!/^Set-up position/.test(s.import_info)&&importKey!==lastImport&&s.ply===s.review_total){
+   lastImport=importKey;
+   save({game:s.review_game,white:names[0]||'',black:names[1]||'',result:outcome(s),source:'Imported',note:String(s.import_info).slice(0,150)});
+  }
+  const r=s.game_review,rows=r&&(r.rows||[]).length;
+  if(rows&&r.status!=='running'&&!reviewBusy){
+   const key=s.review_game+'|'+rows+'|'+r.status;
+   if(key!==lastReview){
+    lastReview=key;reviewBusy=true;
+    fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Board-Token':window.BOARD_TOKEN},body:JSON.stringify({action:'review_save'})})
+     .then(async res=>{const d=await res.json();if(res.ok&&d.text)await call('review',{game:s.review_game,text:d.text,reviewed:rows,total:r.total||s.review_total,engine:r.engine||''})})
+     .catch(()=>{}).finally(()=>{reviewBusy=false;if(open)refresh()});
+   }
+  }
+ };
+ const earlier=window.renderBotThoughts;
+ window.renderBotThoughts=s=>{if(earlier)earlier(s);try{observe(s)}catch(e){}};
 })();

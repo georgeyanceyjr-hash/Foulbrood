@@ -1,3 +1,10 @@
+# History tab (24 November 2026)
+
+- Added a **History** tab (Play, Live, Analysis, History, Engine): every game played in the viewer, played by the bot on hivegame.com, or imported is saved automatically when it ends or is brought in.
+- Each game shows the players, ratings and rating changes where known, result, number of moves, time control, where it came from, and date and time.
+- Games can be searched, starred (starred games stay at the top), opened in Analysis (asking first if Analysis already holds a game) or deleted.
+- Finished and partial game reviews are saved with their game and reopen with it.
+
 # Live tab (24 November 2026)
 
 - Added a **Live** tab between Play and Analysis for playing on hivegame.com with a bot account: log in (saved in the macOS Keychain), pick the engine, and watch the game on the board with clocks, sounds and the engine's thinking in the player bars.
