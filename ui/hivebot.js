@@ -2,6 +2,9 @@
 (()=>{
  const el=id=>document.getElementById(id);
  if(!el('hivebotPanel'))return;
+ let cleared=null; // id of a finished game the user cleared off the Live board (remembered across reloads)
+ try{cleared=localStorage.getItem('foulbrood_live_cleared')||null}catch(e){}
+ const setCleared=v=>{cleared=v;try{v?localStorage.setItem('foulbrood_live_cleared',v):localStorage.removeItem('foulbrood_live_cleared')}catch(e){}};
  let bot=null,shown={id:null,turn:-1},starting=false,timer=null,clockCard=null,clockFetched=0;
  const post=async payload=>{
   const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Board-Token':window.BOARD_TOKEN},body:JSON.stringify(payload)});
@@ -30,8 +33,8 @@
   el('hivebotPanel').hidden=!on;el('hbChallengesPanel').hidden=!on||el('hbChallenges').hidden;
  };
  const setLive=v=>{live=v;try{localStorage.setItem('foulbrood_live_tab',v?'1':'0')}catch(e){}};
- el('liveTab').onclick=()=>{setLive(true);if(typeof enginePageOpen!=='undefined')enginePageOpen=false;shown={id:null,turn:-1};action({action:'mode',mode:'analysis'});setTimeout(()=>{fixTabs();render()},50)};
- for(const id of ['playTab','analysisTab','engineTab'])el(id).addEventListener('click',()=>{setLive(false);setTimeout(fixTabs,50)});
+ el('liveTab').onclick=()=>{setLive(true);if(typeof enginePageOpen!=='undefined')enginePageOpen=false;shown={id:null,turn:-1};action({action:'mode',mode:'analysis'});setTimeout(()=>{fixTabs();takeBoard().catch(()=>{}).then(()=>render())},300)};
+ for(const id of ['playTab','analysisTab','engineTab'])el(id).addEventListener('click',()=>{setLive(false);setTimeout(fixTabs,50);if(id==='analysisTab')setTimeout(()=>releaseBoard().catch(()=>{}),300)});
  const remember=()=>{try{localStorage.setItem('foulbrood_hivebot',JSON.stringify({login:el('hbLogin').value,engine:el('hbEngine').value,follow:el('hbFollow').checked,auto:el('hbAuto').checked,humans:el('hbHumans').checked,color:el('hbColor').value,acceptTime:el('hbAcceptTime').value,max:el('hbMax').value,only:el('hbOnly').value}))}catch(e){}};
  if(saved.login)el('hbLogin').value=saved.login;
  el('hbMax').closest('label').style.display='none';
@@ -57,9 +60,29 @@
   return {humans:el('hbHumans').checked,accept:auto?only:[],anyone:auto&&!only.length,max_games:auto?1000000:0,clock:v==='any'?null:v.split('+').map(Number)};
  };
  const names=g=>`${g.white||'White'} vs ${g.black||'Black'}`;
+ // Live borrows the Analysis board. Whatever game was in Analysis is set aside first and put back when
+ // the user goes to the Analysis tab, unless they chose to open the Live game there.
+ const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}return null};
+ const stash=v=>ls('foulbrood_analysis_stash',v),botBoard=v=>v===undefined?ls('foulbrood_live_board')==='1':ls('foulbrood_live_board',v?'1':null);
+ const hasGame=text=>!!text&&text.split(';').length>3;
+ const whenFree=async fn=>{for(let i=0;i<40&&typeof busy!=='undefined'&&busy;i++)await new Promise(r=>setTimeout(r,100));return fn()};
+ const releaseBoard=async()=>{
+  if(!botBoard()||typeof state==='undefined'||!state)return;
+  const saved=stash();botBoard(false);stash(null);shown={id:null,turn:-1};
+  await whenFree(()=>action({action:'load',text:hasGame(saved)?saved:state.game.split(';')[0].split('~')[0],confirm_review_clear:true}));
+ };
+ // Entering Live: set the Analysis game aside and start from an empty board (the bot's game is loaded next, if any).
+ const takeBoard=async()=>{
+  if(botBoard()||typeof state==='undefined'||!state||state.mode!=='analysis')return;
+  if(hasGame(state.game))stash(state.game);
+  botBoard(true);shown={id:null,turn:-1};
+  if(hasGame(state.game))await whenFree(()=>action({action:'load',text:state.game.split(';')[0].split('~')[0],confirm_review_clear:true}));
+ };
  const showOnBoard=async g=>{
   if(!g||typeof action!=='function')return;
   if(typeof busy!=='undefined'&&busy)return;
+  if(!botBoard()&&typeof state!=='undefined'&&state&&hasGame(state.game))stash(state.game);
+  botBoard(true);
   shown={id:g.id,turn:g.turn};
   try{await action({action:'load_link',url:g.url,confirm_review_clear:true})}catch(e){}
  };
@@ -150,7 +173,8 @@
    el('hbLink').href=card.url;el('hbLink').onclick=e=>{e.preventDefault();post({action:'hivebot_open',url:card.url}).catch(()=>window.open(card.url,'_blank'))};el('hbShow').onclick=()=>showOnBoard(card);el('hbShow').hidden=el('hbFollow').checked;
   }
   // Same button as on the Play page: take what is on the Live board over to Analysis.
-  el('hbToAnalysis').hidden=false;el('hbToAnalysis').textContent=g?'Open current position in Analysis':'Open current game in Analysis';
+  el('hbToAnalysis').hidden=false;{const some=typeof state!=='undefined'&&state&&hasGame(state.game);el('hbClear').disabled=!!g||!some;el('hbToAnalysis').disabled=!some} // nothing to clear mid-game, nothing to open or clear on an empty board
+  el('hbToAnalysis').textContent=g?'Open current position in Analysis':'Open current game in Analysis';
   clockCard=card||null;clockFetched=Date.now();drawClocks();drawThought(card);
   if(connected){
    const who=bot.anyone?'anyone':(bot.accept||[]).join(', ');
@@ -161,7 +185,8 @@
   }
   const pending=(bot.lobby||[]).some(c=>c.mine); // a sent challenge is only news while it is still waiting
   el('hbLog').textContent=(bot.log||[]).filter(line=>!/^Accepted a challenge/.test(line)&&(pending||!/^Challenge sent/.test(line))).slice(-3).join('\n');el('hbLog').hidden=!el('hbLog').textContent;
-  if(liveOn()&&el('hbFollow').checked&&card&&(card.id!==shown.id||card.turn!==shown.turn))showOnBoard(card);
+  if(card&&!card.finished&&cleared)setCleared(null);
+  if(liveOn()&&el('hbFollow').checked&&card&&cleared!==card.id&&(card.id!==shown.id||card.turn!==shown.turn))showOnBoard(card);
   try{if(typeof state!=='undefined'&&state){drawNativeStrip(state);drawNativePreview(state);drawIdentity(state)}}catch(e){}
   try{feedSounds()}catch(e){}
  };
@@ -184,7 +209,7 @@
  const boardCard=s=>{
   if(!bot||bot.state!=='connected'||s.mode!=='analysis'||!liveOn()||s.game_review)return null;
   const card=bot.current||[...(bot.games||[])].reverse().find(x=>x.finished);
-  if(!card||shown.id!==card.id)return null;
+  if(!card||shown.id!==card.id||cleared===card.id)return null;
   if(typeof editorDraft!=='undefined'&&editorDraft)return null;
   return card;
  };
@@ -324,12 +349,40 @@
   button.disabled=false;render();
  };
  el('hbTime').addEventListener('change',()=>render()); // ratings in the opponent menu follow the chosen time control
- el('hbToAnalysis').onclick=async()=>{
+ const clearBoard=async()=>{
+  const last=bot&&[...(bot.games||[])].reverse().find(g=>g.finished);setCleared(last?last.id:'none');shown={id:null,turn:-1};
+  try{await whenFree(()=>action({action:'load',text:state.game.split(';')[0].split('~')[0],confirm_review_clear:true}))}catch(e){}
+  render();
+ };
+ el('hbClear').onclick=()=>{
+  if(bot&&bot.current)return;if(typeof state==='undefined'||!state||state.mode!=='analysis')return;
+  if(hasGame(state.game))ask('Clear game and history?','This will clear the board and the game history. Continue?','Clear game',clearBoard);
+ };
+
+ const toAnalysis=async()=>{
   const card=bot&&(bot.current||[...(bot.games||[])].reverse().find(g=>g.finished));
-  if(card&&(card.id!==shown.id||card.turn!==shown.turn))await showOnBoard(card);
-  setLive(false);fixTabs();if(typeof state!=='undefined'&&state&&typeof render==='function')render();
+  if(card&&cleared!==card.id&&(card.id!==shown.id||card.turn!==shown.turn))await showOnBoard(card);
+  stash(null);botBoard(false); // the Live game now is the Analysis game
+  setLive(false);fixTabs();render();
   if(typeof window.render==='function'&&typeof serverState!=='undefined'&&serverState)window.render(serverState);
  };
+ // The viewer's own "are you sure" dialog, with our action on Continue.
+ const ask=(title,message,label,fn)=>{
+  if(typeof state==='undefined'||!state||(typeof busy!=='undefined'&&busy))return;
+  const dialog=el('resignDialog'),ok=el('confirmResign');
+  el('resignTitle').textContent=title;el('resignMessage').textContent=message;ok.textContent=label;
+  const yes=e=>{e.preventDefault();e.stopImmediatePropagation();done();dialog.close();fn()};
+  const done=()=>{ok.removeEventListener('click',yes,true);dialog.removeEventListener('close',done)};
+  ok.addEventListener('click',yes,true);dialog.addEventListener('close',done);
+  dialog.showModal();
+ };
+ el('hbToAnalysis').onclick=()=>{
+  // Analysis already holds a game: ask first, as the Play page does.
+  if(hasGame(stash()))ask('Replace game and history?','This will replace the current Analysis position and game history. Continue?','Open in Analysis',toAnalysis);
+  else toAnalysis();
+ };
+
+
  el('hbPick').addEventListener('change',()=>{el('hbTake').disabled=!el('hbPick').value||!!(bot&&bot.current)});
  el('hbTake').onclick=async()=>{const id=el('hbPick').value;if(!id)return;el('hbTake').disabled=true;try{bot=await post({action:'hivebot_take',id})}catch(e){el('hbStatus').textContent=e.message}render()};
  el('hbSend').onclick=()=>{
@@ -347,6 +400,7 @@
   try{bot=await post({action:'hivebot_accept',...rules()})}catch(e){el('hbStatus').textContent=e.message}render();
  });
  el('hbLogin').addEventListener('input',render);
+ setTimeout(()=>{if(typeof state==='undefined'||!state||state.mode!=='analysis')return;(live?takeBoard():releaseBoard()).catch(()=>{})},1500);
  el('hbFollow').addEventListener('change',()=>{if(el('hbFollow').checked)shown={id:null,turn:-1};render()});
  el('hivebotDetails').addEventListener('toggle',()=>{refresh();schedule()});
  el('hbPassword').addEventListener('keydown',e=>{if(e.key==='Enter')el('hbStart').click()});

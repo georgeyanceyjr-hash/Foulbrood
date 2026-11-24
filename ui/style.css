@@ -556,3 +556,4 @@ details.hivebot-panel,section.hivebot-panel{width:100%}
 .hb-game[hidden]{display:none}
 .hb-game a,.hb-game a:hover{color:#3b82f6}
 #hbStatus{white-space:pre-line}.hb-log[hidden]{display:none}
+.hb-two{margin-top:12px;gap:8px}.hb-two button{margin:0;white-space:normal;line-height:1.2;padding-top:8px;padding-bottom:8px}

@@ -6,6 +6,9 @@
 - "Open current position/game in Analysis" takes the Live board to the Analysis tab.
 - Every sidebar box folds, with one title style.
 - ThoraxRex engines are listed as "ThoraxRex" and "ThoraxRex Book".
+- Live keeps its own board: the game in Analysis is set aside when Live opens and put back when you return to Analysis.
+- "Open current game in Analysis" asks before replacing a game already in Analysis; "Clear game" clears the Live board and history, also after asking.
+- The bot's status shows on three lines, and a sent challenge is only shown while it is waiting.
 - Includes the viewer changes made since Beta 3.
 
 # Beta 3
