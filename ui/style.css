@@ -641,3 +641,11 @@ input[type=checkbox]{accent-color:var(--ink)}[data-theme="dark"] input[type=chec
 .moves:not(:has(*)){display:block;font:13px/1.5 -apple-system,BlinkMacSystemFont,sans-serif;color:var(--muted)}
 #setupFromPlay,.setup-help{display:none!important}
 .analysis-modes{width:max-content;max-width:100%}.analysis-modes button{flex:0 0 auto;padding:10px 14px;white-space:nowrap}
+#positionEditor{border-top:0;margin-top:0;padding-top:0}
+#positionEditor .setup-heading h3{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:0 0 16px}
+#positionEditor .setup-imports{margin-bottom:16px}
+#positionEditor .setup-side-field>span,#positionEditor label{font-size:12px;color:var(--muted)}
+#positionEditor .setup-last-card{border-radius:2px;margin:16px 0}
+#positionEditor .setup-last-card strong{font-size:13px}
+#positionEditor .setup-last-card .muted{font-size:12px}
+#positionEditor input,#positionEditor button{border-radius:2px}
