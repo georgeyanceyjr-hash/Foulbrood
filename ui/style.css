@@ -891,3 +891,7 @@ body.hb-live.hb-manual.hb-insight #engineInsightPanel{display:block!important}
 @container (min-width:781px){
  .player:not(.review-insight) .bot-thought-strip{gap:clamp(12px,2.2cqw,30px);margin-right:16px}
 }
+/* Narrower windows: the status strip becomes two rows of two so it can never reach the clock. */
+@container (min-width:781px) and (max-width:930px){
+ .player:not(.review-insight) .bot-thought-strip{display:grid;grid-template-columns:max-content max-content;gap:6px 24px;justify-content:start;align-items:baseline;margin-right:0}
+}
