@@ -372,7 +372,7 @@
  };
  el('hbClear').onclick=()=>{
   if(bot&&bot.current)return;if(typeof state==='undefined'||!state||state.mode!=='analysis')return;
-  if(hasGame(state.game))ask('Bury this game?','This will clear the board and the game history. Continue?','Bury game',clearBoard);
+  if(hasGame(state.game))ask('Bury this game?','This will clear the board and the game history. Continue?','Clear game',clearBoard);
  };
 
  const toAnalysis=async()=>{
@@ -631,7 +631,7 @@ window.foulbroodSfx=(()=>{
  const tag=make('div','fb-tag');tag.hidden=true;wrap.append(tag);
  const over=make('div','fb-over');over.hidden=true;over.setAttribute('role','status');
  const stamp=make('div','fb-stamp'),names=make('div','fb-names'),line=make('div','fb-line'),buttons=make('div','fb-buttons');
- const open=make('button','go','Open in Analysis'),bury=make('button','','Bury game'),close=make('button','','Close');
+ const open=make('button','go','Open in Analysis'),bury=make('button','','Clear game'),close=make('button','','Close');
  buttons.append(open,bury,close);over.append(stamp,names,line,buttons);wrap.append(over);
  let dismissed='',shownKey='';
  const hide=()=>{dismissed=shownKey;over.hidden=true};
