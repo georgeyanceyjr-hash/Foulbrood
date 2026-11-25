@@ -687,3 +687,9 @@ header .header-tools .sound-settings>summary{font-size:14px!important}
 .player .clock,.player.bot-duel .clock{font-family:'Archivo Black','Arial Black',Impact,'Helvetica Neue',sans-serif;font-weight:900;letter-spacing:.02em;font-variant-numeric:tabular-nums}
 .player .insight-source,.player .player-identity>.muted{letter-spacing:.02em}
 .player .clock::before,.player.bot-duel:not(.analysis-insight) .clock::before{font-family:Archivo,-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+/* Eval bar: White's share in bone from the left, Black's in black, a marker where they meet. */
+.evaluation-scale,.player .evaluation-scale,.position-score .evaluation-scale{height:10px;overflow:hidden;border-radius:0;border:1px solid var(--muted);background:#0d0e0c}
+.evaluation-scale>span,.player .evaluation-scale>span,.position-score .evaluation-scale>span{top:0;height:100%;width:3px;border-radius:0;box-shadow:none;z-index:1}
+.evaluation-scale>span::before{content:'';position:absolute;right:100%;top:0;height:100%;width:3000px;background:#eee6cc}
+.evaluation-scale::after{z-index:2;border-left:1px solid #8a8a80;opacity:.9}
+.evaluation-scale:not(:has(span)){background:repeating-linear-gradient(-45deg,transparent 0 4px,var(--line) 4px 8px)}
