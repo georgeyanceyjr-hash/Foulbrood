@@ -172,7 +172,7 @@
    if(g){summary='Hunting';status='';}
    else if(last){status=`Connected as ${bot.user}.\nLast game: ${names(last)} — ${last.result||'finished'}.\nWaiting for the next game.`;}
   }
-  el('hbSummary').textContent=summary;el('hbStatus').textContent=status;el('hbStatus').hidden=!status;
+  el('hbSummary').textContent=summary;el('hbLight').className='hb-light '+(connected?'on':bot.state==='starting'||bot.state==='building'?'wait':'off');site(bot.site);el('hbStatus').textContent=status;el('hbStatus').hidden=!status;
   const card=g||last;el('hbGame').hidden=!card;
   if(card){
    el('hbPlayers').textContent=names(card);el('hbPlayers').parentElement.hidden=true; // the pairing and result are in the status lines and the player bars
@@ -327,6 +327,7 @@
   const nativeThoughts=window.renderBotThoughts;
   window.renderBotThoughts=s=>{nativeThoughts(s);fixTabs();try{drawNativeStrip(s);drawOpponentStrip(s);drawIdentity(s);drawNativePreview(s);drawClocks()}catch(e){}};
  }
+ const site=ok=>{let s=el('hbSite');if(!s){const t=document.querySelector('.header-tools');if(!t)return;s=document.createElement('span');s.id='hbSite';s.className='hb-site';s.innerHTML='<i class="hb-light" aria-hidden="true"></i>hivegame.com';t.prepend(s)}s.firstChild.className='hb-light '+(ok===true?'on':ok===false?'off':'wait');s.title=ok===true?'Connected to hivegame.com':ok===false?'Can\u2019t reach hivegame.com':'Checking hivegame.com';};
  const refresh=async()=>{try{bot=await post({action:'hivebot_status',lobby:el('hivebotDetails').open});render()}catch(e){}};
  const schedule=()=>{clearTimeout(timer);timer=setTimeout(async()=>{await refresh();schedule()},bot&&bot.running?2000:el('hivebotDetails').open?4000:15000)};
  el('hbStart').onclick=async()=>{

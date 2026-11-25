@@ -497,7 +497,34 @@ class HiveBot:
                         saved_login=saved_login(), accept=list(self.accept), max_games=self.max_games,
                         anyone=self.anyone, humans=bool(getattr(self, 'humans', False)), clock=list(self.clock) if self.clock else None,
                         lobby=list(self.lobby) if self.state == 'connected' else [],
-                        online=list(getattr(self, 'online', [])) if self.state == 'connected' else [])
+                        online=list(getattr(self, 'online', [])) if self.state == 'connected' else [],
+                        site=True if self.state == 'connected' else site_online())
+
+
+_SITE = {'ok': None, 'at': 0.0, 'busy': False}
+
+
+def _site_check():
+    ok = False
+    try:
+        from urllib.request import Request, urlopen
+        from urllib.error import HTTPError
+        try:
+            with urlopen(Request('https://hivegame.com/', headers={'User-Agent': 'FoulBrood/1.0 (connection check)'}), timeout=6) as r:
+                ok = r.status < 500
+        except HTTPError as e:
+            ok = e.code < 500
+    except Exception:
+        ok = False
+    _SITE.update(ok=ok, at=time.time(), busy=False)
+
+
+def site_online():
+    """Whether hivegame.com can be reached from this computer (checked in the background, at most every 30 s)."""
+    if not _SITE['busy'] and time.time() - _SITE['at'] > 30:
+        _SITE['busy'] = True
+        threading.Thread(target=_site_check, daemon=True).start()
+    return _SITE['ok']
 
 
 BOT = HiveBot()

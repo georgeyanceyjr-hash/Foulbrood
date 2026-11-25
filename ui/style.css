@@ -650,3 +650,9 @@ input[type=checkbox]{accent-color:var(--ink)}[data-theme="dark"] input[type=chec
 #positionEditor .setup-last-card .muted{font-size:12px}
 #positionEditor input,#positionEditor button{border-radius:2px}
 header .brand-image,.brand-image{width:64px;height:64px;border-radius:2px}
+.hb-light{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 7px 0 6px;background:#8a8a80;flex:none}
+.hb-light.on{background:#35c25a;box-shadow:0 0 0 2px rgba(53,194,90,.22)}
+.hb-light.off{background:#e0392b;box-shadow:0 0 0 2px rgba(224,57,43,.22)}
+.hb-light.wait{background:var(--hazard)}
+.hb-site{display:inline-flex;align-items:center;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.hb-site .hb-light{margin:0 7px 0 0}
