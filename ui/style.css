@@ -758,3 +758,9 @@ header .header-tools .sound-settings>summary{font-size:14px!important}
 @container (min-width:781px){
  .player.review-insight .review-thought-heading,.player.review-insight .review-thought-heading.has-reviewed-move{padding-right:26px}
 }
+/* Review: the played move is plain, the preferred move is the highlighted one. */
+@container (min-width:781px){
+ .player.review-insight .review-thought-cell:nth-child(2)>.bot-field-value{color:var(--ink)}
+ .player.review-insight .review-thought-cell:nth-child(3){padding:6px 10px;border:1px solid var(--thought-color);background:color-mix(in srgb,var(--thought-color) 10%,transparent)}
+ .player.review-insight .review-thought-cell:nth-child(3)>.bot-field-label{color:var(--thought-color)}
+}
