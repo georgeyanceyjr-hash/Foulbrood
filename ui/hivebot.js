@@ -340,7 +340,7 @@
  el('hbStart').onclick=async()=>{
   starting=true;el('hbStart').disabled=true;el('hbStatus').textContent='Starting…';remember();
   try{bot=await post({action:'hivebot_start',login:el('hbLogin').value,password:el('hbPassword').value,engine:el('hbEngine').value,...rules(),min_base:600,remember:el('hbRemember').checked&&!!el('hbPassword').value});el('hbPassword').value='';}
-  catch(e){el('hbStatus').textContent=e.message}
+  catch(e){el('hbStatus').textContent=(window.plainMessage?window.plainMessage(e.message):e.message)}
   finally{starting=false;render();schedule()}
  };
  // Changing the engine while the bot is connected: restart the bot with the new engine (the saved
@@ -353,16 +353,16 @@
   if(bot.current){enginePending=true;return}
   enginePending=false;switching=true;starting=true;el('hbStatus').textContent='Switching engine…';
   try{await post({action:'hivebot_stop'});bot=await post({action:'hivebot_start',login:el('hbLogin').value||bot.saved_login||bot.user||'',password:'',engine:el('hbEngine').value,...rules(),min_base:600,remember:false})}
-  catch(e){el('hbStatus').textContent=e.message}
+  catch(e){el('hbStatus').textContent=(window.plainMessage?window.plainMessage(e.message):e.message)}
   finally{switching=false;starting=false;render();schedule()}
  };
  el('hbEngine').addEventListener('change',switchEngine);
- el('hbStop').onclick=async()=>{el('hbStop').disabled=true;try{bot=await post({action:'hivebot_stop'})}catch(e){el('hbStatus').textContent=e.message}render();schedule()};
- el('hbForget').onclick=async()=>{try{bot=await post({action:'hivebot_forget'})}catch(e){el('hbStatus').textContent=e.message}render()};
+ el('hbStop').onclick=async()=>{el('hbStop').disabled=true;try{bot=await post({action:'hivebot_stop'})}catch(e){el('hbStatus').textContent=(window.plainMessage?window.plainMessage(e.message):e.message)}render();schedule()};
+ el('hbForget').onclick=async()=>{try{bot=await post({action:'hivebot_forget'})}catch(e){el('hbStatus').textContent=(window.plainMessage?window.plainMessage(e.message):e.message)}render()};
  // Two ways to challenge: open (the lobby, with a rating range) or sent to one named player.
  const challenge=async(button,payload)=>{
   button.disabled=true;
-  try{bot=await post({action:'hivebot_challenge',...payload})}catch(e){el('hbStatus').textContent=e.message}
+  try{bot=await post({action:'hivebot_challenge',...payload})}catch(e){el('hbStatus').textContent=(window.plainMessage?window.plainMessage(e.message):e.message)}
   button.disabled=false;render();
  };
  el('hbTime').addEventListener('change',()=>render()); // ratings in the opponent menu follow the chosen time control
@@ -401,7 +401,7 @@
 
 
  el('hbPick').addEventListener('change',()=>{el('hbTake').disabled=!el('hbPick').value||!!(bot&&bot.current)});
- el('hbTake').onclick=async()=>{const id=el('hbPick').value;if(!id)return;el('hbTake').disabled=true;try{bot=await post({action:'hivebot_take',id})}catch(e){el('hbStatus').textContent=e.message}render()};
+ el('hbTake').onclick=async()=>{const id=el('hbPick').value;if(!id)return;el('hbTake').disabled=true;try{bot=await post({action:'hivebot_take',id})}catch(e){el('hbStatus').textContent=(window.plainMessage?window.plainMessage(e.message):e.message)}render()};
  el('hbSend').onclick=()=>{
   const opponent=el('hbOpponent').value.trim();if(!opponent){el('hbOpponent').focus();return}
   const [base,increment]=el('hbTime').value.split('+').map(Number);
@@ -414,7 +414,7 @@
  for(const id of ['hbFollow','hbEngine','hbLogin'])el(id).addEventListener('change',remember);
  for(const id of ['hbAuto','hbAcceptTime','hbMax','hbOnly','hbHumans'])el(id).addEventListener('change',async()=>{
   remember();if(!bot||!bot.running)return;
-  try{bot=await post({action:'hivebot_accept',...rules()})}catch(e){el('hbStatus').textContent=e.message}render();
+  try{bot=await post({action:'hivebot_accept',...rules()})}catch(e){el('hbStatus').textContent=(window.plainMessage?window.plainMessage(e.message):e.message)}render();
  });
  el('hbLogin').addEventListener('input',render);
  // What the History tab needs from Live.
@@ -472,7 +472,7 @@
    buttons.append(openButton,del);row.append(star,text,buttons);list.append(row);
   }
  };
- const refresh=async()=>{try{draw(await call('list',{query:el('histSearch').value}))}catch(e){el('histCount').textContent=e.message}};
+ const refresh=async()=>{try{draw(await call('list',{query:el('histSearch').value}))}catch(e){el('histCount').textContent=(window.plainMessage?window.plainMessage(e.message):e.message)}};
  el('histSearch').addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(refresh,200)});
 
  const free=async()=>{for(let i=0;i<40&&typeof busy!=='undefined'&&busy;i++)await new Promise(r=>setTimeout(r,100))};
