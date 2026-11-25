@@ -764,3 +764,10 @@ header .header-tools .sound-settings>summary{font-size:14px!important}
  .player.review-insight .review-thought-cell:nth-child(3){padding:6px 10px;border:1px solid var(--thought-color);background:color-mix(in srgb,var(--thought-color) 10%,transparent)}
  .player.review-insight .review-thought-cell:nth-child(3)>.bot-field-label{color:var(--thought-color)}
 }
+/* Review heading: move number as a small line of its own (real elements, so the width is measured right). */
+.review-thought-heading>small{display:block;font-family:Archivo,-apple-system,BlinkMacSystemFont,sans-serif;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);line-height:1.5}
+.review-thought-heading>span{display:block}
+.review-thought-heading.has-reviewed-move::first-line,.player.review-insight .review-thought-heading.has-reviewed-move::first-line{font-family:inherit;font-size:inherit;font-weight:inherit;letter-spacing:inherit;color:inherit}
+@container (min-width:781px){
+ .player.review-insight .review-thought-heading,.player.review-insight .review-thought-heading.has-reviewed-move{padding-right:0;white-space:nowrap}
+}
