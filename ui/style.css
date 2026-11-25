@@ -693,3 +693,31 @@ header .header-tools .sound-settings>summary{font-size:14px!important}
 .evaluation-scale>span::before{content:'';position:absolute;right:100%;top:0;height:100%;width:3000px;background:#eee6cc}
 .evaluation-scale::after{z-index:2;border-left:1px solid #8a8a80;opacity:.9}
 .evaluation-scale:not(:has(span)){background:repeating-linear-gradient(-45deg,transparent 0 4px,var(--line) 4px 8px)}
+
+/* ---- Status bars, one-line layout: name, stats in a row, clock; the eval bar is the bottom edge ---- */
+.player .bot-position,.player .bot-depth{position:static}
+.player .bot-position::before,.player .bot-depth::before{content:none}
+@container (min-width:781px){
+ .player:not(.review-insight),.player.bot-duel:not(.review-insight){display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto;height:auto;min-height:78px;gap:36px;padding:13px 20px 21px 24px;align-items:center}
+ .player:not(.review-insight)::after{content:'';position:absolute;left:0;right:0;bottom:0;height:8px;border-top:1px solid var(--line);background:repeating-linear-gradient(-45deg,transparent 0 4px,var(--line) 4px 8px);pointer-events:none}
+ .player:not(.review-insight) .player-identity,.player.bot-duel:not(.review-insight) .player-identity{display:grid;grid-template-columns:18px auto;grid-template-rows:auto;gap:4px 10px;align-items:center;align-self:center;margin:0;min-width:0}
+ .player:not(.review-insight) .player-identity>.stone{grid-column:1;grid-row:1}
+ .player:not(.review-insight) .player-identity>strong{grid-column:2;grid-row:1;display:flex;align-items:baseline;gap:10px;min-width:0;font-size:17px;line-height:1.1;white-space:nowrap}
+ .player:not(.review-insight) .player-identity>strong .fb-nm{display:block;max-width:230px}
+ .player:not(.review-insight) .player-identity>strong .fb-rt{display:block;margin:0;flex:none;white-space:nowrap}
+ .player:not(.review-insight) .player-identity>.muted{grid-column:2;grid-row:auto;line-height:1.3;font-size:11px}
+ .player:not(.review-insight) .player-identity>.insight-source{grid-column:2;grid-row:auto;line-height:1.35;font-size:10px;min-height:0}
+ .player.analysis-insight:not(.review-insight) .player-identity>.muted{display:none}
+ .player:not(.review-insight) .bot-thought-strip{display:flex;align-items:baseline;justify-content:flex-start;gap:30px;height:auto;min-height:0;padding:0;margin:0;grid-template-columns:none}
+ .player:not(.review-insight) .bot-thought-strip>div{display:flex;align-items:baseline;gap:8px;margin:0;padding:0;min-width:0;width:auto;height:auto;flex:0 1 auto}
+ .player:not(.review-insight) .bot-thought-strip .bot-field-label{display:block;font-size:9px;letter-spacing:.14em;line-height:1;margin:0;min-height:0;white-space:nowrap}
+ .player:not(.review-insight) .bot-thought-strip .bot-field-value,.player:not(.review-insight) .bot-thought-strip .bot-move button.bot-field-value{display:block;width:auto;font-family:'Archivo Black','Arial Black',Impact,'Helvetica Neue',sans-serif;font-size:17px;font-weight:900;line-height:1.1;letter-spacing:.01em;text-align:left;white-space:nowrap}
+ .player:not(.review-insight) .bot-thought-strip .evaluation-legend{display:none}
+ .player:not(.review-insight) .bot-thought-strip .evaluation-scale{position:absolute;grid-column:auto;grid-row:auto;left:0;right:0;bottom:0;width:auto;height:8px;margin:0;border:0;border-top:1px solid var(--line);z-index:1}
+ .player:not(.review-insight) .clock,.player.bot-duel:not(.review-insight) .clock,.player.bot-duel:not(.analysis-insight):not(.review-insight) .clock{grid-column:3;grid-row:1;align-self:center;padding:0;font-size:26px;line-height:1.05;text-align:right}
+ .player:not(.review-insight) .clock::before,.player.bot-duel:not(.analysis-insight):not(.review-insight) .clock::before{display:block;font-size:9px;line-height:1.2;margin:0 0 3px;letter-spacing:.14em}
+}
+@container (min-width:781px){
+ .player:not(.review-insight) .bot-thought-strip>div{flex:none}
+ .player:not(.review-insight) .bot-thought-strip .bot-field-value,.player:not(.review-insight) .bot-thought-strip .bot-move button.bot-field-value{overflow:visible;text-overflow:clip}
+}
