@@ -4,7 +4,9 @@
  if(!el('hivebotPanel'))return;
  let cleared=null; // id of a finished game the user cleared off the Live board (remembered across reloads)
  try{cleared=localStorage.getItem('foulbrood_live_cleared')||null}catch(e){}
- const setCleared=v=>{cleared=v;try{v?localStorage.setItem('foulbrood_live_cleared',v):localStorage.removeItem('foulbrood_live_cleared')}catch(e){}};
+ let clearedAt=0; // when this window last changed it; the app's copy is ignored for a moment after
+ const keepCleared=v=>{cleared=v;try{v?localStorage.setItem('foulbrood_live_cleared',v):localStorage.removeItem('foulbrood_live_cleared')}catch(e){}};
+ const setCleared=v=>{keepCleared(v);clearedAt=Date.now();try{post({action:'hivebot_cleared',id:v||''}).catch(()=>{})}catch(e){}};
  let bot=null,shown={id:null,turn:-1},starting=false,timer=null,clockCard=null,clockFetched=0;
  const post=async payload=>{
   const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Board-Token':window.BOARD_TOKEN},body:JSON.stringify(payload)});
@@ -247,6 +249,7 @@
    if(line!==render.logLine){render.logAt=render.logLine===undefined?0:Date.now();render.logLine=line} // a line already there when the page opens is old news
    const show=!!line&&!bot.current&&(Date.now()-(render.logAt||0)<30000||/^Challenge sent/.test(line));
    el('hbLog').textContent=show?line:'';el('hbLog').hidden=!show;}
+  if('cleared' in bot&&(bot.cleared||null)!==cleared&&Date.now()-clearedAt>4000)keepCleared(bot.cleared||null); // every window follows the app's copy
   if(card&&!card.finished&&cleared)setCleared(null);
   // Playing by hand: after our own move the board is already right, so it is not reloaded from the site.
   if(bot.manual&&card&&card.id===shown.id&&card.turn!==shown.turn&&typeof state!=='undefined'&&state&&(state.review_total||0)===card.turn&&(state.ply||0)===card.turn)shown={id:card.id,turn:card.turn};

@@ -587,7 +587,28 @@ class HiveBot:
                         lobby=list(self.lobby) if self.state == 'connected' else [],
                         online=list(getattr(self, 'online', [])) if self.state == 'connected' else [],
                         site=True if self.state == 'connected' else site_online(),
-                        manual=bool(self.manual) and self.state == 'connected', refused=self.refused)
+                        manual=bool(self.manual) and self.state == 'connected', refused=self.refused, cleared=cleared_get())
+
+
+_CLEARED = {}
+
+
+def cleared_get():
+    """The finished game the user cleared off the Online board; kept in a file so every window and a restart agree."""
+    if 'v' not in _CLEARED:
+        try:
+            _CLEARED['v'] = (BOT_DIR / 'live-cleared.txt').read_text().strip() or None
+        except Exception:
+            _CLEARED['v'] = None
+    return _CLEARED['v']
+
+
+def cleared_set(value):
+    _CLEARED['v'] = str(value)[:64] if value else None
+    try:
+        (BOT_DIR / 'live-cleared.txt').write_text(_CLEARED['v'] or '')
+    except Exception:
+        pass
 
 
 _SITE = {'ok': None, 'at': 0.0, 'busy': False}
@@ -703,6 +724,9 @@ def hivebot_action(payload, engines):
     if action == 'hivebot_status':
         if payload.get('lobby'):
             BOT.refresh_lobby()
+        return BOT.view()
+    if action == 'hivebot_cleared':
+        cleared_set(payload.get('id'))
         return BOT.view()
     if action == 'hivebot_take':
         return BOT.take(payload.get('id'))
