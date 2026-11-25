@@ -665,3 +665,5 @@ header .brand-image,.brand-image{width:64px;height:64px;border-radius:2px}
 header .header-tools>button,header .header-tools .sound-settings>summary{font-size:11px!important;color:var(--muted)!important;font-weight:700!important}
 header .header-tools>button:hover,header .header-tools .sound-settings>summary:hover{color:var(--ink)!important}
 header .header-tools .sound-settings>summary{font-size:14px!important}
+.board-result{display:none!important}
+#toast{top:48px;left:40px;right:auto;transform:none;max-width:calc(100% - 80px);padding:6px 10px;border:0;border-radius:0;background:var(--hazard);color:var(--pitch);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;text-align:left;box-shadow:none}

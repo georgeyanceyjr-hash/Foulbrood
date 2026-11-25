@@ -655,10 +655,18 @@ window.foulbroodSfx=(()=>{
    else if(card.result==='White won'||card.result==='Black won'){const winner=card.result==='White won'?0:1;state={...base,winner,how:boxed(s,winner?'wQ':'bQ')?'queen':'other'}}
    else if(card.result==='Draw')state={...base,winner:null,how:boxed(s,'wQ')&&boxed(s,'bQ')?'both':'repeat'};
   }
-  if(!state){tag.hidden=true;over.hidden=true;return}
-  if(state.progress){tag.hidden=false;tag.textContent='Outbreak in progress · move '+state.moves;over.hidden=true;return}
+  // One message on the board, everywhere: the move being shown when stepped back, else the result, else the game in progress.
+  const ply=s.ply||0,total=s.review_total??ply,br=document.getElementById('boardResult');
+  let text='';
+  if(typeof editorDraft!=='undefined'&&editorDraft)text='Set up position';
+  else if(ply<total)text=`Move ${ply} of ${total}`;
+  else if(br&&!br.hidden&&br.textContent)text=br.textContent+' · move '+total;
+  else if(state&&!state.progress&&card&&card.result)text=card.result+' · move '+total;
+  else if(state&&state.progress)text='Outbreak in progress · move '+state.moves;
+  else if(total)text=`Move ${ply} of ${total}`;
+  tag.hidden=!text;if(text&&tag.textContent!==text)tag.textContent=text;
+  if(!state||state.progress){over.hidden=true;return}
   const side=['White','Black'],w=state.winner,winName=w==null?'':[state.white,state.black][w],loseName=w==null?'':[state.white,state.black][1-w];
-  tag.hidden=false;tag.textContent=(state.how==='both'?'Mutual destruction':state.how==='repeat'?'Standoff':'Colony collapsed')+' · move '+state.moves;
   shownKey=state.key;
   // stepping back through the moves takes the stamp away; it returns on the last move
   if((s.ply||0)<(s.review_total||0)){over.hidden=true;if(dismissed===state.key)dismissed='';return}
