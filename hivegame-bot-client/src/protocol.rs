@@ -26,6 +26,8 @@ pub enum ChallengeAction {
     Accept(String),
     /// HotFrass patch: challenge details as the bot API documents them.
     Create(Value),
+    /// Withdraw one of our own open challenges.
+    Delete(String),
 }
 
 #[derive(Debug, Clone, Deserialize)]

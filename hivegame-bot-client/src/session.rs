@@ -159,6 +159,19 @@ fn listen_for_commands(outbox: mpsc::UnboundedSender<Outgoing>, auto: Arc<AutoSt
                 }
                 continue;
             }
+            if cmd == "withdraw" {
+                // {"cmd":"withdraw","id":"<challenge id>"}: take back one of our own open challenges.
+                if let Some(id) = command.get("id").and_then(|i| i.as_str()) {
+                    let request = ClientRequest::Challenge(ChallengeAction::Delete(id.to_string()));
+                    if outbox.send(Outgoing::Request(request)).is_err() {
+                        return;
+                    }
+                    if outbox.send(Outgoing::Resync).is_err() {
+                        return;
+                    }
+                }
+                continue;
+            }
             if cmd == "take" {
                 // {"cmd":"take","id":"<challenge id>"}: accept one challenge picked in the viewer.
                 if let Some(id) = command.get("id").and_then(|i| i.as_str()) {

@@ -143,7 +143,16 @@
   const box=el('hbLobby'),tcv=el('hbAcceptTime').value,tcOk=c=>tcv==='any'?c.mode==='RealTime'&&(c.base||0)>=600:c.mode==='RealTime'&&`${c.base}+${c.increment||0}`===tcv,rows=(bot.lobby||[]).filter(c=>!c.mine&&!c.to&&tcOk(c)&&!(el('hbHumans').checked&&c.bot)).sort((a,b)=>speed(a)-speed(b)||(b.rating||0)-(a.rating||0));
   const mine=(bot.lobby||[]).filter(c=>c.mine);
   const key=JSON.stringify([rows,mine,playing]);if(box.dataset.key===key)return;box.dataset.key=key;box.replaceChildren();
-  for(const c of mine){const p=document.createElement('p');p.className='caption';p.textContent=`Your challenge${c.to?' to '+c.to:' (open)'} · ${clockText(c)} — waiting to be accepted.`;box.append(p)}
+  // Our own waiting challenges are listed where they were made: open ones under "Open a challenge", sent ones under "Send a challenge".
+  for(const [id,list] of [['hbMineOpen',mine.filter(c=>!c.to)],['hbMineSent',mine.filter(c=>c.to)]]){
+   const host=el(id);host.replaceChildren();host.hidden=!list.length;
+   for(const c of list){
+    const row=document.createElement('div'),text=document.createElement('span'),cancel=document.createElement('button');row.className='hb-mine-row';
+    text.textContent=[c.to?'To '+c.to:'Open',clockText(c),c.rated===false?'casual':'rated',c.color?'we play '+c.color:''].filter(Boolean).join(' · ');
+    cancel.className='small';cancel.textContent='Cancel';cancel.title='Take this challenge back';
+    cancel.onclick=async()=>{cancel.disabled=true;try{bot=await post({action:'hivebot_withdraw',id:c.id})}catch(e){el('hbStatus').textContent=(window.plainMessage?window.plainMessage(e.message):e.message)}render()};
+    row.append(text,cancel);host.append(row)}
+  }
   // The waiting challenges as one menu (people first, then bots, fastest time control first) and one Accept button.
   const sel=el('hbPick'),keep=sel.value;sel.replaceChildren();
   const first=document.createElement('option');first.value='';first.textContent=rows.length?`Choose a challenge (${rows.length} waiting)`:'No open challenges right now';sel.append(first);
@@ -215,7 +224,7 @@
   el('hbStart').disabled=running||starting;el('hbStop').disabled=!running;
   if(enginePending&&bot&&!bot.current)setTimeout(switchEngine,0);
   el('hbEngineRow').title=enginePending?'The new engine takes over after this game.':'';
-  el('hbForm').hidden=running;el('hbChallenges').hidden=!connected;el('hbChallenges').classList.toggle('hb-ingame',!!bot.current);el('hbChallenges').classList.toggle('hb-mine',(bot.lobby||[]).some(c=>c.mine)); // during a game only the automatic switch (and our own open challenge) stays, so it can be turned offfixTabs();el('hbBusyNote').hidden=true;
+  el('hbForm').hidden=running;el('hbChallenges').hidden=!connected;el('hbChallenges').classList.toggle('hb-ingame',!!bot.current);el('hbChallenges').classList.toggle('hb-mine',(bot.lobby||[]).some(c=>c.mine)); /* during a game only the automatic switch (and our own open challenge) stays, so it can be turned off */fixTabs();el('hbBusyNote').hidden=true;
   if(bot.saved_login&&!el('hbLogin').value)el('hbLogin').value=bot.saved_login;
   el('hbPassword').placeholder=(bot.saved_login&&bot.saved_login===el('hbLogin').value.trim())?'Saved in Keychain — leave blank to use it':'';
   el('hbForget').hidden=!bot.saved_login;

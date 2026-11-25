@@ -280,6 +280,19 @@ class HiveBot:
         self._send(dict(cmd='control', id=str(game_id), what=what, color=color))
         return self.view()
 
+    def withdraw(self, challenge_id):
+        """Take back one of our own waiting challenges."""
+        if not GAME_ID.match(str(challenge_id)):
+            raise ValueError('The viewer did not understand that.')
+        with self.lock:
+            if self.state != 'connected':
+                raise ValueError('Start the bot and wait until it is connected.')
+            if not any(c.get('id') == challenge_id and c.get('mine') for c in self.lobby):
+                raise ValueError('That challenge is not waiting any more.')
+            self.lobby = [c for c in self.lobby if c.get('id') != challenge_id]
+        self._send(dict(cmd='withdraw', id=str(challenge_id)))
+        return self.view()
+
     def take(self, challenge_id):
         """Accept one challenge the user picked from the list."""
         if not GAME_ID.match(str(challenge_id)):
@@ -771,6 +784,8 @@ def hivebot_action(payload, engines):
     if action == 'hivebot_cleared':
         cleared_set(payload.get('id'))
         return BOT.view()
+    if action == 'hivebot_withdraw':
+        return BOT.withdraw(payload.get('id'))
     if action == 'hivebot_take':
         return BOT.take(payload.get('id'))
     if action == 'hivebot_manual':
