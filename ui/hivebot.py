@@ -218,6 +218,9 @@ class HiveBot:
         with self.lock:
             if self.proc is None or self.state != 'connected':
                 raise ValueError('Start the bot and wait until it is connected.')
+            if not opponent:
+                keep = {k: v for k, v in details.items() if k not in ('cmd', 'opponent')}
+                standing_set([r for r in standing_get() if _standing_key(r) != _standing_key(keep)] + [keep])
             try:
                 self.proc.stdin.write(command + '\n')
                 self.proc.stdin.flush()
@@ -289,6 +292,10 @@ class HiveBot:
                 raise ValueError('Start the bot and wait until it is connected.')
             if not any(c.get('id') == challenge_id and c.get('mine') for c in self.lobby):
                 raise ValueError('That challenge is not waiting any more.')
+            for c in self.lobby:
+                if c.get('id') == challenge_id and not c.get('to'):
+                    standing_set([r for r in standing_get() if _standing_key(r) != _standing_key(c)])
+            self.cancelled = (getattr(self, 'cancelled', []) + [str(challenge_id)])[-40:]
             self.lobby = [c for c in self.lobby if c.get('id') != challenge_id]
         self._send(dict(cmd='withdraw', id=str(challenge_id)))
         return self.view()
@@ -405,6 +412,7 @@ class HiveBot:
         refused = False
         resign = None
         withdraws, resync = [], False  # our other waiting challenges are taken back once a game starts: one game at a time
+        creates = []  # and put back when the game is over
         with self.lock:
             if generation != self.generation:
                 return
@@ -432,6 +440,19 @@ class HiveBot:
                 if any(not g.get('finished') for g in self.games.values()):
                     withdraws += [c['id'] for c in rows if c.get('mine')]
                     rows = [c for c in rows if not c.get('mine')]
+                else:
+                    mine_open = [c for c in rows if c.get('mine') and not c.get('to') and c.get('mode') == 'RealTime'
+                                 and c['id'] not in getattr(self, 'cancelled', [])]
+                    have = {_standing_key(c) for c in mine_open}
+                    if getattr(self, 'reopen', False):
+                        self.reopen = False
+                        creates += [r for r in standing_get() if _standing_key(r) not in have]
+                    else:
+                        known = {_standing_key(r) for r in standing_get()}
+                        fresh = [dict(base=int(c['base']), increment=int(c.get('increment') or 0), rated=c.get('rated') is not False,
+                                      color='Random') for c in mine_open if _standing_key(c) not in known and c.get('base')]
+                        if fresh:
+                            standing_set(standing_get() + fresh)
                 self.lobby, self.lobby_at = rows, time.time()
                 if isinstance(event.get('online'), list):
                     self.online = [dict(name=str(u.get('name'))[:40], bot=bool(u.get('bot')),
@@ -443,6 +464,8 @@ class HiveBot:
                 if not game.get('finished'):
                     game.update(finished=True, result='Aborted or ended', our_turn=False, updated=time.time())
                     self.log.append('The game %s vs %s was aborted.' % (game.get('white') or 'White', game.get('black') or 'Black'))
+                    if standing_get() and not any(not g.get('finished') for g in self.games.values()):
+                        self.reopen, resync = True, True
                 if self.thinking == event['id']:
                     self.thinking = None
             elif kind == 'manual':
@@ -472,6 +495,7 @@ class HiveBot:
                     self.lobby = [c for c in self.lobby if not c.get('mine')]
                     resync = True  # the list may be stale: ask again, and anything of ours still waiting goes too
                 game = self.games.setdefault(gid, {'id': gid, 'last_move': None})
+                was_finished = bool(game.get('finished'))
                 if gid not in self.order:
                     self.order.append(gid)
                 status = event.get('status')
@@ -498,6 +522,8 @@ class HiveBot:
                             timed=bool(event.get('timed')), increment=event.get('increment'),
                             white_left=event.get('white_left'), black_left=event.get('black_left'),
                             clock_at=time.time())
+                if game['finished'] and not was_finished and standing_get() and not any(not g.get('finished') for g in self.games.values()):
+                    self.reopen, resync = True, True
                 if game['finished'] and self.thinking == gid:
                     self.thinking = None
                 game['base'] = event.get('base')
@@ -538,6 +564,14 @@ class HiveBot:
                     resign = (str(event['id']), 'White' if game.get('white') == self.user else 'Black', 100000 + int(info['score']))
         if refused:
             self.stop()
+        if creates:
+            try:
+                for r in creates:
+                    self._send(dict(r, cmd='challenge', opponent=None))
+                with self.lock:
+                    self.log.append('Game over: put %d open challenge%s back up.' % (len(creates), '' if len(creates) == 1 else 's'))
+            except ValueError:
+                pass
         if withdraws or resync:
             try:
                 for cid in dict.fromkeys(withdraws):
@@ -639,7 +673,7 @@ class HiveBot:
                         online=list(getattr(self, 'online', [])) if self.state == 'connected' else [],
                         site=True if self.state == 'connected' else site_online(),
                         manual=bool(self.manual) and self.state == 'connected', refused=self.refused, cleared=cleared_get(),
-                        resign_lost=resign_lost_get())
+                        resign_lost=resign_lost_get(), standing=len(standing_get()))
 
 
 _CLEARED = {}
@@ -653,6 +687,32 @@ def cleared_get():
         except Exception:
             _CLEARED['v'] = None
     return _CLEARED['v']
+
+
+_STANDING = {}
+
+
+def standing_get():
+    """Open challenges the bot keeps up: put back after each game. Kept in a file so restarts do not lose them."""
+    if 'v' not in _STANDING:
+        try:
+            rows = json.loads((BOT_DIR / 'standing-challenges.json').read_text())
+            _STANDING['v'] = [r for r in rows if isinstance(r, dict) and isinstance(r.get('base'), int)][:8]
+        except Exception:
+            _STANDING['v'] = []
+    return _STANDING['v']
+
+
+def standing_set(rows):
+    _STANDING['v'] = list(rows)[:8]
+    try:
+        (BOT_DIR / 'standing-challenges.json').write_text(json.dumps(_STANDING['v']))
+    except Exception:
+        pass
+
+
+def _standing_key(row):
+    return (int(row.get('base') or 0), int(row.get('increment') or 0), row.get('rated') is not False)
 
 
 _RESIGN = {}
