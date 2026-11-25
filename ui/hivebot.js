@@ -170,7 +170,7 @@
   let summary={stopped:'Not running',building:'Building…',starting:'Connecting…',connected:'Connected',error:'Needs attention'}[bot.state]||bot.state;
   let status=bot.message||'';
   if(connected){
-   if(g){summary='Hunting';status='';}
+   if(g){summary='Playing';status='';}
    else if(last){status=`Connected as ${bot.user}.\nLast game: ${names(last)} — ${last.result||'finished'}.\nWaiting for the next game.`;}
   }
   el('hbSummary').textContent=summary;el('hbLight').className='hb-light '+(connected?'on':bot.state==='starting'||bot.state==='building'?'wait':'off');site(bot.site);el('hbStatus').textContent=status;el('hbStatus').hidden=!status;
