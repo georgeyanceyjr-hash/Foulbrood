@@ -43,7 +43,7 @@ window.renderEngines=s=>{
  const key=JSON.stringify(entries);if(key===engineListKey)return;engineListKey=key;
  $('engineList').replaceChildren();
  for(const e of entries){
-  const row=document.createElement('div');row.className='engine-entry';const info=document.createElement('div'),name=document.createElement('strong'),path=document.createElement('small'),status=document.createElement('span');name.textContent=e.name;path.textContent=e.path;status.textContent=(e.connected?'Connected':'Disconnected')+(e.review_supported?' · Game review supported'+(e.score_format_check==='matched'?' · '+({mzinga:'Mzinga',nokamute:'Nokamute',foulbrood:'FoulBrood'}[e.score_adapter]||e.score_adapter)+' format':''):e.score_adapter?' · Scores available':' · Moves only');status.className='engine-connection'+(e.connected?' connected':'');info.append(name,path,status);
+  const row=document.createElement('div');row.className='engine-entry';const info=document.createElement('div'),name=document.createElement('strong'),path=document.createElement('small'),status=document.createElement('span');name.textContent=e.name;path.textContent=e.path;status.textContent=(e.connected?'Connected':'Disconnected')+' · Game review: '+(e.review_supported?'yes':'no')+' · Set-up positions: '+(e.setup_supported===true?'yes':'no');status.className='engine-connection'+(e.connected?' connected':'');info.append(name,path,status);
   const controls=document.createElement('div');controls.className='engine-entry-controls';
   // The FoulBrood engine is part of the viewer: always installed, never removed.
   if(e.name==='FoulBrood'||e.name==='FoulBrood Book'){const built=document.createElement('span');built.className='caption';built.textContent='Built in';controls.append(built)}

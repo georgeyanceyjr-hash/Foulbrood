@@ -154,6 +154,8 @@
   el('hbTake').disabled=playing||!sel.value;
  };
  // An aborted game: say so on the board, once, in plain words; and never show a link-reading error on the Live board.
+ // A game aborted before both sides had moved never counts as 'the last game'.
+ const realGame=g=>g.finished&&!(/^Aborted/.test(g.result||'')&&(g.turn||0)<2);
  const abortSeen=new Set();let abortReady=false;
  const noteAborts=()=>{
   if(!bot||!bot.games)return;
@@ -182,7 +184,7 @@
   if(bot.saved_login&&!el('hbLogin').value)el('hbLogin').value=bot.saved_login;
   el('hbPassword').placeholder=(bot.saved_login&&bot.saved_login===el('hbLogin').value.trim())?'Saved in Keychain — leave blank to use it':'';
   el('hbForget').hidden=!bot.saved_login;
-  const g=bot.current,last=[...(bot.games||[])].reverse().find(x=>x.finished);
+  const g=bot.current,last=[...(bot.games||[])].reverse().find(realGame);
   let summary={stopped:'Not running',building:'Building…',starting:'Connecting…',connected:'Connected',error:'Needs attention'}[bot.state]||bot.state;
   let status=bot.message||'';
   if(connected){
@@ -237,7 +239,7 @@
  // The bot's game that is on the board right now: the one in progress, or the one that just ended.
  const boardCard=s=>{
   if(!bot||bot.state!=='connected'||s.mode!=='analysis'||!liveOn()||s.game_review)return null;
-  const card=bot.current||[...(bot.games||[])].reverse().find(x=>x.finished);
+  const card=bot.current||[...(bot.games||[])].reverse().find(realGame);
   if(!card||shown.id!==card.id||cleared===card.id)return null;
   if(typeof editorDraft!=='undefined'&&editorDraft)return null;
   return card;
@@ -336,7 +338,7 @@
  const soundTurn={key:null,clocks:[null,null]};
  const soundCard=()=>{
   if(!bot||!bot.running)return null;
-  const card=bot.current||[...(bot.games||[])].reverse().find(x=>x.finished);
+  const card=bot.current||[...(bot.games||[])].reverse().find(realGame);
   return card&&shown.id===card.id?card:null;
  };
  const nativeObserve=window.observeHumanTurn;
@@ -393,7 +395,7 @@
  };
  el('hbTime').addEventListener('change',()=>render()); // ratings in the opponent menu follow the chosen time control
  const clearBoard=async()=>{
-  const last=bot&&[...(bot.games||[])].reverse().find(g=>g.finished);setCleared(last?last.id:'none');shown={id:null,turn:-1};
+  const last=bot&&[...(bot.games||[])].reverse().find(realGame);setCleared(last?last.id:'none');shown={id:null,turn:-1};
   try{await whenFree(()=>action({action:'load',text:state.game.split(';')[0].split('~')[0],confirm_review_clear:true}))}catch(e){}
   render();
  };
@@ -403,7 +405,7 @@
  };
 
  const toAnalysis=async()=>{
-  const card=bot&&(bot.current||[...(bot.games||[])].reverse().find(g=>g.finished));
+  const card=bot&&(bot.current||[...(bot.games||[])].reverse().find(realGame));
   if(card&&cleared!==card.id&&(card.id!==shown.id||card.turn!==shown.turn))await showOnBoard(card);
   stash(null);botBoard(false); // the Live game now is the Analysis game
   setLive(false);fixTabs();render();
@@ -538,6 +540,7 @@
   const names=s.player_names||[];
   if(s.mode==='play'&&s.play_finished&&s.review_game!==lastPlay){
    lastPlay=s.review_game;
+   if((s.review_total||0)<2)return; // nothing worth keeping: the clock never started
    const who=i=>{const p=(s.players||[])[i];if(!p||p==='Human')return names[i]||'Human';const e=(s.engines||[]).find(x=>x.id===p);return e?e.name:String(p)};
    const kind=i=>((s.players||[])[i]==='Human'?'Human':'Engine');
    save({game:s.review_game,white:who(0),black:who(1),white_kind:kind(0),black_kind:kind(1),result:outcome(s),source:'Play',time_control:String(s.time_control||''),played:now()});

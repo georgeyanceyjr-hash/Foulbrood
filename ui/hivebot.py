@@ -464,6 +464,8 @@ class HiveBot:
                 row = json.loads(line)
                 gid = str(row['id'])
                 moves = row.get('moves') or []
+                if len(moves) < 2:
+                    continue
                 evals = {str(k): v for k, v in (row.get('evals') or {}).items()}
                 game = dict(id=gid, white=row.get('white'), black=row.get('black'), result=row.get('result'), finished=True, saved=True,
                             turn=len(moves), last_move=moves[-1] if moves else '', our_turn=False, updated=now - (len(lines) - n),
@@ -483,6 +485,8 @@ class HiveBot:
         """Append a finished game to FoulBroodData/hivegame-bot/games.jsonl (moves, result, our evaluations)."""
         try:
             moves = [' '.join(str(x) for x in pair).strip() for pair in history if isinstance(pair, list)][:2000]
+            if len(moves) < 2:
+                return  # aborted before the clock started: nothing to keep
             row = dict(id=game['id'], white=game.get('white'), black=game.get('black'), result=game.get('result'),
                        bot=self.user, engine=self.engine_name, base=game.get('base'), increment=game.get('increment'),
                        finished=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), moves=moves,
