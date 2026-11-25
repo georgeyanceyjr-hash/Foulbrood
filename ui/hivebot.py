@@ -404,6 +404,7 @@ class HiveBot:
             return
         refused = False
         resign = None
+        withdraws, resync = [], False  # our other waiting challenges are taken back once a game starts: one game at a time
         with self.lock:
             if generation != self.generation:
                 return
@@ -428,6 +429,9 @@ class HiveBot:
                                      rated=c.get('rated'), mode=str(c.get('mode') or '')[:20],
                                      base=c.get('base'), increment=c.get('increment'), bot=bool(c.get('bot')),
                                      color=c.get('color') if c.get('color') in ('White', 'Black') else None))
+                if any(not g.get('finished') for g in self.games.values()):
+                    withdraws += [c['id'] for c in rows if c.get('mine')]
+                    rows = [c for c in rows if not c.get('mine')]
                 self.lobby, self.lobby_at = rows, time.time()
                 if isinstance(event.get('online'), list):
                     self.online = [dict(name=str(u.get('name'))[:40], bot=bool(u.get('bot')),
@@ -463,6 +467,10 @@ class HiveBot:
                 self.log.append('Accepted a challenge%s.' % (' from ' + str(event.get('from'))[:40] if event.get('from') else ''))
             elif kind == 'game' and GAME_ID.match(str(event.get('id'))):
                 gid = event['id']
+                if gid not in self.games and not event.get('finished'):
+                    withdraws += [c['id'] for c in self.lobby if c.get('mine')]
+                    self.lobby = [c for c in self.lobby if not c.get('mine')]
+                    resync = True  # the list may be stale: ask again, and anything of ours still waiting goes too
                 game = self.games.setdefault(gid, {'id': gid, 'last_move': None})
                 if gid not in self.order:
                     self.order.append(gid)
@@ -530,6 +538,18 @@ class HiveBot:
                     resign = (str(event['id']), 'White' if game.get('white') == self.user else 'Black', 100000 + int(info['score']))
         if refused:
             self.stop()
+        if withdraws or resync:
+            try:
+                for cid in dict.fromkeys(withdraws):
+                    self._send(dict(cmd='withdraw', id=str(cid)))
+                if withdraws:
+                    with self.lock:
+                        self.log.append('A game started: took back %d other waiting challenge%s.' % (
+                            len(set(withdraws)), '' if len(set(withdraws)) == 1 else 's'))
+                elif resync:
+                    self._send(dict(cmd='resync'))
+            except ValueError:
+                pass
         if resign:
             try:
                 self._send(dict(cmd='control', id=resign[0], what='Resign', color=resign[1]))
