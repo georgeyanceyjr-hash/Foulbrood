@@ -261,6 +261,7 @@
  };
  // ---- Native display: the viewer's own player strip and move preview, fed by the bot's thinking ----
  let thinkKey='',thinkSince=0;
+ const thinkTook={}; // how long each of our moves took, kept so the time stays up after the move and when stepping back
  const DIRS={e:[1,0],w:[-1,0],ne:[1,-1],nw:[0,-1],se:[0,1],sw:[-1,1]};
  const legalFor=(s,text)=>{
   // Engine notation "bA1 -wQ" -> the viewer's own legal move with the same piece and destination.
@@ -319,7 +320,8 @@
   let text=info.move;try{if(typeof insightMoveText==='function'&&s.ply===info.turn)text=insightMoveText(s.game,(legalFor(s,info.move)||{}).move||info.move,notationFollowsBoard())||info.move}catch(e){}
   fields.move.caption.textContent=info.turn===null?'Waiting':(thinking?'Thinking':'Played')+' · Move '+moveNumber;fields.move.value.textContent=text;fields.move.value.title='Top move: '+text;fields.move.value.disabled=true;
   fields.depth.value.textContent=info.depth===null?'—':String(info.depth);
-  fields.time.value.textContent=thinking&&key===thinkKey?((Date.now()-thinkSince)/1000).toFixed(1)+'s':'—';
+  if(thinking&&key===thinkKey)thinkTook[key]=(Date.now()-thinkSince)/1000;
+  fields.time.value.textContent=thinkTook[key]!=null?thinkTook[key].toFixed(1)+'s':'—';fields.time.value.title=thinking?'Time on this move so far':'Time this move took';
   updatePositionScore(fields.score,{score:info.score,side,source:'bot'},null,{side,label:'Position'});
  };
  // Who the player is on hivegame.com: rating (and its change once the game is over) beside the name,
