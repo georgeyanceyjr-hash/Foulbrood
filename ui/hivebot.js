@@ -673,7 +673,7 @@ window.foulbroodSfx=(()=>{
   else if(ply<total)text=`Move ${ply} of ${total}`;
   else if(br&&!br.hidden&&br.textContent)text=br.textContent+' · move '+total;
   else if(state&&!state.progress&&card&&card.result)text=card.result+' · move '+total;
-  else if(state&&state.progress)text='Outbreak in progress · move '+state.moves;
+  else if(state&&state.progress)text='In progress · move '+state.moves;
   else if(total)text=`Move ${ply} of ${total}`;
   tag.hidden=!text;if(text&&tag.textContent!==text)tag.textContent=text;
   if(!state||state.progress){over.hidden=true;return}
