@@ -745,7 +745,7 @@ window.foulbroodSfx=(()=>{
   names.replaceChildren();
   if(w==null){const c=state.how==='both'?'lost':'plain';names.append(span(c,state.white),span('i',state.how==='both'?'and':'vs'),span(c,state.black))}
   else names.append(span('won',winName),span('i',state.how==='resign'?'broke':state.how==='time'?'outlasted':'killed'),span('lost',loseName));
-  line.textContent={queen:`${side[w]} wins in ${state.moves} moves · no survivors`,other:`${side[w]} wins in ${state.moves} moves`,resign:`${side[1-(w??0)]} gave up on move ${state.moves}`,time:`${side[1-(w??0)]} ran out of time on move ${state.moves}`,both:`Draw in ${state.moves} moves · they took each other out`,repeat:`Draw by repetition in ${state.moves} moves · nobody blinked`}[state.how];
+  line.textContent={queen:`${side[w]} wins in ${state.moves} moves · one queen left standing`,other:`${side[w]} wins in ${state.moves} moves`,resign:`${side[1-(w??0)]} gave up on move ${state.moves}`,time:`${side[1-(w??0)]} ran out of time on move ${state.moves}`,both:`Draw in ${state.moves} moves · they took each other out`,repeat:`Draw by repetition in ${state.moves} moves · nobody blinked`}[state.how];
   bury.hidden=!live;over.hidden=false;
  };
  const earlier=window.renderBotThoughts;
