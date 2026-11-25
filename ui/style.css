@@ -869,3 +869,11 @@ aside .moves button,aside #moves button{text-transform:none;letter-spacing:0;fon
  .player.review-insight .review-thought-heading[data-verdict="poor"]>span{color:var(--verdict-poor)}
  .player.review-insight .review-thought-heading[data-verdict="bad"]>span{color:var(--verdict-bad)}
 }
+/* Review graph dots use the same verdict colours as the Played box. */
+#reviewGraph{--verdict-good:#35c25a;--verdict-mid:#f2c20a;--verdict-poor:#f0913a;--verdict-bad:#f0483a}
+.review-dot.v-good{fill:var(--verdict-good)}.review-dot.v-mid{fill:var(--verdict-mid)}.review-dot.v-poor{fill:var(--verdict-poor)}.review-dot.v-bad{fill:var(--verdict-bad)}
+.review-dot.flagged{r:5px;stroke-width:2}
+.review-dot.flagged.v-mid{fill:var(--verdict-mid)}.review-dot.flagged.v-poor{fill:var(--verdict-poor)}.review-dot.flagged.v-bad{fill:var(--verdict-bad)}
+.review-dot.current{fill:#0d0e0c;stroke-width:3;stroke:var(--hazard)}
+.review-dot.current.v-good{stroke:var(--verdict-good)}.review-dot.current.v-mid{stroke:var(--verdict-mid)}.review-dot.current.v-poor{stroke:var(--verdict-poor)}.review-dot.current.v-bad{stroke:var(--verdict-bad)}
+.review-line{stroke:#c9c6b4}
