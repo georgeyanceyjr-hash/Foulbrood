@@ -178,7 +178,7 @@ class HiveBot:
                             'exec env %s%s\n' % (extra, shlex.quote(engine['path'])))
         launcher.chmod(0o755)
         lines = ['max_concurrent_processes: 1', 'base_url: "https://hivegame.com"', 'bots:', '  - name: hotfrass',
-                 '    ai_command: %s' % launcher, '    bestmove_command_args: time 00:00:25',
+                 '    ai_command: %s' % launcher, '    bestmove_command_args: time 00:02:00',
                  '    email: set-at-start', '    password: set-at-start',
                  '    accept_open_from: []', '    min_base_secs: %d' % min_base, '    max_auto_games: 0']
         (BOT_DIR / 'hive-hydra.yaml').write_text('\n'.join(lines) + '\n')
