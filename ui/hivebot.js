@@ -170,6 +170,37 @@
    }
    return plain(text);
  }}
+ // ---- Playing by hand on the bot account: the person makes the moves on the board, the engine stays idle ----
+ let handSent='',refusedAt=0;
+ const handCard=()=>bot&&bot.manual&&bot.current&&!bot.current.finished?bot.current:null;
+ const handWatch=s=>{
+  const card=handCard();
+  if(!card||!s||s.mode!=='analysis'||!liveOn()||shown.id!==card.id||!card.our_turn)return;
+  const moves=(s.game||'').split(';').slice(3);
+  if(moves.length!==(card.turn||0)+1||(s.ply||0)!==moves.length)return; // exactly one new move on top of the live position
+  const key=card.id+'|'+card.turn;if(handSent===key)return;handSent=key;
+  post({action:'hivebot_move',id:card.id,move:moves[moves.length-1]}).then(b=>{bot=b;render()})
+   .catch(e=>{handSent='';if(typeof toast==='function')toast(e.message);shown={id:null,turn:-1};render()});
+ };
+ const handPanel=connected=>{
+  const on=!!(bot&&bot.manual),card=handCard();
+  document.body.classList.toggle('hb-manual',on);
+  document.body.classList.toggle('hb-insight',on&&el('hbInsight').checked);
+  el('hbManualRow').hidden=!connected;if(document.activeElement!==el('hbManual'))el('hbManual').checked=on;
+  el('hbInsightRow').hidden=!on;el('hbHandRow').hidden=!card;
+  const s=typeof state!=='undefined'?state:null;
+  el('hbPass').disabled=!(card&&card.our_turn&&s&&(s.legal||[]).some(m=>m.move==='pass'));
+  if(card&&card.our_turn)el('hbSummary').textContent='Your move';
+  // The site turned a move down: say so and put the real position back.
+  if(bot&&bot.refused&&bot.refused.at>refusedAt){
+   const first=refusedAt===0&&Date.now()/1000-bot.refused.at>20;refusedAt=bot.refused.at;
+   if(!first){handSent='';shown={id:null,turn:-1};if(typeof toast==='function')toast('hivegame.com did not accept that move.')}
+  }
+ };
+ el('hbManual').onchange=async()=>{try{bot=await post({action:'hivebot_manual',on:el('hbManual').checked})}catch(e){el('hbStatus').textContent=e.message;el('hbStatus').hidden=false}render()};
+ el('hbInsight').onchange=()=>render();
+ el('hbPass').onclick=()=>{if(typeof action==='function')action({action:'move',move:'pass'})};
+ el('hbResign').onclick=()=>{const card=handCard();if(!card)return;ask('Resign this game?','You will lose the game on hivegame.com. Continue?','Resign',async()=>{try{bot=await post({action:'hivebot_control',id:card.id,what:'Resign'})}catch(e){if(typeof toast==='function')toast(e.message)}render()})};
  const render=()=>{
   try{noteAborts()}catch(e){}
   fillEngines();
@@ -217,7 +248,10 @@
    const show=!!line&&!bot.current&&(Date.now()-(render.logAt||0)<30000||/^Challenge sent/.test(line));
    el('hbLog').textContent=show?line:'';el('hbLog').hidden=!show;}
   if(card&&!card.finished&&cleared)setCleared(null);
+  // Playing by hand: after our own move the board is already right, so it is not reloaded from the site.
+  if(bot.manual&&card&&card.id===shown.id&&card.turn!==shown.turn&&typeof state!=='undefined'&&state&&(state.review_total||0)===card.turn&&(state.ply||0)===card.turn)shown={id:card.id,turn:card.turn};
   if(liveOn()&&el('hbFollow').checked&&card&&cleared!==card.id&&(card.id!==shown.id||card.turn!==shown.turn))showOnBoard(card);
+  try{handPanel(connected)}catch(e){}
   try{if(typeof state!=='undefined'&&state){drawNativeStrip(state);drawNativePreview(state);drawIdentity(state)}}catch(e){}
   try{feedSounds()}catch(e){}
  };
@@ -360,7 +394,7 @@
  };
  if(typeof window.renderBotThoughts==='function'){
   const nativeThoughts=window.renderBotThoughts;
-  window.renderBotThoughts=s=>{nativeThoughts(s);fixTabs();try{drawNativeStrip(s);drawOpponentStrip(s);drawIdentity(s);drawNativePreview(s);drawClocks()}catch(e){}};
+  window.renderBotThoughts=s=>{nativeThoughts(s);fixTabs();try{handWatch(s)}catch(e){}try{drawNativeStrip(s);drawOpponentStrip(s);drawIdentity(s);drawNativePreview(s);drawClocks()}catch(e){}};
  }
  const site=ok=>{let s=el('hbSite');if(!s){const t=document.querySelector('.header-tools');if(!t)return;s=document.createElement('span');s.id='hbSite';s.className='hb-site';s.innerHTML='<i class="hb-light" aria-hidden="true"></i>hivegame.com';t.prepend(s)}s.firstChild.className='hb-light '+(ok===true?'on':ok===false?'off':'wait');s.title=ok===true?'Connected to hivegame.com':ok===false?'Can\u2019t reach hivegame.com':'Checking hivegame.com';};
  const refresh=async()=>{try{bot=await post({action:'hivebot_status',lobby:el('hivebotDetails').open});render()}catch(e){}};

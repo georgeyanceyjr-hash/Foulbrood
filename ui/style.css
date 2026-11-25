@@ -878,3 +878,5 @@ aside .moves button,aside #moves button{text-transform:none;letter-spacing:0;fon
 .review-dot.current.v-good{stroke:var(--verdict-good)}.review-dot.current.v-mid{stroke:var(--verdict-mid)}.review-dot.current.v-poor{stroke:var(--verdict-poor)}.review-dot.current.v-bad{stroke:var(--verdict-bad)}
 .review-line{stroke:#c9c6b4}
 #toast{font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1.4;padding:8px 12px;max-width:min(520px,calc(100% - 80px))}
+body.hb-live.hb-manual.hb-insight #engineInsightPanel{display:block!important}
+#hbManualRow,#hbInsightRow{margin-top:12px}#hbManualRow[hidden],#hbInsightRow[hidden],#hbHandRow[hidden]{display:none}

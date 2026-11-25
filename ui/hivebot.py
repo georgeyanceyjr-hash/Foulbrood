@@ -121,6 +121,8 @@ class HiveBot:
         self._restore()
         self.accepted = 0
         self.thinking = None
+        self.manual = False   # moves made by hand on the viewer's board instead of by the engine
+        self.refused = None
         self.log = collections.deque(maxlen=12)
         self.started = None
         self.accept = []
@@ -232,6 +234,51 @@ class HiveBot:
                 self.proc.stdin.flush()
             except (OSError, ValueError):
                 raise ValueError('The bot client is not listening. Stop and start the bot.')
+
+    def set_manual(self, on):
+        """Play by hand (the engine stays idle) or hand the moves back to the engine."""
+        with self.lock:
+            if self.state != 'connected':
+                raise ValueError('Start the bot and wait until it is connected.')
+            self.manual = bool(on)
+        self._send(dict(cmd='manual', on=bool(on)))
+        return self.view()
+
+    def _own_game(self, game_id):
+        game = self.games.get(str(game_id))
+        if not game or game.get('finished'):
+            raise ValueError('That game is not being played any more.')
+        return game
+
+    def hand_move(self, game_id, move):
+        """Send a move made on the viewer's board."""
+        move = ' '.join(str(move or '').split())[:40]
+        with self.lock:
+            if self.state != 'connected':
+                raise ValueError('Start the bot and wait until it is connected.')
+            if not self.manual:
+                raise ValueError('Turn on playing by hand first.')
+            game = self._own_game(game_id)
+            if not game.get('our_turn'):
+                raise ValueError('It is not your turn.')
+            if not move:
+                raise ValueError('Choose a move.')
+            turn = int(game.get('turn') or 0)
+            self.refused = None
+        self._send(dict(cmd='move', id=str(game_id), turn=turn, move=move))
+        return self.view()
+
+    def control(self, game_id, what):
+        """Resign, or offer / accept / decline a draw, in the game being played by hand."""
+        if what not in ('Resign', 'DrawOffer', 'DrawAccept', 'DrawReject', 'Abort'):
+            raise ValueError('The viewer did not understand that.')
+        with self.lock:
+            if self.state != 'connected':
+                raise ValueError('Start the bot and wait until it is connected.')
+            game = self._own_game(game_id)
+            color = 'White' if game.get('white') == self.user else 'Black'
+        self._send(dict(cmd='control', id=str(game_id), what=what, color=color))
+        return self.view()
 
     def take(self, challenge_id):
         """Accept one challenge the user picked from the list."""
@@ -380,6 +427,15 @@ class HiveBot:
                     self.log.append('The game %s vs %s was aborted.' % (game.get('white') or 'White', game.get('black') or 'Black'))
                 if self.thinking == event['id']:
                     self.thinking = None
+            elif kind == 'manual':
+                self.manual = bool(event.get('on'))
+            elif kind == 'refused':
+                self.refused = dict(id=str(event.get('id') or ''), msg=str(event.get('msg') or '')[:200], at=time.time())
+                self.log.append('hivegame.com did not accept that: %s' % (str(event.get('msg') or 'no reason given')[:160]))
+                try:
+                    self._send(dict(cmd='resync'))  # our optimistic turn count is wrong now: ask for the real state
+                except Exception:
+                    pass
             elif kind == 'note':
                 self.log.append(str(event.get('msg') or '')[:200])
             elif kind == 'challenge_sent':
@@ -530,7 +586,8 @@ class HiveBot:
                         anyone=self.anyone, humans=bool(getattr(self, 'humans', False)), clock=list(self.clock) if self.clock else None,
                         lobby=list(self.lobby) if self.state == 'connected' else [],
                         online=list(getattr(self, 'online', [])) if self.state == 'connected' else [],
-                        site=True if self.state == 'connected' else site_online())
+                        site=True if self.state == 'connected' else site_online(),
+                        manual=bool(self.manual) and self.state == 'connected', refused=self.refused)
 
 
 _SITE = {'ok': None, 'at': 0.0, 'busy': False}
@@ -649,6 +706,12 @@ def hivebot_action(payload, engines):
         return BOT.view()
     if action == 'hivebot_take':
         return BOT.take(payload.get('id'))
+    if action == 'hivebot_manual':
+        return BOT.set_manual(payload.get('on'))
+    if action == 'hivebot_move':
+        return BOT.hand_move(payload.get('id'), payload.get('move'))
+    if action == 'hivebot_control':
+        return BOT.control(payload.get('id'), payload.get('what'))
     if action == 'hivebot_stop':
         return BOT.stop()
     if action == 'hivebot_challenge':

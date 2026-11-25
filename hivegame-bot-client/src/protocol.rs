@@ -17,6 +17,8 @@ pub enum ClientRequest {
 #[derive(Debug, Serialize)]
 pub enum GameAction {
     PlayAt { turn: usize, notation: String },
+    /// HotFrass patch: a game control, e.g. `{"Resign": "White"}` (the bot API's `Control`).
+    Control(Value),
 }
 
 #[derive(Debug, Serialize)]

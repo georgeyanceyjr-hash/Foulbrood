@@ -105,6 +105,54 @@ fn listen_for_commands(outbox: mpsc::UnboundedSender<Outgoing>, auto: Arc<AutoSt
                 }
                 continue;
             }
+            if cmd == "manual" {
+                // {"cmd":"manual","on":true}: the person at the viewer makes the moves; the engine is not run.
+                let on = command.get("on").and_then(|o| o.as_bool()).unwrap_or(false);
+                auto.manual.store(on, std::sync::atomic::Ordering::Relaxed);
+                protocol::hb(serde_json::json!({"ev": "manual", "on": on}));
+                // Switching back to the engine in the middle of our turn: look at the games again.
+                if outbox.send(Outgoing::Resync).is_err() {
+                    return;
+                }
+                continue;
+            }
+            if cmd == "move" {
+                // {"cmd":"move","id":"<game id>","turn":12,"move":"wA1 -bQ"}: a move made by hand on the viewer's board.
+                let id = command.get("id").and_then(|i| i.as_str());
+                let turn = command.get("turn").and_then(|t| t.as_u64());
+                let notation = command.get("move").and_then(|m| m.as_str()).map(str::trim).filter(|m| !m.is_empty());
+                if let (Some(id), Some(turn), Some(notation)) = (id, turn, notation) {
+                    protocol::hb(serde_json::json!({"ev": "move", "id": id, "turn": turn, "move": notation, "by_hand": true}));
+                    let request = ClientRequest::Game {
+                        game_id: id.to_string(),
+                        action: protocol::GameAction::PlayAt { turn: turn as usize, notation: notation.to_string() },
+                    };
+                    if outbox.send(Outgoing::Request(request)).is_err() {
+                        return;
+                    }
+                }
+                continue;
+            }
+            if cmd == "control" {
+                // {"cmd":"control","id":"<game id>","what":"Resign","color":"White"}
+                let id = command.get("id").and_then(|i| i.as_str());
+                let what = command.get("what").and_then(|w| w.as_str()).filter(|w| {
+                    ["Resign", "DrawOffer", "DrawAccept", "DrawReject", "Abort"].contains(w)
+                });
+                let color = command.get("color").and_then(|c| c.as_str()).filter(|c| *c == "White" || *c == "Black");
+                if let (Some(id), Some(what), Some(color)) = (id, what, color) {
+                    let mut control = serde_json::Map::new();
+                    control.insert(what.to_string(), serde_json::Value::String(color.to_string()));
+                    let request = ClientRequest::Game {
+                        game_id: id.to_string(),
+                        action: protocol::GameAction::Control(serde_json::Value::Object(control)),
+                    };
+                    if outbox.send(Outgoing::Request(request)).is_err() {
+                        return;
+                    }
+                }
+                continue;
+            }
             if cmd == "resync" {
                 if outbox.send(Outgoing::Resync).is_err() {
                     return;
@@ -169,6 +217,8 @@ struct AutoState {
     accepted: std::sync::atomic::AtomicUsize,
     /// Whose open challenges to take; starts from the config and can be changed while running.
     rules: std::sync::Mutex<AutoRules>,
+    /// The person at the viewer plays the moves; the engine stays idle.
+    manual: std::sync::atomic::AtomicBool,
 }
 
 #[derive(Default, Clone)]
@@ -444,7 +494,16 @@ impl Session {
                 warn!(bot = %bot, reason = %reason, "server error");
                 protocol::hb(serde_json::json!({"ev": "note", "msg": format!("hivegame.com: {reason}")}));
             }
-            Incoming::Refused(refusal) => warn!(bot = %bot, refusal = %refusal, "request refused"),
+            Incoming::Refused(refusal) => {
+                warn!(bot = %bot, refusal = %refusal, "request refused");
+                // A move or control sent by hand that the site would not take: tell the viewer why.
+                if let Some(game) = refusal.get("Game") {
+                    let reason = game.get("reason").and_then(|r| r.as_str()).unwrap_or("request refused");
+                    protocol::hb(serde_json::json!({
+                        "ev": "refused", "id": game.get("game_id").and_then(|g| g.as_str()).unwrap_or(""), "msg": reason,
+                    }));
+                }
+            }
             Incoming::Authenticated(_) => {}
             Incoming::Other(tag) => debug!(bot = %bot, tag = %tag, "ignored server message"),
         }
@@ -470,6 +529,10 @@ impl Session {
                 "history": if game.finished { Some(&game.history) } else { None },
             }));
             if !game.is_turn_of(&self.me.uid) {
+                continue;
+            }
+            if self.auto.manual.load(std::sync::atomic::Ordering::Relaxed) {
+                // Played by hand from the viewer: nothing to compute here.
                 continue;
             }
             let position_key = game.position_key();
