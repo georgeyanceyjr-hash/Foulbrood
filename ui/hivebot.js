@@ -248,16 +248,22 @@
  };
  const drawNativeStrip=s=>{
   const card=nativeCard(s);if(!card||typeof botThoughtFields!=='function')return;
-  const info=card.info,side=card.white===bot.user?0:1,color=side===0?'white':'black';
+  const side=card.white===bot.user?0:1,color=side===0?'white':'black';
+  // Stepping back through the game: show what the engine thought at its latest move up to the one on the board.
+  let info=card.info,stepped=false;
+  if(card.evals&&typeof s.ply==='number'&&s.ply<(s.review_total??s.ply)){
+   stepped=true;let at=null;for(const k in card.evals){const t=+k;if(t%2===side&&t+1<=s.ply&&(at===null||t>at))at=t}
+   info=at===null?{turn:null,depth:null,score:null,move:'—'}:{turn:at,depth:card.evals[at][0],score:card.evals[at][1],move:card.evals[at][2]};
+  }
   const strip=el(color+'Thought'),bar=el(color+'Clock').closest('.player'),source=el(color+'InsightSource');
-  const key=card.id+'|'+info.turn;if(card.thinking&&key!==thinkKey){thinkKey=key;thinkSince=Date.now()}
-  strip.hidden=false;el(color+'ReviewThought').hidden=true;bar.classList.add('bot-duel');bar.classList.toggle('bot-thinking',!!card.thinking);
+  const key=card.id+'|'+info.turn,thinking=!!card.thinking&&!stepped;if(thinking&&key!==thinkKey){thinkKey=key;thinkSince=Date.now()}
+  strip.hidden=false;el(color+'ReviewThought').hidden=true;bar.classList.add('bot-duel');bar.classList.toggle('bot-thinking',thinking);
   source.hidden=false;source.style.visibility='';source.textContent=identity(card,color,(bot.engine||'engine').replace(/ /g,'\u00a0'));source.title=source.textContent;
   const fields=botThoughtFields(strip),moveNumber=(info.turn||0)+1;
   let text=info.move;try{if(typeof insightMoveText==='function'&&s.ply===info.turn)text=insightMoveText(s.game,(legalFor(s,info.move)||{}).move||info.move,notationFollowsBoard())||info.move}catch(e){}
-  fields.move.caption.textContent=(card.thinking?'Thinking':'Played')+' · Move '+moveNumber;fields.move.value.textContent=text;fields.move.value.title='Top move: '+text;fields.move.value.disabled=true;
-  fields.depth.value.textContent=String(info.depth);
-  fields.time.value.textContent=card.thinking&&key===thinkKey?((Date.now()-thinkSince)/1000).toFixed(1)+'s':'—';
+  fields.move.caption.textContent=info.turn===null?'Waiting':(thinking?'Thinking':'Played')+' · Move '+moveNumber;fields.move.value.textContent=text;fields.move.value.title='Top move: '+text;fields.move.value.disabled=true;
+  fields.depth.value.textContent=info.depth===null?'—':String(info.depth);
+  fields.time.value.textContent=thinking&&key===thinkKey?((Date.now()-thinkSince)/1000).toFixed(1)+'s':'—';
   updatePositionScore(fields.score,{score:info.score,side,source:'bot'},null,{side,label:'Position'});
  };
  // Who the player is on hivegame.com: rating (and its change once the game is over) beside the name,

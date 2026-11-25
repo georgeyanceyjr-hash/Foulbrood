@@ -118,6 +118,7 @@ class HiveBot:
         self.engine_name = None
         self.games = {}
         self.order = []
+        self._restore()
         self.accepted = 0
         self.thinking = None
         self.log = collections.deque(maxlen=12)
@@ -451,6 +452,33 @@ class HiveBot:
         if refused:
             self.stop()
 
+    def _restore(self):
+        """Bring the last few finished games back after a restart, with the engine's scores, so they can still be stepped through."""
+        try:
+            lines = [line for line in (BOT_DIR / 'games.jsonl').read_text().splitlines() if line.strip()][-8:]
+        except Exception:
+            return
+        now = time.time()
+        for n, line in enumerate(lines):
+            try:
+                row = json.loads(line)
+                gid = str(row['id'])
+                moves = row.get('moves') or []
+                evals = {str(k): v for k, v in (row.get('evals') or {}).items()}
+                game = dict(id=gid, white=row.get('white'), black=row.get('black'), result=row.get('result'), finished=True, saved=True,
+                            turn=len(moves), last_move=moves[-1] if moves else '', our_turn=False, updated=now - (len(lines) - n),
+                            timed=False, base=row.get('base'), increment=row.get('increment'), speed=row.get('speed'), rated=row.get('rated'),
+                            white_card=row.get('white_card'), black_card=row.get('black_card'), evals=evals)
+                if evals:
+                    last = max(evals, key=lambda k: int(k))
+                    game['info'] = dict(turn=int(last), depth=int(evals[last][0]), score=int(evals[last][1]), move=str(evals[last][2]))
+                self.games[gid] = game
+                if gid in self.order:
+                    self.order.remove(gid)
+                self.order.append(gid)
+            except Exception:
+                continue
+
     def _record(self, game, history):
         """Append a finished game to FoulBroodData/hivegame-bot/games.jsonl (moves, result, our evaluations)."""
         try:
@@ -483,7 +511,7 @@ class HiveBot:
     # ---- what the panel sees -------------------------------------------------------------
     def view(self):
         with self.lock:
-            games = [{k: v for k, v in self.games[g].items() if k not in ('evals', 'saved')} for g in self.order[-8:]]
+            games = [{k: v for k, v in self.games[g].items() if k != 'saved'} for g in self.order[-8:]]  # evals go along so a finished game can be stepped through with its scores
             for game in games:
                 game['url'] = 'https://hivegame.com/game/' + game['id']
                 game['thinking'] = self.thinking == game['id']
