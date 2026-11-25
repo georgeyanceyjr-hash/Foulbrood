@@ -885,3 +885,9 @@ body.hb-live.hb-manual.hb-insight #engineInsightPanel{display:block!important}
 .hb-ingame details.hb-sub:not(:first-of-type){display:none}
 .hb-ingame details.hb-sub:first-of-type>:not(summary):not(.hb-auto):not(#hbAccepting){display:none}
 .hb-ingame.hb-mine details.hb-sub:first-of-type>#hbLobby{display:block}
+
+/* Forced win: the move count sits small after the score, and the strip never runs into the clock. */
+.bot-field-value[data-forced]:not([data-forced=""])::after{content:"\00a0" attr(data-forced);font-size:.58em;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+@container (min-width:781px){
+ .player:not(.review-insight) .bot-thought-strip{gap:clamp(12px,2.2cqw,30px);margin-right:16px}
+}

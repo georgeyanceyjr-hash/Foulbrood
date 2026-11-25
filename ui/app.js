@@ -314,7 +314,7 @@ function createPositionScore(){
 function updatePositionScore(fields,hint,engine,{side=hint?.side??0,label='Position'}={}){
  const value=positionScoreValue(hint,engine);
  const forcedIn=hint&&hint.source!=='external'&&hint.score!=null&&Math.abs(hint.score)>99000?100000-Math.abs(hint.score):null; // a forced win: how many moves until the queen is surrounded, counting both sides' moves
- fields.caption.textContent=label;fields.value.textContent=value==null?'—':(value>0?'+':'')+value+(forcedIn!=null&&Math.abs(value)===100?' in '+forcedIn:'');
+ fields.caption.textContent=label;fields.value.textContent=value==null?'—':(value>0?'+':'')+value;fields.value.dataset.forced=forcedIn!=null&&value!=null&&Math.abs(value)===100?'in '+forcedIn:''; // shown small after the number
  fields.box.style.setProperty('--score-color',hintColor(side));
  fields.box.classList.toggle('score-unavailable',value==null);fields.meter.hidden=value==null;
  if(value==null)fields.meter.removeAttribute('aria-valuenow');
