@@ -667,3 +667,23 @@ header .header-tools>button:hover,header .header-tools .sound-settings>summary:h
 header .header-tools .sound-settings>summary{font-size:14px!important}
 .board-result{display:none!important}
 #toast{top:48px;left:40px;right:auto;transform:none;max-width:calc(100% - 80px);padding:6px 10px;border:0;border-radius:0;background:var(--hazard);color:var(--pitch);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;text-align:left;box-shadow:none}
+
+/* ---- Status bars: the FoulBrood look ---- */
+.player{position:relative;border:1px solid var(--line);background:var(--paper)}
+.player.active,[data-theme="dark"] .player.active{border-color:var(--line);box-shadow:none}
+.player::before{content:'';position:absolute;left:-1px;top:-1px;bottom:-1px;width:6px;background:var(--line)}
+.player.active::before{background:repeating-linear-gradient(-45deg,var(--hazard) 0 6px,var(--pitch) 6px 12px)}
+.player .player-identity>strong{font-family:'Archivo Black','Arial Black',Impact,'Helvetica Neue',sans-serif;font-weight:900;font-size:14px;letter-spacing:.04em;text-transform:uppercase;line-height:18px;color:var(--ink)}
+.player .player-identity>strong .fb-nm{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player .player-identity>strong .fb-rt{display:block;margin-top:3px;font-family:Archivo,-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted);font-variant-numeric:tabular-nums}
+.player .fb-rt b{font-weight:800;color:var(--muted)}.player .fb-rt b.up{color:#2fae52}.player .fb-rt b.down{color:#e0392b}
+.player .bot-field-label,.player .position-score .bot-field-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.player .bot-field-value{font-weight:800;font-variant-numeric:tabular-nums}
+.player .bot-position,.player .bot-depth{position:relative}
+.player .bot-position::before,.player .bot-depth::before{content:'';position:absolute;left:-15px;top:2px;bottom:2px;border-left:1px solid var(--line)}
+.player .evaluation-scale{border-radius:0;border:1px solid var(--line);background:linear-gradient(to right,#0d0e0c,#eee6cc)}
+.player .evaluation-scale>span{border-radius:0;box-shadow:0 0 0 1px var(--pitch)}
+.player .evaluation-legend{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.player .clock,.player.bot-duel .clock{font-family:'Archivo Black','Arial Black',Impact,'Helvetica Neue',sans-serif;font-weight:900;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.player .insight-source,.player .player-identity>.muted{letter-spacing:.02em}
+.player .clock::before,.player.bot-duel:not(.analysis-insight) .clock::before{font-family:Archivo,-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}

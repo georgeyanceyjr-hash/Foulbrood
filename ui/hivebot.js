@@ -260,9 +260,15 @@
  const identity=(card,color,lead)=>{
   const info=card[color+'_card'];if(!info)return lead;
   const name=el(color+'Name'),base=card[color]||name.textContent;
-  let text=base;
-  if(info.rating!=null){text+='  '+Math.round(info.rating);if(card.finished&&info.change!=null){const d=Math.round(info.change);text+=' ('+(d>0?'+':d<0?'−':'±')+Math.abs(d)+')'}}
-  name.textContent=text;name.title='Rating on hivegame.com at this time control'+(card.finished?', and the change from this game':'');
+  const who=document.createElement('span');who.className='fb-nm';who.textContent=base.replace(/\s+\d+(\s*\([^)]*\))?$/,'');
+  const parts=[who];
+  if(info.rating!=null){
+   const rate=document.createElement('span');rate.className='fb-rt';rate.textContent=Math.round(info.rating);
+   if(card.finished&&info.change!=null){const d=Math.round(info.change),delta=document.createElement('b');delta.className=d>0?'up':d<0?'down':'';delta.textContent=(d>0?'+':d<0?'−':'±')+Math.abs(d);rate.append(' ',delta)}
+   parts.push(rate);
+  }
+  const sig=parts.map(p=>p.textContent).join('|');
+  if(name.dataset.sig!==sig||!name.querySelector('.fb-nm')){name.replaceChildren(...parts);name.dataset.sig=sig}name.title='Rating on hivegame.com at this time control'+(card.finished?', and the change from this game':'');
   const bits=[];
   if(info.patreon)bits.push('Supporter');
   let record='';if(info.played!=null)record=`${Number(info.played).toLocaleString()} games ${info.win}W ${info.loss}L${info.draw?' '+info.draw+'D':''}`.replace(/ /g,'\u00a0');
