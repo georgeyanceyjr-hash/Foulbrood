@@ -253,6 +253,7 @@ function renderReviewThought(strip,s,side,engine){
  const point=available&&s.ply===0?review.points.find(p=>p.ply===0):null;
  fields.heading.textContent=pending?`Move ${review.working_ply}\nReviewing…`:!available?'Game review unavailable':row?`Move ${row.ply}\n${row.label}`:s.ply===0?'Starting position':'Not reviewed yet';
  fields.heading.classList.toggle('has-reviewed-move',!!row&&!pending);
+ {const verdict=row&&!pending?({'Best move':'good','Book move':'good','No clear error':'good','Inaccuracy':'mid','Uncertain':'mid','Mistake':'poor','Blunder':'bad','Missed win':'bad'})[row.label]||'':'';fields.heading.dataset.verdict=verdict;fields.played.box.dataset.verdict=verdict;}
  {const short={'No clear error':'Fine','Not reviewed yet':'No review','Game review unavailable':'No review','Starting position':'Start','Reviewing…':'Reviewing','Book move':'Book','Missed win':'Missed win','Uncertain':'Unclear'};const parts=fields.heading.textContent.split('\n').map(t=>short[t]||t);if(parts.length===1)fields.heading.textContent=parts[0];if(parts.length===2){const top=document.createElement('small'),main=document.createElement('span');top.textContent=parts[0];main.textContent=parts[1];fields.heading.replaceChildren(top,main)}}
  fields.heading.classList.toggle('search-activity',pending);
  fields.heading.title=row?.label==='Uncertain'?'Comparison inconclusive at this depth.':row?.label==='Missed win'?'The preferred line retains a forced win.':'';

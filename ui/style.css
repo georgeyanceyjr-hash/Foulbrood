@@ -853,3 +853,19 @@ aside .moves button,aside #moves button{text-transform:none;letter-spacing:0;fon
 @container (min-width:781px){
  .player.review-insight .review-thought-cell>.review-thought-depth::after{font-size:14px;font-weight:800;letter-spacing:.04em;color:var(--ink);opacity:.8}
 }
+/* Review: the played move sits in a box coloured by the verdict (green good, yellow middling, orange poor, red bad). */
+.player.review-insight{--verdict-good:#2fae52;--verdict-mid:#d9a900;--verdict-poor:#e8842a;--verdict-bad:#e0392b}
+[data-theme="dark"] .player.review-insight{--verdict-good:#35c25a;--verdict-mid:#f2c20a;--verdict-poor:#f0913a;--verdict-bad:#f0483a}
+@container (min-width:781px){
+ .player.review-insight .review-thought-cell:nth-child(2){padding:5px 8px;border:1px solid var(--line)}
+ .player.review-insight .review-thought-cell[data-verdict="good"]{--v:var(--verdict-good)}
+ .player.review-insight .review-thought-cell[data-verdict="mid"]{--v:var(--verdict-mid)}
+ .player.review-insight .review-thought-cell[data-verdict="poor"]{--v:var(--verdict-poor)}
+ .player.review-insight .review-thought-cell[data-verdict="bad"]{--v:var(--verdict-bad)}
+ .player.review-insight .review-thought-cell[data-verdict]:not([data-verdict=""]){border-color:var(--v);background:color-mix(in srgb,var(--v) 14%,transparent)}
+ .player.review-insight .review-thought-cell[data-verdict]:not([data-verdict=""])>.bot-field-label{color:var(--v)}
+ .player.review-insight .review-thought-heading[data-verdict="good"]>span{color:var(--verdict-good)}
+ .player.review-insight .review-thought-heading[data-verdict="mid"]>span{color:var(--verdict-mid)}
+ .player.review-insight .review-thought-heading[data-verdict="poor"]>span{color:var(--verdict-poor)}
+ .player.review-insight .review-thought-heading[data-verdict="bad"]>span{color:var(--verdict-bad)}
+}
