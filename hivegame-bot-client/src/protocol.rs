@@ -149,6 +149,8 @@ impl Game {
         let left = self.seconds_left_to_move()?;
         let inc = self.time_increment.unwrap_or(0).max(0) as f64;
         let budget = (inc + left / 10.0 - 0.4).min(left / 4.0);
+        // Our very first move (game turn 0 or 1) is played within about 10 s, book or no book.
+        let max_secs = if self.turn <= 1 { max_secs.min(8) } else { max_secs };
         let secs = (budget.floor() as i64).clamp(1, max_secs.max(1) as i64) as u64;
         Some(format!("time {:02}:{:02}:{:02}", secs / 3600, (secs / 60) % 60, secs % 60))
     }
@@ -354,6 +356,8 @@ mod tests {
         g.time_mode = Some("RealTime".to_string());
         g.time_increment = Some(10);
         g.white_time_left = Some(json!({"secs": 600, "nanos": 0}));
+        assert_eq!(g.bestmove_time_args(90).unwrap(), "time 00:00:08");
+        g.turn = 2;
         assert_eq!(g.bestmove_time_args(90).unwrap(), "time 00:01:09");
         assert_eq!(g.bestmove_time_args(20).unwrap(), "time 00:00:20");
         g.white_time_left = Some(json!({"secs": 8, "nanos": 0}));
