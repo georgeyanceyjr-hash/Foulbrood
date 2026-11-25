@@ -359,14 +359,16 @@
   if(!card||!card.timed||typeof botThoughtFields!=='function')return;
   const botSide=card.white===bot.user?0:1,side=1-botSide,color=side===0?'white':'black';
   const left=side===0?card.white_left:card.black_left;if(left==null)return;
-  if(oppClock.id!==card.id){oppClock.id=card.id;oppClock.left=left;oppClock.used=null}
-  else if(left!==oppClock.left){oppClock.used=Math.max(0,oppClock.left-left+(card.increment||0));oppClock.left=left}
+  if(oppClock.id!==card.id){oppClock.id=card.id;oppClock.left=left;oppClock.used=null;oppClock.turn=card.turn||0}
+  else if((card.turn||0)!==oppClock.turn){ // worked out once per move, when the move is made: clock at the start of its turn, less the clock now, plus the increment
+   if(oppClock.turn%2===side)oppClock.used=Math.max(0,oppClock.left-left+(card.increment||0));
+   oppClock.left=left;oppClock.turn=card.turn||0}
   const strip=el(color+'Thought'),bar=el(color+'Clock').closest('.player'),fields=botThoughtFields(strip);
   const toMove=!card.finished&&(card.turn||0)%2===side,moveNumber=(card.turn||0)+1;
   strip.hidden=false;bar.classList.add('bot-duel');bar.classList.toggle('bot-thinking',toMove);
   const source=el(color+'InsightSource');source.hidden=false;source.style.visibility='';source.textContent=identity(card,color,'')||'Opponent on hivegame.com';source.title=source.textContent;
   fields.move.caption.textContent=toMove?'Thinking · Move '+moveNumber:'Waiting';fields.move.value.textContent='—';fields.move.value.disabled=true;
-  const elapsed=(card.clock_age||0)+(Date.now()-clockFetched)/1000;
+  const elapsed=(card.turn_age!=null?card.turn_age:(card.clock_age||0))+(Date.now()-clockFetched)/1000; // counted from when the move began, not from the site's latest update
   fields.time.value.textContent=toMove&&(card.turn||0)>=2?elapsed.toFixed(1)+'s':oppClock.used!=null?oppClock.used.toFixed(1)+'s':'—';
   fields.time.value.title=toMove?'Time on this move so far':'Time the last move took';
   fields.depth.value.textContent='—';

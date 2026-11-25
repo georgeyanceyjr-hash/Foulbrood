@@ -468,6 +468,8 @@ class HiveBot:
                     if not game.get('finished'):
                         self.log.append('%s vs %s was aborted by the opponent before it got going. Nothing was rated.' % (
                             str(event.get('white') or 'White')[:40], str(event.get('black') or 'Black')[:40]))
+                if game.get('turn') != int(event.get('turn') or 0) or 'turn_at' not in game:
+                    game['turn_at'] = time.time()  # when this move began, for 'thinking so far' (the site may repeat an update mid-move)
                 game.update(turn=int(event.get('turn') or 0), finished=bool(event.get('finished')), result=result,
                             white=str(event.get('white') or '')[:40], black=str(event.get('black') or '')[:40],
                             our_turn=bool(event.get('our_turn')), updated=time.time(),
@@ -576,6 +578,7 @@ class HiveBot:
                 game['url'] = 'https://hivegame.com/game/' + game['id']
                 game['thinking'] = self.thinking == game['id']
                 game['clock_age'] = max(0.0, time.time() - game.get('clock_at', time.time()))
+                game['turn_age'] = max(0.0, time.time() - game.get('turn_at', game.get('clock_at', time.time())))
             live = [g for g in games if not g.get('finished')]
             current = max(live, key=lambda g: g.get('updated', 0)) if live else None
             return dict(state=self.state, message=self.message, user=self.user, engine=self.engine_name,
