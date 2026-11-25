@@ -649,3 +649,4 @@ input[type=checkbox]{accent-color:var(--ink)}[data-theme="dark"] input[type=chec
 #positionEditor .setup-last-card strong{font-size:13px}
 #positionEditor .setup-last-card .muted{font-size:12px}
 #positionEditor input,#positionEditor button{border-radius:2px}
+header .brand-image,.brand-image{width:64px;height:64px;border-radius:2px}
