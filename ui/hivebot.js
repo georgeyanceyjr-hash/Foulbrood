@@ -436,10 +436,9 @@
  const tabs=['playTab','liveTab','analysisTab','engineTab'];
  const show=v=>{
   open=v;document.body.classList.toggle('history-open',v);el('historyTab').classList.toggle('active',v);
-  if(v){for(const id of tabs)el(id).classList.remove('active');refresh()}
+  if(v){try{enginePageOpen=false;if(typeof renderEngines==='function'&&typeof state!=='undefined'&&state)renderEngines(state)}catch(e){}for(const id of tabs)el(id).classList.remove('active');refresh()}
  };
  // Other scripts re-mark their own tab on every redraw; keep History the only marked one while it is open.
- setInterval(()=>{if(open)for(const id of tabs)el(id).classList.remove('active')},200);
  el('historyTab').onclick=()=>show(true);
  for(const id of tabs)el(id).addEventListener('click',()=>show(false));
 
@@ -458,12 +457,13 @@
    star.onclick=async()=>{try{await call('star',{id:g.id,starred:!g.starred});refresh()}catch(e){toast(e.message)}};
    const text=document.createElement('div');text.className='hist-text';
    const title=document.createElement('strong');title.textContent=`${player(g,'white')}  vs  ${player(g,'black')}`;
-   const bits=[g.result||'',g.moves?`${g.moves} moves`:'',g.time_control||'',g.source||'',when(g.played||g.saved)];
-   if(g.review)bits.push(g.review.total&&g.review.reviewed<g.review.total?`Review ${g.review.reviewed} of ${g.review.total} moves`:'Reviewed'+(g.review.engine?' by '+g.review.engine:''));
-   const meta=document.createElement('span');meta.className='caption';meta.textContent=bits.filter(Boolean).join(' · ');
+   // Same three lines as an engine entry: name, a grey detail line, then the highlighted status line.
    const kinds=[g.white_kind,g.black_kind].filter(Boolean).join(' vs ');
-   const extra=document.createElement('span');extra.className='caption';extra.textContent=[kinds,g.note].filter(Boolean).join(' · ');
-   text.append(title,meta);if(extra.textContent)text.append(extra);
+   const meta=document.createElement('span');meta.className='caption';meta.textContent=[g.time_control||'',g.source||'',when(g.played||g.saved),kinds,g.note].filter(Boolean).join(' · ');
+   const bits=[g.result||'',g.moves?`${g.moves} moves`:''];
+   if(g.review)bits.push(g.review.total&&g.review.reviewed<g.review.total?`Review ${g.review.reviewed} of ${g.review.total} moves`:'Reviewed'+(g.review.engine?' by '+g.review.engine:''));
+   const extra=document.createElement('span');extra.className='hist-result';extra.textContent=bits.filter(Boolean).join(' · ');
+   text.append(title);if(meta.textContent)text.append(meta);if(extra.textContent)text.append(extra);
    const buttons=document.createElement('div');buttons.className='hist-buttons';
    const openButton=document.createElement('button');openButton.textContent='Open in Analysis';openButton.onclick=()=>openGame(g.id).catch(e=>toast(e.message));
    const del=document.createElement('button');del.textContent='Delete';

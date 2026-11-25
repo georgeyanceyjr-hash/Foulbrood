@@ -801,3 +801,17 @@ header .header-tools .sound-settings>summary{font-size:14px!important}
 .review-working{stroke:var(--hazard);stroke-width:2}
 #reviewGraph g:focus circle:last-child{stroke:var(--hazard);stroke-width:3}
 .review-panel .review-summary{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:10px 0 0}
+/* While History is open it is the only marked tab (no script fights over the marker). */
+body.history-open nav .tab.active:not(#historyTab),[data-theme="dark"] body.history-open nav .tab.active:not(#historyTab){color:var(--muted);border-bottom-color:transparent;background:none}
+
+/* ---- History and Engine pages: one style ---- */
+.hist-list{display:block;margin-top:14px}
+.hist-row,.hist-row.starred{border:0;border-top:1px solid var(--line);border-radius:0;padding:16px 0;gap:14px}
+.hist-text{gap:5px}.hist-text strong{font-size:15px}
+.hist-text .caption{font-size:12px;color:var(--muted)}
+.hist-result,.engine-connection.connected{font-size:12px;font-weight:700;color:#8a6d00}
+[data-theme="dark"] .hist-result,[data-theme="dark"] .engine-connection.connected{color:var(--hazard)}
+#histSearch{display:block;width:100%;box-sizing:border-box;padding:10px 12px;background:var(--bg);border:1px solid var(--line);color:var(--ink);font-size:13px;outline-offset:2px}
+#histCount{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:12px 0 0}
+.engine-protocol{border-radius:2px;border-color:var(--hazard);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.engine-catalog{border-radius:2px}
