@@ -313,12 +313,14 @@ function createPositionScore(){
 }
 function updatePositionScore(fields,hint,engine,{side=hint?.side??0,label='Position'}={}){
  const value=positionScoreValue(hint,engine);
- fields.caption.textContent=label;fields.value.textContent=value==null?'—':(value>0?'+':'')+value;
+ const forcedIn=hint&&hint.source!=='external'&&hint.score!=null&&Math.abs(hint.score)>99000?100000-Math.abs(hint.score):null; // a forced win: how many moves until the queen is surrounded, counting both sides' moves
+ fields.caption.textContent=label;fields.value.textContent=value==null?'—':(value>0?'+':'')+value+(forcedIn!=null&&Math.abs(value)===100?' in '+forcedIn:'');
  fields.box.style.setProperty('--score-color',hintColor(side));
  fields.box.classList.toggle('score-unavailable',value==null);fields.meter.hidden=value==null;
  if(value==null)fields.meter.removeAttribute('aria-valuenow');
  else {fields.meter.setAttribute('aria-valuenow',value);fields.marker.style.left=((value+100)/2)+'%';}
  fields.box.title=value==null?(hint?.score_status==='unverified'?'Older report: final score could not be verified.':hint?.score_status==='book'?'Opening-book choice: no position search was performed.':'This engine has not reported a verified position score.'):'Approximate advantage, not a winning percentage. Negative favors Black; positive favors White. This is the last completed POSITION assessment; a move selected in an unfinished deeper search has no verified move score. Only forced wins reach −100 or +100.';
+ if(forcedIn!=null&&value!=null&&Math.abs(value)===100)fields.box.title=`Forced win for ${value>0?'White':'Black'} within ${forcedIn} ${forcedIn===1?'move':'moves'}, counting both sides' moves.`;
  if(hint?.score_status==='last_complete'){fields.caption.textContent='Position · depth '+hint.depth;fields.box.title+=' This is the last fully completed position assessment. The played move was selected in an unfinished deeper search; its exact score is unavailable.';}
  if(hint?.score_status==='unverified')fields.caption.textContent='Unverified score';
 }
