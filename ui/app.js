@@ -406,7 +406,7 @@ $('board').addEventListener('pointerup',endBoardDrag);$('board').addEventListene
 $('board').addEventListener('click',e=>{if(suppressBoardClick){e.preventDefault();e.stopImmediatePropagation();suppressBoardClick=false}},true);
 
 $('analysisTime').onchange=()=>action({action:'insight_time',milliseconds:Number($('analysisTime').value)});
-$('resetPlay').onclick=()=>{const payload={action:'reset_play'};if(state?.pieces.length||state?.review_total)confirmViewerAction('Reset the board?','This will clear the board and game history.','Reset board',payload);else action(payload)};
+$('resetPlay').onclick=()=>{const payload={action:'reset_play'};if(state?.pieces.length||state?.review_total)confirmViewerAction('Clear the game?','This will clear the board and game history.','Clear game',payload);else action(payload)};
 
 $('analyzePosition').onclick=()=>{if(!state||state.mode!=='play')return;action({action:'open_analysis',ply:state.ply})};
 
