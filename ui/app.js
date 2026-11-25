@@ -762,7 +762,8 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
     speakNumber(crossed[crossed.length-1],speechPitch);
    }
   }
-  syncClockTicks(next);
+  // The game clock only runs once both sides have made their first move; no ticking before that.
+  syncClockTicks(((s?.review_total??s?.ply??0)>=2)?next:{...next,running:false});
   previous=next;
  };
  sync();
