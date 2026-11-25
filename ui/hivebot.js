@@ -237,6 +237,7 @@
   el('hbToAnalysis').textContent='Open in Analysis';
   clockCard=card||null;clockFetched=Date.now();drawClocks();drawThought(card);
   if(connected){
+   {const real=!!bot.max_games&&(!!bot.anyone||(bot.accept||[]).length>0),box=el('hbAuto');if(box.checked!==real&&Date.now()-(render.autoAt||0)>4000)box.checked=real} // the switch shows what the bot is really doing, in every window
    const who=bot.anyone?'anyone':(bot.accept||[]).join(', ');
    const tc=bot.clock?`${bot.clock[0]/60}+${bot.clock[1]} only`:'10 minutes or longer';
    el('hbAccepting').textContent=who&&bot.max_games?`Accepting open challenges from ${who}, ${tc}, one game at a time until you untick the box.`:'';
@@ -478,7 +479,7 @@
  };
  for(const id of ['hbFollow','hbEngine','hbLogin'])el(id).addEventListener('change',remember);
  for(const id of ['hbAuto','hbAcceptTime','hbMax','hbOnly','hbHumans'])el(id).addEventListener('change',async()=>{
-  remember();if(!bot||!bot.running)return;
+  remember();render.autoAt=Date.now();if(!bot||!bot.running)return;
   try{bot=await post({action:'hivebot_accept',...rules()})}catch(e){el('hbStatus').textContent=(window.plainMessage?window.plainMessage(e.message):e.message)}render();
  });
  el('hbLogin').addEventListener('input',render);
