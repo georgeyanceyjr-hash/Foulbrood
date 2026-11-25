@@ -815,3 +815,4 @@ body.history-open nav .tab.active:not(#historyTab),[data-theme="dark"] body.hist
 #histCount{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:12px 0 0}
 .engine-protocol{border-radius:2px;border-color:var(--hazard);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
 .engine-catalog{border-radius:2px}
+.engine-add label{display:block;font-size:12px;color:var(--muted)}.engine-add label>input{display:block;width:100%;box-sizing:border-box;margin-top:7px}
