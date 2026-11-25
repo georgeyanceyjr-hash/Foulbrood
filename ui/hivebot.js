@@ -153,7 +153,23 @@
   if(rows.some(c=>c.id===keep))sel.value=keep;
   el('hbTake').disabled=playing||!sel.value;
  };
+ // An aborted game: say so on the board, once, in plain words; and never show a link-reading error on the Live board.
+ const abortSeen=new Set();let abortReady=false;
+ const noteAborts=()=>{
+  if(!bot||!bot.games)return;
+  for(const g of bot.games)if(g.finished&&/^Aborted/.test(g.result||'')&&!abortSeen.has(g.id)){abortSeen.add(g.id);if(abortReady&&typeof toast==='function')toast(g.result+'.')}
+  abortReady=true;
+ };
+ {const plain=window.toast;if(typeof plain==='function')window.toast=text=>{
+   if(liveOn()&&/game link|reach that hivegame\.com game/.test(String(text))){
+    const last=bot&&bot.games&&bot.games[bot.games.length-1];
+    if(last&&last.finished&&/^Aborted/.test(last.result||''))return plain(last.result+'.');
+    return;
+   }
+   return plain(text);
+ }}
  const render=()=>{
+  try{noteAborts()}catch(e){}
   fillEngines();
   if(!bot)return;
   const running=!!bot.running,connected=bot.state==='connected';
