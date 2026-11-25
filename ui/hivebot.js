@@ -372,7 +372,7 @@
  };
  el('hbClear').onclick=()=>{
   if(bot&&bot.current)return;if(typeof state==='undefined'||!state||state.mode!=='analysis')return;
-  if(hasGame(state.game))ask('Bury this game?','This will clear the board and the game history. Continue?','Clear game',clearBoard);
+  if(hasGame(state.game))ask('Clear the game?','This will clear the board and the game history. Continue?','Clear game',clearBoard);
  };
 
  const toAnalysis=async()=>{

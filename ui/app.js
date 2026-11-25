@@ -220,7 +220,7 @@ function arrangePlayerSeats(s){
 function gameSettingsLocked(s){return s.mode==='play'&&!s.play_finished&&s.timeout_side==null&&s.resigned_side==null&&!['Draw','WhiteWins','BlackWins'].includes((s.live_game||s.game).split(';')[1])&&(s.running||(s.review_total??s.ply)>0)}
 function syncGameSettings(s){
  const locked=gameSettingsLocked(s);
- for(const id of ['whitePlayer','blackPlayer','time','variant']){$(id).disabled=locked;$(id).title=locked?'Reset the board to change game settings.':'';}
+ for(const id of ['whitePlayer','blackPlayer','time','variant']){$(id).disabled=locked;$(id).title=locked?'Clear the game to change game settings.':'';}
  if(locked){seatPreviewPlayers=null;$('whitePlayer').value=s.players[0];$('blackPlayer').value=s.players[1];$('time').value=s.time_control;$('variant').value=(s.live_game||s.game).split(';')[0];$('time').onchange();}
 }
 // Release aliases also cover a server started before the registry migration.
