@@ -193,7 +193,11 @@
    drawLobby(!!g);
   }
   const pending=(bot.lobby||[]).some(c=>c.mine); // a sent challenge is only news while it is still waiting
-  el('hbLog').textContent=(bot.log||[]).filter(line=>!/^Accepted a challenge/.test(line)&&(pending||!/^Challenge sent/.test(line))).slice(-3).join('\n');el('hbLog').hidden=!el('hbLog').textContent;
+  // One notice at a time: the newest line only, and it clears itself after half a minute or when a game starts.
+  {const line=(bot.log||[]).filter(line=>!/^Accepted a challenge/.test(line)&&(pending||!/^Challenge sent/.test(line))).slice(-1)[0]||'';
+   if(line!==render.logLine){render.logAt=render.logLine===undefined?0:Date.now();render.logLine=line} // a line already there when the page opens is old news
+   const show=!!line&&!bot.current&&(Date.now()-(render.logAt||0)<30000||/^Challenge sent/.test(line));
+   el('hbLog').textContent=show?line:'';el('hbLog').hidden=!show;}
   if(card&&!card.finished&&cleared)setCleared(null);
   if(liveOn()&&el('hbFollow').checked&&card&&cleared!==card.id&&(card.id!==shown.id||card.turn!==shown.turn))showOnBoard(card);
   try{if(typeof state!=='undefined'&&state){drawNativeStrip(state);drawNativePreview(state);drawIdentity(state)}}catch(e){}
