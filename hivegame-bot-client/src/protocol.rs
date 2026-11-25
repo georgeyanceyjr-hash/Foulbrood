@@ -140,12 +140,14 @@ impl Game {
         }
     }
 
-    /// "time hh:mm:ss" budget for this move: clock/30 + 80% of the increment, less 2 s of
-    /// overhead, never more than the configured `max_secs` and never less than 1 s.
+    /// "time hh:mm:ss" budget for this move: the whole increment plus 1/16 of the clock, less
+    /// 0.4 s for the trip to the site, never more than a quarter of the clock or the configured
+    /// `max_secs`, and never less than 1 s. The bank is spent over the first twenty or so moves
+    /// and then settles near 20 s, instead of finishing the game unused.
     pub fn bestmove_time_args(&self, max_secs: u64) -> Option<String> {
         let left = self.seconds_left_to_move()?;
         let inc = self.time_increment.unwrap_or(0).max(0) as f64;
-        let budget = (left / 30.0 + inc * 0.8 - 2.0).min(left / 4.0);
+        let budget = (inc + left / 16.0 - 0.4).min(left / 4.0);
         let secs = (budget.floor() as i64).clamp(1, max_secs.max(1) as i64) as u64;
         Some(format!("time {:02}:{:02}:{:02}", secs / 3600, (secs / 60) % 60, secs % 60))
     }
@@ -351,13 +353,20 @@ mod tests {
         g.time_mode = Some("RealTime".to_string());
         g.time_increment = Some(10);
         g.white_time_left = Some(json!({"secs": 600, "nanos": 0}));
-        assert_eq!(g.bestmove_time_args(60).unwrap(), "time 00:00:26");
+        assert_eq!(g.bestmove_time_args(60).unwrap(), "time 00:00:47");
         assert_eq!(g.bestmove_time_args(20).unwrap(), "time 00:00:20");
         g.white_time_left = Some(json!({"secs": 8, "nanos": 0}));
         assert_eq!(g.bestmove_time_args(20).unwrap(), "time 00:00:02");
         g.time_increment = Some(0);
         g.white_time_left = Some(json!(180_000_000_000u64));
-        assert_eq!(g.bestmove_time_args(20).unwrap(), "time 00:00:04");
+        assert_eq!(g.bestmove_time_args(20).unwrap(), "time 00:00:10");
+        g.time_increment = Some(2);
+        g.white_time_left = Some(json!({"secs": 60, "nanos": 0}));
+        assert_eq!(g.bestmove_time_args(25).unwrap(), "time 00:00:05");
+        g.white_time_left = Some(json!({"secs": 20, "nanos": 0}));
+        assert_eq!(g.bestmove_time_args(25).unwrap(), "time 00:00:02");
+        g.white_time_left = Some(json!({"secs": 3, "nanos": 0}));
+        assert_eq!(g.bestmove_time_args(25).unwrap(), "time 00:00:01");
     }
 
     fn frame(request: &ClientRequest) -> String {
