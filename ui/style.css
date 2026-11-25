@@ -880,3 +880,8 @@ aside .moves button,aside #moves button{text-transform:none;letter-spacing:0;fon
 #toast{font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1.4;padding:8px 12px;max-width:min(520px,calc(100% - 80px))}
 body.hb-live.hb-manual.hb-insight #engineInsightPanel{display:block!important}
 #hbManualRow,#hbInsightRow{margin-top:12px}#hbManualRow[hidden],#hbInsightRow[hidden],#hbHandRow[hidden]{display:none}
+
+/* During a game the challenge boxes shrink to the automatic switch, so perpetual play can be stopped. */
+.hb-ingame details.hb-sub:not(:first-of-type){display:none}
+.hb-ingame details.hb-sub:first-of-type>:not(summary):not(.hb-auto):not(#hbAccepting){display:none}
+.hb-ingame.hb-mine details.hb-sub:first-of-type>#hbLobby{display:block}

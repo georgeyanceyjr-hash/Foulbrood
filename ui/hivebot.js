@@ -213,7 +213,7 @@
   el('hbStart').disabled=running||starting;el('hbStop').disabled=!running;
   if(enginePending&&bot&&!bot.current)setTimeout(switchEngine,0);
   el('hbEngineRow').title=enginePending?'The new engine takes over after this game.':'';
-  el('hbForm').hidden=running;el('hbChallenges').hidden=!connected||!!bot.current;fixTabs();el('hbBusyNote').hidden=true;
+  el('hbForm').hidden=running;el('hbChallenges').hidden=!connected;el('hbChallenges').classList.toggle('hb-ingame',!!bot.current);el('hbChallenges').classList.toggle('hb-mine',(bot.lobby||[]).some(c=>c.mine)); // during a game only the automatic switch (and our own open challenge) stays, so it can be turned offfixTabs();el('hbBusyNote').hidden=true;
   if(bot.saved_login&&!el('hbLogin').value)el('hbLogin').value=bot.saved_login;
   el('hbPassword').placeholder=(bot.saved_login&&bot.saved_login===el('hbLogin').value.trim())?'Saved in Keychain — leave blank to use it':'';
   el('hbForget').hidden=!bot.saved_login;
