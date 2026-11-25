@@ -92,6 +92,7 @@
   if(!botBoard()&&typeof state!=='undefined'&&state&&hasGame(state.game))stash(state.game);
   botBoard(true);
   shown={id:g.id,turn:g.turn};
+  if(g.finished&&/^Aborted/.test(g.result||''))return; // an aborted game has no record on hivegame.com to load
   try{await action({action:'load_link',url:g.url,confirm_review_clear:true})}catch(e){}
  };
  // Clocks tick locally between status updates.
