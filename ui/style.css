@@ -771,3 +771,15 @@ header .header-tools .sound-settings>summary{font-size:14px!important}
 @container (min-width:781px){
  .player.review-insight .review-thought-heading,.player.review-insight .review-thought-heading.has-reviewed-move{padding-right:0;white-space:nowrap}
 }
+/* Review bar: compact depth, tighter gaps, and wrap rather than run off the end. */
+@container (min-width:781px){
+ .player.review-insight,.player.bot-duel.review-insight{gap:22px}
+ .player.review-insight .review-thought-strip{gap:8px 16px;flex-wrap:wrap;justify-self:stretch}
+ .player.review-insight .review-thought-cell>.review-thought-depth{font-size:0;letter-spacing:0}
+ .player.review-insight .review-thought-cell>.review-thought-depth::after{content:attr(data-d);font-size:9px;letter-spacing:.14em}
+ .player.review-insight .review-thought-cell:nth-child(3){padding:5px 8px}
+}
+@container (min-width:781px){
+ .player.review-insight .review-thought-heading>span,.player.review-insight .review-thought-heading{max-width:9.5em;overflow:hidden;text-overflow:ellipsis}
+ .player.review-insight .review-thought-heading{max-width:none;overflow:visible}
+}

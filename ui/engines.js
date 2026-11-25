@@ -253,7 +253,7 @@ function renderReviewThought(strip,s,side,engine){
  const point=available&&s.ply===0?review.points.find(p=>p.ply===0):null;
  fields.heading.textContent=pending?`Move ${review.working_ply}\nReviewing…`:!available?'Game review unavailable':row?`Move ${row.ply}\n${row.label}`:s.ply===0?'Starting position':'Not reviewed yet';
  fields.heading.classList.toggle('has-reviewed-move',!!row&&!pending);
- {const parts=fields.heading.textContent.split('\n');if(parts.length===2){const top=document.createElement('small'),main=document.createElement('span');top.textContent=parts[0];main.textContent=parts[1];fields.heading.replaceChildren(top,main)}}
+ {const short={'No clear error':'Fine','Not reviewed yet':'No review','Game review unavailable':'No review','Starting position':'Start','Reviewing…':'Reviewing','Book move':'Book','Missed win':'Missed win','Uncertain':'Unclear'};const parts=fields.heading.textContent.split('\n').map(t=>short[t]||t);if(parts.length===1)fields.heading.textContent=parts[0];if(parts.length===2){const top=document.createElement('small'),main=document.createElement('span');top.textContent=parts[0];main.textContent=parts[1];fields.heading.replaceChildren(top,main)}}
  fields.heading.classList.toggle('search-activity',pending);
  fields.heading.title=row?.label==='Uncertain'?'Comparison inconclusive at this depth.':row?.label==='Missed win'?'The preferred line retains a forced win.':'';
  const difference=reviewMoveDifference(row);
@@ -263,7 +263,7 @@ function renderReviewThought(strip,s,side,engine){
  const game=row?botThoughtGame({game:s.review_game||s.game},row):null;
  for(const [key,move,score,depth]of [['played',row?.move,row?.score??point?.score,row?.depth??point?.depth],['preferred',row?.alternative,row?.best_score,row?.best_depth]]){
   const field=fields[key];field.move.textContent=row&&move?insightMoveText(game,move,notationFollowsBoard()):'—';field.move.title=field.move.textContent;
-  updatePositionScore(field.score,{score,side:0},null,{side});field.depth.textContent=depth==null?'Depth —':'Depth '+depth;
+  updatePositionScore(field.score,{score,side:0},null,{side});field.depth.textContent=depth==null?'Depth —':'Depth '+depth;field.depth.dataset.d=depth==null?'':'D'+depth;
   const book=row?.label==='Book move';field.box.hidden=pending||(book&&key==='preferred');field.score.box.hidden=book;field.depth.hidden=book;
  }
  return !pending&&!!row&&row.ply===s.ply;
