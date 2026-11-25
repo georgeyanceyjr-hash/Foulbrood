@@ -643,7 +643,7 @@ window.foulbroodSfx=(()=>{
   if(play){
    const who=i=>{const p=(s.players||[])[i];if(!p||p==='Human')return (s.player_names||[])[i]||(i?'Black':'White');const e=(s.engines||[]).find(x=>x.id===p);return e?e.name:String(p)};
    const moves=s.review_total||0,base={key:'play|'+s.review_game,moves,white:who(0),black:who(1)};
-   if(s.play_finished&&!s.reviewing){
+   if(s.play_finished){
     if(s.resigned_side!=null)state={...base,winner:1-s.resigned_side,how:'resign'};
     else if(s.timeout_side!=null)state={...base,winner:1-s.timeout_side,how:'time'};
     else if(s.completed_state==='WhiteWins'||s.completed_state==='BlackWins')state={...base,winner:s.completed_state==='WhiteWins'?0:1,how:'queen'};
@@ -660,6 +660,8 @@ window.foulbroodSfx=(()=>{
   const side=['White','Black'],w=state.winner,winName=w==null?'':[state.white,state.black][w],loseName=w==null?'':[state.white,state.black][1-w];
   tag.hidden=false;tag.textContent=(state.how==='both'?'Mutual destruction':state.how==='repeat'?'Standoff':'Colony collapsed')+' · move '+state.moves;
   shownKey=state.key;
+  // stepping back through the moves takes the stamp away; it returns on the last move
+  if((s.ply||0)<(s.review_total||0)){over.hidden=true;if(dismissed===state.key)dismissed='';return}
   if(dismissed===state.key){over.hidden=true;return}
   stamp.textContent={queen:'QUEEN DOWN',both:'QUEENS DOWN',repeat:'STANDOFF',resign:'SURRENDER',time:'OUT OF TIME',other:'FLATLINED'}[state.how];
   names.replaceChildren();
