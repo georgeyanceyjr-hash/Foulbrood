@@ -816,3 +816,32 @@ body.history-open nav .tab.active:not(#historyTab),[data-theme="dark"] body.hist
 .engine-protocol{border-radius:2px;border-color:var(--hazard);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
 .engine-catalog{border-radius:2px}
 .engine-add label{display:block;font-size:12px;color:var(--muted)}.engine-add label>input{display:block;width:100%;box-sizing:border-box;margin-top:7px}
+
+/* ---- Inside the side panels: one set of labels, fields, buttons and notes ---- */
+aside label:not(.switch),aside .setup-side-field>span,aside .hb-pick-label{display:block;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);line-height:1.3}
+aside label:not(.switch)>select,aside label:not(.switch)>input,aside label:not(.switch)>textarea{margin-top:6px}
+aside label.switch{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink);line-height:1.3}
+aside select,aside input[type=text],aside input[type=password],aside input[type=number],aside input[type=url],aside input[type=search],aside textarea{box-sizing:border-box;width:100%;min-height:36px;padding:7px 10px;background:var(--bg);border:1px solid var(--line);border-radius:2px;color:var(--ink);font-family:inherit;font-size:13px;font-weight:500;letter-spacing:0;text-transform:none;outline-offset:2px}
+aside select:focus,aside input:focus,aside textarea:focus{border-color:var(--hazard)}
+aside input::placeholder,aside textarea::placeholder{color:var(--muted);opacity:.8}
+aside button:not(.hist-star){box-sizing:border-box;min-height:36px;padding:8px 10px;border:1px solid var(--line);border-radius:2px;background:transparent;color:var(--ink);font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;line-height:1.3;white-space:normal}
+aside button:not(:disabled):hover{border-color:var(--ink);background:transparent}
+aside button:disabled{color:var(--muted);opacity:.55}
+aside button.primary,aside #analyze,aside .setup-side-buttons button[aria-pressed="true"]{background:var(--hazard);border-color:var(--hazard);color:var(--pitch)}
+aside button.primary:not(:disabled):hover,aside #analyze:not(:disabled):hover{border-color:var(--ink);background:var(--hazard)}
+aside button.small{min-height:30px;font-size:10px;padding:6px 9px}
+aside .caption,aside p.caption{font-size:11px;line-height:1.5;color:var(--muted);letter-spacing:0;text-transform:none;font-weight:400}
+aside label.caption{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+aside #linkEntry>summary,aside #manualEntry>summary{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:5px 0}
+aside #linkEntry>summary:hover,aside #manualEntry>summary:hover{color:var(--ink)}
+aside input[type=file]{width:100%;font-size:11px;color:var(--muted);margin-top:6px}
+aside input[type=file]::file-selector-button{min-height:30px;margin-right:10px;padding:6px 10px;border:1px solid var(--line);border-radius:2px;background:transparent;color:var(--ink);font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+aside #gameResult,aside .game-result{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);text-align:left;padding:8px 10px;margin:10px 0;border-left:4px solid var(--hazard);background:var(--bg)}
+aside #hbStatus,aside .hb-log{font-size:11px;line-height:1.55}
+aside #hbBand{display:flex;align-items:center;gap:10px}
+aside #hbBand label{display:flex;align-items:center;gap:8px;margin:0;white-space:nowrap}
+aside #hbBand label>input{width:74px;margin:0}
+aside .hb-row{align-items:end}
+aside .hb-pick{display:flex;gap:8px;align-items:stretch;margin-top:6px}aside .hb-pick select{flex:1;min-width:0}aside .hb-pick button{flex:none}
+aside input[type=checkbox]{accent-color:var(--hazard)}
+aside .setup-turn-edit button{border:0;min-height:0;padding:4px 0;text-align:left;color:var(--muted)}
