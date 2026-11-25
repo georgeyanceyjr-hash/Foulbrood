@@ -297,7 +297,7 @@ window.renderBotThoughts=s=>{
   fields.move.value.title=evaluation?.move?'Suggested move: '+data.moveText:'Waiting for a suggested move';fields.move.value.disabled=!data.preview;
   fields.depth.value.textContent=evaluation?.score_status==='book'?'Book':evaluation?.depth==null?'—':String(evaluation.depth)+(evaluation.score_status==='last_complete'?' +partial':'');fields.depth.value.title=evaluation?.score_status==='last_complete'?'Completed search depth. The chosen move came from the unfinished next depth.':evaluation?.score_status==='unverified'?'The older report cannot establish a valid final depth.':'Last fully completed search depth';fields.time.value.textContent=data.seconds==null?'—':Number(data.seconds||0).toFixed(1)+'s';
   const value=positionScoreValue(evaluation,engine),forced=value===100||value===-100;
-  updatePositionScore(fields.score,evaluation,engine,{side,label:forced?positionAssessment(evaluation):'Position'});
+  updatePositionScore(fields.score,evaluation,engine,{side,label:forced&&evaluation?.source==='external'?positionAssessment(evaluation):'Position'}); // FoulBrood's forced wins show the move count beside the number instead of a long caption
  }
 };
 
