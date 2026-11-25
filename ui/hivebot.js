@@ -488,7 +488,7 @@
  });
  el('hbLogin').addEventListener('input',render);
  // What the History tab needs from Live.
- window.foulbroodLive={ask,card:()=>soundCard(),setLive:v=>{setLive(v);fixTabs()},boardIsLive:()=>botBoard(),hasStash:()=>hasGame(stash()),dropStash:()=>{stash(null);botBoard(false);shown={id:null,turn:-1}}};
+ window.foulbroodLive={stepped:s=>{try{const c=boardCard(s);return !!c&&!c.finished&&document.body.classList.contains('hb-live')&&typeof s.ply==='number'&&s.ply<(s.review_total??s.ply)}catch(e){return false}},ask,card:()=>soundCard(),setLive:v=>{setLive(v);fixTabs()},boardIsLive:()=>botBoard(),hasStash:()=>hasGame(stash()),dropStash:()=>{stash(null);botBoard(false);shown={id:null,turn:-1}}};
  setTimeout(()=>{if(typeof state==='undefined'||!state||state.mode!=='analysis')return;(live?takeBoard():releaseBoard()).catch(()=>{})},1500);
  el('hbFollow').addEventListener('change',()=>{if(el('hbFollow').checked)shown={id:null,turn:-1};render()});
  el('hivebotDetails').addEventListener('toggle',()=>{refresh();schedule()});

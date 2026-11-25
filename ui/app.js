@@ -261,8 +261,9 @@ function render(s){normalizeEngineNames(s);zeroOpening(s);window.observeHumanTur
  $('turn').classList.toggle('opening-thinking',s.mode==='play'&&s.job==='computer'&&s.side===1&&s.review_total<2&&!s.reviewing&&!finished);
  document.querySelector('.arena').classList.toggle('reviewing',!!s.reviewing);
  if(s.reviewing)$('turn').textContent=`Viewing move ${s.ply} of ${s.review_total} · ${s.running?(s.time_control==='untimed'?'Live game':'Live clocks are running'):'History'}`;
- $('historyLast').textContent=s.reviewing&&s.running?'Live ⏭':'⏭';
- $('historyLast').title=s.reviewing&&s.running?'Return to live game':'End of game';
+ const backToLive=(s.reviewing&&s.running)||!!(window.foulbroodLive&&window.foulbroodLive.stepped&&window.foulbroodLive.stepped(s)); // stepped back while a game is being played, Local or Online
+ $('historyLast').textContent=backToLive?'Live ⏭':'⏭';
+ $('historyLast').title=backToLive?'Return to live game':'End of game';
  $('historyLast').setAttribute('aria-label',$('historyLast').title);
  $('gameResult').hidden=!finished;$('gameResult').textContent=resultText(s);
  const resultBanner=$('boardResult');resultBanner.hidden=!finished||!!editorDraft;$('turn').hidden=finished&&!editorDraft;const summary=boardResultText(s);if(resultBanner.textContent!==summary)resultBanner.textContent=summary;
