@@ -845,3 +845,4 @@ aside .hb-row{align-items:end}
 aside .hb-pick{display:flex;gap:8px;align-items:stretch;margin-top:6px}aside .hb-pick select{flex:1;min-width:0}aside .hb-pick button{flex:none}
 aside input[type=checkbox]{accent-color:var(--hazard)}
 aside .setup-turn-edit button{border:0;min-height:0;padding:4px 0;text-align:left;color:var(--muted)}
+aside .game-actions{grid-template-columns:1fr 1fr;gap:8px}aside .game-actions button,aside .hb-two button{font-size:11px;padding:8px 10px}
