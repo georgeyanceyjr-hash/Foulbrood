@@ -656,3 +656,12 @@ header .brand-image,.brand-image{width:64px;height:64px;border-radius:2px}
 .hb-light.wait{background:var(--hazard)}
 .hb-site{display:inline-flex;align-items:center;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .hb-site .hb-light{margin:0 7px 0 0}
+.header-tools{gap:0;align-items:center}
+.header-tools>button,.header-tools .sound-settings>summary{height:30px;border:0;background:none;border-radius:0;padding:0 14px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);box-shadow:none}
+.header-tools>button:hover,.header-tools .sound-settings>summary:hover{color:var(--ink);background:none}
+.header-tools .sound-settings>summary{padding:0 14px 0 0;font-size:15px;letter-spacing:0;width:auto;margin-left:-6px}
+.header-tools #themeToggle{border-left:1px solid var(--line);padding-right:0}
+.header-tools .hb-site{padding-right:14px;border-right:1px solid var(--line);height:30px}
+header .header-tools>button,header .header-tools .sound-settings>summary{font-size:11px!important;color:var(--muted)!important;font-weight:700!important}
+header .header-tools>button:hover,header .header-tools .sound-settings>summary:hover{color:var(--ink)!important}
+header .header-tools .sound-settings>summary{font-size:14px!important}
