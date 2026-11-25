@@ -189,6 +189,7 @@
   document.body.classList.toggle('hb-manual',on);
   document.body.classList.toggle('hb-insight',on&&el('hbInsight').checked);
   el('hbManualRow').hidden=!connected;if(document.activeElement!==el('hbManual'))el('hbManual').checked=on;
+  el('hbResignRow').hidden=!connected||!('resign_lost' in bot);if(document.activeElement!==el('hbResignLost'))el('hbResignLost').checked=!!bot.resign_lost;
   el('hbInsightRow').hidden=!on;el('hbHandRow').hidden=!card;
   const s=typeof state!=='undefined'?state:null;
   el('hbPass').disabled=!(card&&card.our_turn&&s&&(s.legal||[]).some(m=>m.move==='pass'));
@@ -199,6 +200,7 @@
    if(!first){handSent='';shown={id:null,turn:-1};if(typeof toast==='function')toast('hivegame.com did not accept that move.')}
   }
  };
+ el('hbResignLost').onchange=async()=>{try{bot=await post({action:'hivebot_resign_lost',on:el('hbResignLost').checked})}catch(e){el('hbStatus').textContent=e.message;el('hbStatus').hidden=false}render()};
  el('hbManual').onchange=async()=>{try{bot=await post({action:'hivebot_manual',on:el('hbManual').checked})}catch(e){el('hbStatus').textContent=e.message;el('hbStatus').hidden=false}render()};
  el('hbInsight').onchange=()=>render();
  el('hbPass').onclick=()=>{if(typeof action==='function')action({action:'move',move:'pass'})};

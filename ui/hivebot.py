@@ -390,6 +390,7 @@ class HiveBot:
         except ValueError:
             return
         refused = False
+        resign = None
         with self.lock:
             if generation != self.generation:
                 return
@@ -507,8 +508,22 @@ class HiveBot:
                 game['updated'] = time.time()
                 if self.thinking == event['id']:
                     self.thinking = None
+                # The engine's final word on the move it just played: a forced loss (it is mated however it plays).
+                info = game.get('info') or {}
+                if (resign_lost_get() and not self.manual and not game.get('finished') and not game.get('resigned')
+                        and info.get('turn') == int(event.get('turn') or 0) and int(info.get('score') or 0) < -99000
+                        and int(info.get('depth') or 0) >= 4):
+                    game['resigned'] = True
+                    resign = (str(event['id']), 'White' if game.get('white') == self.user else 'Black', 100000 + int(info['score']))
         if refused:
             self.stop()
+        if resign:
+            try:
+                self._send(dict(cmd='control', id=resign[0], what='Resign', color=resign[1]))
+                with self.lock:
+                    self.log.append('Resigned: the engine saw a forced loss in %d.' % resign[2])
+            except ValueError:
+                pass
 
     def _restore(self):
         """Bring the last few finished games back after a restart, with the engine's scores, so they can still be stepped through."""
@@ -590,7 +605,8 @@ class HiveBot:
                         lobby=list(self.lobby) if self.state == 'connected' else [],
                         online=list(getattr(self, 'online', [])) if self.state == 'connected' else [],
                         site=True if self.state == 'connected' else site_online(),
-                        manual=bool(self.manual) and self.state == 'connected', refused=self.refused, cleared=cleared_get())
+                        manual=bool(self.manual) and self.state == 'connected', refused=self.refused, cleared=cleared_get(),
+                        resign_lost=resign_lost_get())
 
 
 _CLEARED = {}
@@ -604,6 +620,27 @@ def cleared_get():
         except Exception:
             _CLEARED['v'] = None
     return _CLEARED['v']
+
+
+_RESIGN = {}
+
+
+def resign_lost_get():
+    """Whether the bot resigns once its engine sees a forced loss; kept in a file so it survives restarts."""
+    if 'v' not in _RESIGN:
+        try:
+            _RESIGN['v'] = (BOT_DIR / 'resign-when-lost.txt').read_text().strip() == '1'
+        except Exception:
+            _RESIGN['v'] = False
+    return _RESIGN['v']
+
+
+def resign_lost_set(on):
+    _RESIGN['v'] = bool(on)
+    try:
+        (BOT_DIR / 'resign-when-lost.txt').write_text('1' if on else '0')
+    except Exception:
+        pass
 
 
 def cleared_set(value):
@@ -727,6 +764,9 @@ def hivebot_action(payload, engines):
     if action == 'hivebot_status':
         if payload.get('lobby'):
             BOT.refresh_lobby()
+        return BOT.view()
+    if action == 'hivebot_resign_lost':
+        resign_lost_set(payload.get('on'))
         return BOT.view()
     if action == 'hivebot_cleared':
         cleared_set(payload.get('id'))
