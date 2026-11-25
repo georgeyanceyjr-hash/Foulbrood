@@ -105,7 +105,7 @@ window.renderGameReview=s=>{
  const graph=$('reviewGraph'),width=Math.max(300,graph.clientWidth),span=width-24;graph.setAttribute('viewBox',`0 0 ${width} 160`);graph.replaceChildren();graph.append(node('line',{x1:12,y1:80,x2:width-12,y2:80,class:'review-zero'}));
  const points=review.points.filter(p=>p.score!=null),x=p=>12+span*p.ply/Math.max(1,review.total),y=p=>80-reviewPoint(p.score)*.65;
  if(review.status==='running'){const at=12+span*review.working_ply/Math.max(1,review.total);graph.append(node('line',{x1:at,y1:10,x2:at,y2:150,class:'review-working'}));}
- if(points.length)graph.append(node('polyline',{points:points.map(p=>`${x(p)},${y(p)}`).join(' '),class:'review-line'}));
+ if(points.length){const path=points.map(p=>`${x(p)},${y(p)}`).join(' ');graph.append(node('polyline',{points:path,class:'review-line-case'}));graph.append(node('polyline',{points:path,class:'review-line'}))}
  for(const p of points){const r=review.rows.find(r=>r.ply===p.ply);const group=node('g',{role:'button',tabindex:0,'aria-label':`Move ${p.ply}: ${reviewPoint(p.score)}${r?.symbol?', '+r.label:''}`});group.append(node('circle',{cx:x(p),cy:y(p),r:9,fill:'transparent'}));group.append(node('circle',{cx:x(p),cy:y(p),r:p.ply===s.ply?5:3.5,class:'review-dot'+(r?.symbol?' flagged':'')+(p.ply===s.ply?' current':'')}));group.onclick=()=>action({action:'navigate',ply:p.ply});group.onkeydown=e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();group.onclick()}};graph.append(group);}
 };
 // Restore controls after leaving review; the normal render controls their state.

@@ -783,3 +783,21 @@ header .header-tools .sound-settings>summary{font-size:14px!important}
  .player.review-insight .review-thought-heading>span,.player.review-insight .review-thought-heading{max-width:9.5em;overflow:hidden;text-overflow:ellipsis}
  .player.review-insight .review-thought-heading{max-width:none;overflow:visible}
 }
+
+/* ---- Game review panel: the FoulBrood look ---- */
+.review-panel #reviewProgress,.arena .review-panel #reviewProgress{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);margin:12px 0 2px}
+.review-panel #reviewRemaining,.arena .review-panel #reviewRemaining{font-size:11px;color:var(--muted);margin:0 0 10px}
+#reviewProgressBar{appearance:none;-webkit-appearance:none;display:block;width:100%;height:8px;margin:0 0 16px;border:1px solid var(--line);border-radius:0;background:transparent;overflow:hidden}
+#reviewProgressBar::-webkit-progress-bar{background:repeating-linear-gradient(-45deg,transparent 0 4px,var(--line) 4px 8px)}
+#reviewProgressBar::-webkit-progress-value{background:repeating-linear-gradient(-45deg,var(--hazard) 0 6px,var(--pitch) 6px 12px)}
+.review-graph-labels{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+#reviewGraph,.arena #reviewGraph{border:1px solid var(--muted);border-radius:0;margin:5px 0;background:linear-gradient(to bottom,#eee6cc 0 50%,#0d0e0c 50% 100%)}
+.review-zero{stroke:#8a8a80;stroke-dasharray:none;opacity:.9}
+.review-line-case{fill:none;stroke:#0d0e0c;stroke-width:6;stroke-linejoin:round;stroke-linecap:round}
+.review-line{fill:none;stroke:var(--hazard);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.review-dot{fill:var(--hazard);stroke:#0d0e0c;stroke-width:1.5}
+.review-dot.flagged{fill:#e0392b;stroke:#0d0e0c;stroke-width:2;r:5px}
+.review-dot.current{fill:#0d0e0c;stroke:var(--hazard);stroke-width:3}
+.review-working{stroke:var(--hazard);stroke-width:2}
+#reviewGraph g:focus circle:last-child{stroke:var(--hazard);stroke-width:3}
+.review-panel .review-summary{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:10px 0 0}
