@@ -571,7 +571,7 @@
  const el=id=>document.getElementById(id),L=()=>window.foulbroodLive;
  const call=async(name,payload={})=>{
   const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Board-Token':window.BOARD_TOKEN},body:JSON.stringify({...payload,action:'hivebot_library_'+name})});
-  const d=await r.json();if(!r.ok)throw Error(d.error||'The game history is not available.');return d;
+  const d=await r.json();if(!r.ok)throw Error(d.error||'The archive is not available.');return d;
  };
  let open=false,timer=null;
  const tabs=['playTab','liveTab','analysisTab','engineTab'];
@@ -665,7 +665,7 @@
    const buttons=document.createElement('div');buttons.className='hist-buttons';
    const openButton=document.createElement('button');openButton.textContent='Open in Analysis';openButton.onclick=()=>openGame(g.id).catch(e=>toast(e.message));
    const del=document.createElement('button');del.textContent='Delete';
-   del.onclick=()=>L().ask('Delete this game?',`${g.white||'White'} vs ${g.black||'Black'} will be removed from the history`+(g.review?', with its review results':'')+'. Continue?','Delete',async()=>{try{await call('delete',{id:g.id});refresh()}catch(e){toast(e.message)}});
+   del.onclick=()=>L().ask('Delete this game?',`${g.white||'White'} vs ${g.black||'Black'} will be removed from the archive`+(g.review?', with its review results':'')+'. Continue?','Delete',async()=>{try{await call('delete',{id:g.id});refresh()}catch(e){toast(e.message)}});
    buttons.append(openButton);
    if(/^https:\/\/hivegame\.com\/game\/[A-Za-z0-9_-]{1,40}$/.test(g.url||'')){ // played on hivegame.com: a link to its page there, after the result on the same line
     const site=document.createElement('a');site.className='hist-link';site.href=g.url;site.target='_blank';site.rel='noopener';site.textContent='Open on hivegame.com ↗';

@@ -398,12 +398,12 @@ def library_action(payload):
         return dict(id=set_review(payload.get('game'), payload.get('text'), payload.get('reviewed'), payload.get('total'), payload.get('engine')))
     gid = payload.get('id')
     if not isinstance(gid, str) or not ID.match(gid):
-        raise ValueError('That game is not in the history.')
+        raise ValueError('That game is not in the archive.')
     with LOCK:
         games = _load()
         entry = next((g for g in games if g.get('id') == gid), None)
         if entry is None:
-            raise ValueError('That game is not in the history.')
+            raise ValueError('That game is not in the archive.')
         if action == 'library_get':
             review = None
             if entry.get('review'):

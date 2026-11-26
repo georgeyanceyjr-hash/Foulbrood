@@ -1072,7 +1072,7 @@ body.review-mode aside #historyPanel h2.hb-fold-title::before{content:none}
 aside #reviewFacts #reviewTurn{justify-self:start;width:auto;margin:4px 0 0}
 aside #reviewFacts #reviewTurn[aria-pressed="true"]{background:var(--hazard);border-color:var(--hazard);color:var(--pitch)}
 #moves .history-move.turning{outline:2px solid var(--hazard);outline-offset:1px}
-#moves .history-move.turning .move-number::after{content:' ★';color:var(--hazard)}
+#moves .history-move.turning .move-number::after{content:'★';margin-left:2px;font-size:9px;color:var(--hazard)}
 /* History page: filters across games */
 .hist-filters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:8px;margin:10px 0 4px;align-items:end}
 .hist-filters label{display:block;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
