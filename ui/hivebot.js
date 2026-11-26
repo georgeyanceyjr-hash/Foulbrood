@@ -603,7 +603,12 @@
    const openButton=document.createElement('button');openButton.textContent='Open in Analysis';openButton.onclick=()=>openGame(g.id).catch(e=>toast(e.message));
    const del=document.createElement('button');del.textContent='Delete';
    del.onclick=()=>L().ask('Delete this game?',`${g.white||'White'} vs ${g.black||'Black'} will be removed from the history`+(g.review?', with its review results':'')+'. Continue?','Delete',async()=>{try{await call('delete',{id:g.id});refresh()}catch(e){toast(e.message)}});
-   buttons.append(openButton,del);row.append(star,text,buttons);list.append(row);
+   buttons.append(openButton);
+   if(/^https:\/\/hivegame\.com\/game\/[A-Za-z0-9_-]{1,40}$/.test(g.url||'')){ // played on hivegame.com: its page there
+    const site=document.createElement('button');site.textContent='hivegame.com ↗';site.title='Open this game on hivegame.com';
+    site.onclick=()=>fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Board-Token':window.BOARD_TOKEN},body:JSON.stringify({action:'hivebot_open',url:g.url})}).then(r=>{if(!r.ok)throw 0}).catch(()=>window.open(g.url,'_blank','noopener'));
+    buttons.append(site)}
+   buttons.append(del);row.append(star,text,buttons);list.append(row);
   }
  };
  const refresh=async()=>{try{draw(await call('list',{query:el('histSearch').value}))}catch(e){el('histCount').textContent=(window.plainMessage?window.plainMessage(e.message):e.message)}};
