@@ -940,3 +940,9 @@ body.hb-live #engineInsightPanel .switch:has(#hints),body.hb-live #engineInsight
 .hb-ingame details.hb-sub.hb-open-box.hb-open-box{display:block!important}
 .hb-ingame details.hb-sub.hb-open-box>.hb-keep{display:flex!important}
 .hb-ingame details.hb-sub.hb-open-box>:not(summary):not(.hb-keep):not(.hb-mine-list){display:none!important}
+
+/* Open Challenges: the time-control filter above the list, the same width as the list; Accept beside the list. */
+aside .hb-open-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch;margin-top:6px}
+aside .hb-open-grid #hbAcceptTime{grid-column:1;grid-row:1;margin:0}
+aside .hb-open-grid #hbPick{grid-column:1;grid-row:2;margin:0;min-width:0}
+aside .hb-open-grid #hbTake{grid-column:2;grid-row:2}
