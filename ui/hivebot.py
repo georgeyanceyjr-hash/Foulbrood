@@ -594,6 +594,11 @@ class HiveBot:
                 game['turn'] = int(event.get('turn') or 0) + 1
                 game['our_turn'] = False
                 game['updated'] = time.time()
+                # Our move is on its way: the opponent's clock starts now. (Counting it from the site's last
+                # update - the start of OUR turn - took our thinking time off the opponent's clock until the
+                # next update, and the spoken countdown was scheduled from that wrong figure.)
+                game['clock_at'] = time.time()
+                game['clock_seen'] = (game['turn'], game.get('white_left'), game.get('black_left'))
                 if self.thinking == event['id']:
                     self.thinking = None
                 # The engine's final word on the move it just played: a forced loss (it is mated however it plays).

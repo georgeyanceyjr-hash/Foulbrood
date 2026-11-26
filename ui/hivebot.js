@@ -454,12 +454,15 @@
   const gone=done||(card.turn||0)<2?0:(card.clock_age||0)+(Date.now()-clockFetched)/1000;
   const live=[card.white_left-(side===0?gone:0),card.black_left-(side===1?gone:0)];
   // One clock reading per turn: enough to schedule the ticking, without triggering the spoken countdown.
-  const turnKey=card.id+'|'+(card.turn||0);if(soundTurn.key!==turnKey){soundTurn.key=turnKey;soundTurn.clocks=live}
+  const turnKey=card.id+'|'+(card.turn||0);
+  if(soundTurn.key!==turnKey){soundTurn.key=turnKey;soundTurn.clocks=live;soundTurn.at=Date.now();soundTurn.epoch=0}
+  else if(!done&&(card.turn||0)>=2&&Math.abs(live[side]-(soundTurn.clocks[side]-(Date.now()-soundTurn.at)/1000))>2.5){soundTurn.clocks=live;soundTurn.at=Date.now();soundTurn.epoch=(soundTurn.epoch||0)+1} // the site corrected the clock mid-move: schedule the ticking and countdown again from the right figure
+  const gameKey=card.id+(soundTurn.epoch?'#'+soundTurn.epoch:''),control=card.base!=null?`${Math.round(card.base/60)}+${card.increment||0}`:'10+10';
   const ending=done?({'White won':'WhiteWins','Black won':'BlackWins','Draw':'Draw'}[card.result]||null):null;
   nativeObserve({mode:'play',running:!done,timeout_side:null,resigned_side:null,completed_state:ending,state:'InProgress',
    live_bot:true,bot_won:done?(card.result==='White won')===(card.white===bot.user):null,
-   players:['Human','Human'],side,live_side:side,game:card.id,live_game:card.id+';InProgress',
-   clocks:soundTurn.clocks,time_control:'10+10',review_total:99});
+   players:['Human','Human'],side,live_side:side,game:gameKey,live_game:gameKey+';InProgress',
+   clocks:soundTurn.clocks,time_control:control,review_total:(card.turn||0)});
  };
  if(typeof window.renderBotThoughts==='function'){
   const nativeThoughts=window.renderBotThoughts;
