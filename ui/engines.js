@@ -249,9 +249,10 @@ function renderReviewThought(strip,s,side,engine){
  const fields=reviewThoughtFields(strip),review=s.game_review;
  const pending=pendingReviewSide(s)===side;
  const available=!!(review.rows.length||review.points.length)||!!engine?.connected&&engine.review_supported;
- const row=available?review.rows.filter(r=>r.side===side&&r.ply<=s.ply).at(-1):null;
+ const row=available?review.rows.find(r=>r.side===side&&r.ply===s.ply)||null:null; // only the move being looked at, in its own player's bar
+ const otherTurn=(()=>{if(!s.ply)return false;const root=(s.review_game||s.game).split(';')[0],first=root.includes('~')?Number(root.split('~')[1]):0;return (first+s.ply-1)%2!==side})();
  const point=available&&s.ply===0?review.points.find(p=>p.ply===0):null;
- fields.heading.textContent=pending?`Move ${review.working_ply}\nReviewing…`:!available?'Game review unavailable':row?`Move ${row.ply}\n${row.label}`:s.ply===0?'Starting position':'Not reviewed yet';
+ fields.heading.textContent=pending?`Move ${review.working_ply}\nReviewing…`:!available?'Game review unavailable':row?`Move ${row.ply}\n${row.label}`:s.ply===0?'Starting position':otherTurn?'':'Not reviewed yet';
  fields.heading.classList.toggle('has-reviewed-move',!!row&&!pending);
  {const verdict=row&&!pending?({'Best move':'good','Book move':'good','No clear error':'good','Inaccuracy':'mid','Uncertain':'mid','Mistake':'poor','Blunder':'bad','Missed win':'bad'})[row.label]||'':'';fields.heading.dataset.verdict=verdict;fields.played.box.dataset.verdict=verdict;}
  {const short={'No clear error':'Fine','Not reviewed yet':'No review','Game review unavailable':'No review','Starting position':'Start','Reviewing…':'Reviewing','Book move':'Book','Missed win':'Missed win','Uncertain':'Unclear'};const parts=fields.heading.textContent.split('\n').map(t=>short[t]||t);if(parts.length===1)fields.heading.textContent=parts[0];if(parts.length===2){const top=document.createElement('small'),main=document.createElement('span');top.textContent=parts[0];main.textContent=parts[1];fields.heading.replaceChildren(top,main)}}
@@ -265,7 +266,7 @@ function renderReviewThought(strip,s,side,engine){
  for(const [key,move,score,depth]of [['played',row?.move,row?.score??point?.score,row?.depth??point?.depth],['preferred',row?.alternative,row?.best_score,row?.best_depth]]){
   const field=fields[key];field.move.textContent=row&&move?insightMoveText(game,move,notationFollowsBoard()):'—';field.move.title=field.move.textContent;
   updatePositionScore(field.score,{score,side:0},null,{side});field.depth.textContent=depth==null?'Depth —':'Depth '+depth;field.depth.dataset.d=depth==null?'':'D'+depth;
-  const book=row?.label==='Book move';field.box.hidden=pending||(book&&key==='preferred');field.score.box.hidden=book;field.depth.hidden=book;
+  const book=row?.label==='Book move';field.box.hidden=pending||(book&&key==='preferred')||(otherTurn&&!row);field.score.box.hidden=book;field.depth.hidden=book;
  }
  return !pending&&!!row&&row.ply===s.ply;
 }

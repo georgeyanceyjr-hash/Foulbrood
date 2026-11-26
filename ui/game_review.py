@@ -9,15 +9,21 @@ from live_analysis import history_points
 
 TERMINAL=('WhiteWins','BlackWins','Draw')
 
-def classify(best, played, same_move=False):
-    """Scores are from the mover's perspective; these are engine assessments."""
+def classify(best, played, same_move=False, best_depth=None, played_depth=None):
+    """Scores are from the mover's perspective. Graded on the viewer scale (-100..+100):
+    how far the played move moved the bar against the engine's choice (20/40/60)."""
     if same_move:return 'Best move',''
     if best is None or played is None:return 'Uncertain',''
-    if played < -99000 and best >= -99000:return 'Blunder','??'
-    if best > 99000 and played <= 99000:return 'Missed win','∅'
-    if abs(best)>99000 or abs(played)>99000:return 'Uncertain',''
-    loss=max(0,best-played)
-    return ('Blunder','??') if loss>=300 else ('Mistake','?') if loss>=150 else ('Inaccuracy','?!') if loss>=60 else ('No clear error','')
+    mate=lambda x:abs(x)>99000
+    view=lambda x:(100 if x>0 else -100) if mate(x) else max(-99,min(99,round(100*math.tanh(x/300))))
+    if mate(best) and mate(played) and (best>0)==(played>0):return 'No clear error',''
+    vb,vp=view(best),view(played);loss=max(0,vb-vp)
+    if best>99000 and vp<90:return 'Missed win','∅'
+    uneven=best_depth is not None and played_depth is not None and best_depth!=played_depth and not mate(best) and not mate(played)
+    if loss>=60:return 'Blunder','??'
+    if loss>=40:return 'Mistake','?'
+    if loss>=20:return ('Uncertain','') if uneven else ('Inaccuracy','?!')
+    return 'No clear error',''
 
 def white_score(result):
     return None if result['score'] is None else result['score']*(1 if result['side']==0 else -1)
@@ -243,7 +249,7 @@ class Review:
                     mover=data['side'];sign=1 if mover==0 else -1
                     best_score=white_score(best);played_score=white_score(played)
                     reliable=all(r['terminal'] or (type(r['depth']) is int and r['depth']>=3) for r in [before,best,played])
-                    label,symbol=classify(None if best_score is None else best_score*sign,None if played_score is None else played_score*sign,same) if reliable else ('Uncertain','')
+                    label,symbol=classify(None if best_score is None else best_score*sign,None if played_score is None else played_score*sign,same,best['depth'],played['depth']) if reliable else ('Uncertain','')
                     row=dict(ply=i,move=move,side=mover,label=label,symbol=symbol,score=played_score,best_score=best_score,alternative=alternative,reply=best['move'],depth=played['depth'],best_depth=best['depth'])
                     with self.app.lock:
                         self.check(generation);self.rows.append(row);self.points.append(dict(ply=i,score=played_score));self.before=played;self.pending_played=None

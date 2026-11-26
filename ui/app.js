@@ -241,7 +241,27 @@ function normalizeEngineNames(s){
 // A game starts level: the starting position and the first move are shown at evaluation 0 in a review,
 // whatever the engine reported for a nearly empty board.
 function zeroOpening(s){const r=s?.game_review;if(!r)return;for(const p of r.points||[])if(p.ply<=1&&p.score!=null)p.score=0;for(const row of r.rows||[])if(row.ply===1){if(row.score!=null)row.score=0;if(row.best_score!=null)row.best_score=0;if(row.symbol){row.symbol='';row.label='No clear error'}}}
-function render(s){normalizeEngineNames(s);zeroOpening(s);window.observeHumanTurn?.(s);serverState=s;const playerThought=selectedPlayerThought(s);if(playerThought)s={...s,hint:playerThought.evaluation,insight_job:'hint',search_elapsed:playerThought.elapsed,search_finished:false,showing_player_thought:true};if(editorDraft&&s.mode==='analysis'){s={...s,pieces:editorDraft.pieces,reserve:setupInventory().filter(p=>!editorDraft.pieces.some(x=>x.id===p)),side:editorDraft.side,legal:[],hint:null,job:null,last_move:editorDraft.last&&(editorDraft.last.from||editorDraft.last.kind==='placed')?{...editorDraft.last,to:(()=>{const p=editorDraft.pieces.find(p=>p.id===editorDraft.last.piece);return p?[p.q,p.r]:null})()}:null};}const changed=state&&(state.game!==s.game||state.mode!==s.mode);state=s;if(changed){lastBoardKey='';pendingMove=null;pieceDrag=null;removeDragGhost();selected=null;}if(pendingMove&&!canMove()){pendingMove=null;selected=null;lastBoardKey='';}if(s.revision!==lastRevision){lastRevision=s.revision;lastBoardKey=''}
+// Move grades, measured on the viewer scale (-100..+100, mover's side): how far the played move moved the bar
+// compared with the engine's choice. 20 = inaccuracy, 40 = mistake, 60 = blunder. Staying inside a forced win
+// or a forced loss is not an error; a small gap between searches of unequal depth is called unclear.
+function gradeReviewMove(best,played,bestDepth,playedDepth){
+ const mate=x=>Math.abs(x)>99000,v=x=>mate(x)?Math.sign(x)*100:Math.max(-99,Math.min(99,Math.round(100*Math.tanh(x/300))));
+ if(best==null||played==null)return ['Uncertain',''];
+ if(mate(best)&&mate(played)&&Math.sign(best)===Math.sign(played))return ['No clear error',''];
+ const vb=v(best),vp=v(played),loss=Math.max(0,vb-vp);
+ if(best>99000&&vp<90)return ['Missed win','∅'];
+ const uneven=bestDepth!=null&&playedDepth!=null&&bestDepth!==playedDepth&&!mate(best)&&!mate(played);
+ if(loss>=60)return ['Blunder','??'];
+ if(loss>=40)return ['Mistake','?'];
+ if(loss>=20)return uneven?['Uncertain','']:['Inaccuracy','?!'];
+ return ['No clear error',''];
+}
+function regradeReview(s){const r=s?.game_review;if(!r)return;for(const row of r.rows||[]){
+ if(row.label==='Book move'||row.label==='Best move'||(row.alternative&&row.alternative===row.move))continue;
+ if(row.score==null||row.best_score==null)continue;
+ if(row.label==='Uncertain'&&((row.depth||0)<3||(row.best_depth||0)<3))continue; // too shallow to grade
+ const sign=row.side===0?1:-1,[label,symbol]=gradeReviewMove(row.best_score*sign,row.score*sign,row.best_depth,row.depth);row.label=label;row.symbol=symbol}}
+function render(s){normalizeEngineNames(s);zeroOpening(s);regradeReview(s);window.observeHumanTurn?.(s);serverState=s;const playerThought=selectedPlayerThought(s);if(playerThought)s={...s,hint:playerThought.evaluation,insight_job:'hint',search_elapsed:playerThought.elapsed,search_finished:false,showing_player_thought:true};if(editorDraft&&s.mode==='analysis'){s={...s,pieces:editorDraft.pieces,reserve:setupInventory().filter(p=>!editorDraft.pieces.some(x=>x.id===p)),side:editorDraft.side,legal:[],hint:null,job:null,last_move:editorDraft.last&&(editorDraft.last.from||editorDraft.last.kind==='placed')?{...editorDraft.last,to:(()=>{const p=editorDraft.pieces.find(p=>p.id===editorDraft.last.piece);return p?[p.q,p.r]:null})()}:null};}const changed=state&&(state.game!==s.game||state.mode!==s.mode);state=s;if(changed){lastBoardKey='';pendingMove=null;pieceDrag=null;removeDragGhost();selected=null;}if(pendingMove&&!canMove()){pendingMove=null;selected=null;lastBoardKey='';}if(s.revision!==lastRevision){lastRevision=s.revision;lastBoardKey=''}
  const finished=s.play_finished||s.timeout_side!==null||s.resigned_side!=null||['WhiteWins','BlackWins','Draw'].includes(s.state);
  window.syncEnginePlayers?.(s);
  syncGameSettings(s);
