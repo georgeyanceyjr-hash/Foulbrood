@@ -28,6 +28,7 @@ CLIENT_DIR = BOT_DIR / 'client'
 BINARY = CLIENT_DIR / 'target' / 'release' / 'hive-hydra'
 ANSI = re.compile(r'\x1b\[[0-9;]*m')
 NAME = re.compile(r'^[A-Za-z0-9_-]{1,40}$')
+ABORT_AFTER = 90.0  # seconds an opponent gets to make its first move
 GAME_ID = re.compile(r'^[A-Za-z0-9_-]{6,64}$')
 
 
@@ -271,6 +272,20 @@ class HiveBot:
         self._send(dict(cmd='move', id=str(game_id), turn=turn, move=move))
         return self.view()
 
+    def _abort_if_idle(self, gid, generation):
+        """90 s after a game appeared: if the opponent still has not made its first move, abort it."""
+        with self.lock:
+            game = self.games.get(gid)
+            if (generation != self.generation or self.state != 'connected' or not game or game.get('finished')
+                    or game.get('turn', 0) >= 2 or game.get('our_turn')):
+                return
+            game['aborted_by'] = self.user
+            color = 'White' if game.get('white') == self.user else 'Black'
+        try:
+            self._send(dict(cmd='control', id=str(gid), what='Abort', color=color))
+        except ValueError:
+            pass
+
     def control(self, game_id, what):
         """Resign, or offer / accept / decline a draw, in the game being played by hand."""
         if what not in ('Resign', 'DrawOffer', 'DrawAccept', 'DrawReject', 'Abort'):
@@ -510,18 +525,29 @@ class HiveBot:
                         result = 'Finished'
                 elif event.get('finished'):
                     # Finished without a result: the game was aborted (hivegame.com deletes it, unrated).
-                    result = 'Aborted by the opponent'
+                    white, black = str(event.get('white') or 'White')[:40], str(event.get('black') or 'Black')[:40]
+                    who = game.get('aborted_by') or (black if white == self.user else white)
+                    result = 'Aborted by ' + who
                     if not game.get('finished'):
-                        self.log.append('%s vs %s was aborted by the opponent before it got going. Nothing was rated.' % (
-                            str(event.get('white') or 'White')[:40], str(event.get('black') or 'Black')[:40]))
+                        self.log.append('%s vs %s was aborted by %s before it got going. Nothing was rated.' % (white, black, who))
                 if game.get('turn') != int(event.get('turn') or 0) or 'turn_at' not in game:
                     game['turn_at'] = time.time()  # when this move began, for 'thinking so far' (the site may repeat an update mid-move)
                 game.update(turn=int(event.get('turn') or 0), finished=bool(event.get('finished')), result=result,
                             white=str(event.get('white') or '')[:40], black=str(event.get('black') or '')[:40],
                             our_turn=bool(event.get('our_turn')), updated=time.time(),
                             timed=bool(event.get('timed')), increment=event.get('increment'),
-                            white_left=event.get('white_left'), black_left=event.get('black_left'),
-                            clock_at=time.time())
+                            white_left=event.get('white_left'), black_left=event.get('black_left'))
+                # The clocks count down from when they last CHANGED: the site can repeat an update mid-move
+                # with the same figures, and restarting the count there made the opponent's clock jump back up.
+                clocks = (game.get('turn'), game.get('white_left'), game.get('black_left'))
+                if clocks != game.get('clock_seen') or 'clock_at' not in game:
+                    game['clock_seen'], game['clock_at'] = clocks, time.time()
+                # An opponent who never makes a first move: abort after 90 seconds (the site allows it until both have moved).
+                if not game['finished'] and game['turn'] < 2 and not game.get('abort_timer'):
+                    game['abort_timer'] = True
+                    timer = threading.Timer(ABORT_AFTER, self._abort_if_idle, args=(gid, self.generation))
+                    timer.daemon = True
+                    timer.start()
                 if game['finished'] and not was_finished and standing_get() and not any(not g.get('finished') for g in self.games.values()):
                     self.reopen, resync = True, True
                 if game['finished'] and self.thinking == gid:

@@ -87,14 +87,17 @@
  const releaseBoard=async()=>{
   if(!botBoard()||typeof state==='undefined'||!state)return;
   const saved=stash();botBoard(false);stash(null);shown={id:null,turn:-1};
-  await whenFree(()=>action({action:'load',text:hasGame(saved)?saved:state.game.split(';')[0].split('~')[0],confirm_review_clear:true}));
+  const empty=state.game.split(';')[0].split('~')[0];
+  try{await whenFree(()=>action({action:'load',text:saved||empty,confirm_review_clear:true}))}
+  catch(e){if(saved)await whenFree(()=>action({action:'load',text:empty,confirm_review_clear:true}))}
  };
  // Entering Live: set the Analysis game aside and start from an empty board (the bot's game is loaded next, if any).
  const takeBoard=async()=>{
   if(botBoard()||typeof state==='undefined'||!state||state.mode!=='analysis')return;
-  if(hasGame(state.review_game||state.game))stash(state.review_game||state.game); // the whole game, so its review is found again on coming back
+  const some=hasGame(state.review_game||state.game)||(state.pieces||[]).length>0; // a game, or an arranged position with no moves yet
+  if(some)stash(state.review_game||state.game); // the whole game, so its review is found again on coming back
   botBoard(true);shown={id:null,turn:-1};
-  if(hasGame(state.game))await whenFree(()=>action({action:'load',text:state.game.split(';')[0].split('~')[0],confirm_review_clear:true}));
+  if(some)await whenFree(()=>action({action:'load',text:state.game.split(';')[0].split('~')[0],confirm_review_clear:true}));
  };
  const showOnBoard=async g=>{
   if(!g||typeof action!=='function')return;
@@ -204,10 +207,10 @@
  const handPanel=connected=>{
   const on=!!(bot&&bot.manual),card=handCard();
   document.body.classList.toggle('hb-manual',on);
-  document.body.classList.toggle('hb-insight',on&&el('hbInsight').checked);
+  document.body.classList.toggle('hb-insight',connected&&el('hbInsight').checked);
   el('hbManualRow').hidden=!connected;if(document.activeElement!==el('hbManual'))el('hbManual').checked=on;
   el('hbResignRow').hidden=!connected||!('resign_lost' in bot);if(document.activeElement!==el('hbResignLost'))el('hbResignLost').checked=!!bot.resign_lost;
-  el('hbInsightRow').hidden=!on;el('hbHandRow').hidden=!card;
+  el('hbInsightRow').hidden=!connected;el('hbHandRow').hidden=!card;
   const s=typeof state!=='undefined'?state:null;
   el('hbPass').disabled=!(card&&card.our_turn&&s&&(s.legal||[]).some(m=>m.move==='pass'));
   if(card&&card.our_turn)el('hbSummary').textContent='Your move';
@@ -219,7 +222,21 @@
  };
  el('hbResignLost').onchange=async()=>{try{bot=await post({action:'hivebot_resign_lost',on:el('hbResignLost').checked})}catch(e){el('hbStatus').textContent=e.message;el('hbStatus').hidden=false}render()};
  el('hbManual').onchange=async()=>{try{bot=await post({action:'hivebot_manual',on:el('hbManual').checked})}catch(e){el('hbStatus').textContent=e.message;el('hbStatus').hidden=false}render()};
- el('hbInsight').onchange=()=>render();
+ try{el('hbInsight').checked=localStorage.getItem('foulbrood_live_insight')==='1'}catch(e){}
+ el('hbInsight').onchange=()=>{try{localStorage.setItem('foulbrood_live_insight',el('hbInsight').checked?'1':'0')}catch(e){}render()};
+ // Online keeps its own engine-insight switch. While Online is open it decides whether the engine looks at the
+ // position (only on the opponent's turn when the bot is playing, so the bot's own thinking is never slowed);
+ // on leaving, the suggestions setting the other pages had is put back.
+ let outsideHints=null,insightAt=0;
+ const syncInsight=(card,manual)=>{
+  if(typeof state==='undefined'||!state||typeof action!=='function')return;
+  if(!liveOn()){if(outsideHints!==null&&Date.now()-insightAt>800){const v=outsideHints;outsideHints=null;insightAt=Date.now();if(!!state.hints!==v)action({action:'hints',enabled:v}).catch(()=>{})}return}
+  if(state.mode!=='analysis')return;
+  if(outsideHints===null)outsideHints=!!state.hints;
+  const want=el('hbInsight').checked&&!!card&&!card.finished&&(!!manual||!card.our_turn);
+  if(!!state.hints!==want&&Date.now()-insightAt>1500&&!(typeof busy!=='undefined'&&busy)){insightAt=Date.now();action({action:'hints',enabled:want}).catch(()=>{})}
+ };
+ setInterval(()=>{try{const card=bot&&bot.running?bot.current:null;syncInsight(card,bot&&bot.manual)}catch(e){}},700);
  el('hbPass').onclick=()=>{if(typeof action==='function')action({action:'move',move:'pass'})};
  el('hbResign').onclick=()=>{const card=handCard();if(!card)return;ask('Resign this game?','You will lose the game on hivegame.com. Continue?','Resign',async()=>{try{bot=await post({action:'hivebot_control',id:card.id,what:'Resign'})}catch(e){if(typeof toast==='function')toast(e.message)}render()})};
  const render=()=>{
@@ -393,6 +410,10 @@
   fields.time.value.textContent=toMove&&(card.turn||0)>=2?elapsed.toFixed(1)+'s':oppClock.used!=null?oppClock.used.toFixed(1)+'s':'—';
   fields.time.value.title=toMove?'Time on this move so far':'Time the last move took';
   fields.depth.value.textContent='—';
+  // Engine insight on the opponent: what our engine makes of the position while the opponent thinks.
+  const h=el('hbInsight').checked&&toMove&&typeof state!=='undefined'&&state&&state.hint&&state.hint.side===side&&(s.ply||0)===(card.turn||0)?state.hint:null;
+  if(h){fields.move.caption.textContent='Insight · Move '+moveNumber;fields.move.value.textContent=h.move||'—';fields.move.value.title='What the engine would play here';fields.depth.value.textContent=h.depth!=null?String(h.depth):'—'}
+  if(typeof updatePositionScore==='function')updatePositionScore(fields.score,h,null,{side,label:'Position'});
  };
  // ---- Sounds: feed the viewer's own sound logic a play-style picture of the bot's game ----
  // (turn chirp on every move, the ending fanfare). The Sound button and volume settings apply as usual.
@@ -773,6 +794,7 @@ window.foulbroodSfx=(()=>{
   }else if(card&&s.mode==='analysis'){
    const base={key:'live|'+card.id,moves:card.turn||0,white:card.white||'White',black:card.black||'Black'};
    if(!card.finished)state={...base,progress:true,moves:(card.turn||0)+1};
+   else if((s.review_total||0)<(card.turn||0))state={...base,progress:true,moves:(card.turn||0)}; // the result is in but the last move is not on the board yet: wait, so the stamp is right first time
    else if(card.result==='White won'||card.result==='Black won'){const winner=card.result==='White won'?0:1;state={...base,winner,how:boxed(s,winner?'wQ':'bQ')?'queen':'other'}}
    else if(card.result==='Draw')state={...base,winner:null,how:boxed(s,'wQ')&&boxed(s,'bQ')?'both':'repeat'};
   }

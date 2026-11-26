@@ -29,14 +29,14 @@
 <label id="hbEngineRow">Engine playing on the account<select id="hbEngine" aria-label="Bot engine"></select></label>
 <label class="switch" id="hbManualRow" hidden><input id="hbManual" type="checkbox">Play the moves myself</label>
 <label class="switch" id="hbResignRow" hidden title="When the engine sees that the opponent has a forced win, the bot resigns instead of playing it out"><input id="hbResignLost" type="checkbox">Resign when lost</label>
-<label class="switch" id="hbInsightRow" hidden><input id="hbInsight" type="checkbox">Engine insight</label>
+<label class="switch" id="hbInsightRow" hidden title="While the opponent is thinking, show what the engine makes of the position on the opponent's bar. Separate from the Local page's suggestions."><input id="hbInsight" type="checkbox">Engine insight on the opponent</label>
 <div class="two hb-two" id="hbHandRow" hidden><button id="hbPass" disabled>Pass</button><button id="hbResign">Resign</button></div>
 <div class="two"><button id="hbStart" class="primary">Start bot</button><button id="hbStop" disabled>Stop bot</button></div>
 <p id="hbBusyNote" class="caption" hidden>Challenge controls come back when this game ends.</p>
 <div class="two hb-two"><button id="hbToAnalysis" hidden>Open in Analysis</button><button id="hbClear" title="Clears the board and the history">Clear game</button></div></details></section>
 <section id="hbChallengesPanel" class="hb-chal-wrap" hidden>
 <div id="hbChallenges" class="hb-challenge" hidden>
-<details class="hb-sub panel hivebot-panel" open><summary><strong>Pick a victim</strong></summary>
+<details class="hb-sub panel hivebot-panel" open><summary><strong>Accept a challenge</strong></summary>
 <label class="switch hb-auto"><input id="hbAuto" type="checkbox" checked>Take all comers automatically</label>
 <label class="switch"><input id="hbHumans" type="checkbox">Humans only (hide and skip bots)</label>
 <label>Time control<select id="hbAcceptTime"><option value="60+2">1+2 only</option><option value="180+3">3+3 only</option><option value="300+4">5+4 only</option><option value="600+10" selected>10+10 only</option><option value="1200+20">20+20 only</option><option value="any">Any, 10 min or longer</option></select></label><label hidden>Games<input id="hbMax" type="number" min="1" max="50" value="4"></label>
@@ -53,7 +53,7 @@
 <div class="hb-accept hb-row"><label>Time<select id="hbTime"><option value="60+2">1+2</option><option value="180+3">3+3</option><option value="300+4">5+4</option><option value="600+10" selected>10+10</option><option value="1200+20">20+20</option></select></label><label>We play<select id="hbColor"><option value="Random" selected>Either colour</option><option value="White">White</option><option value="Black">Black</option></select></label><label class="switch"><input id="hbRated" type="checkbox" checked>Rated</label></div><button id="hbSend" class="wide">Send challenge</button><div id="hbMineSent" class="hb-mine-list"></div></details></div></section>
 <div id="analysisModes" class="analysis-modes" role="group" aria-label="Analysis workspace" hidden><button id="modeAnalyze">Position</button><button id="modeReview">Game</button><button id="modeSetup">Arrange</button></div>
 <section id="analysisSetup" class="panel" hidden><div id="analysisImportHeader"><h2>Explore a position</h2>
-<label class="caption" for="importFile">Open a Hive JSON or PGN file</label><input id="importFile" type="file" accept=".json,.pgn,application/json"><p id="importStatus" class="caption" hidden></p></div><details id="linkEntry"><summary>Import a hivegame.com link</summary><label for="gameLink">Game link (finished or in progress)</label><input id="gameLink" type="url"><div class="two"><button id="loadLink">Import game</button><button id="clearLink">Clear</button><button id="pasteLink" aria-label="Paste hivegame.com link">Paste</button></div></details><details id="manualEntry"><summary>Paste or enter moves</summary><label for="position">Position or move list</label><textarea id="position" rows="5"></textarea>
+<details id="fileEntry"><summary>Open a Hive JSON or PGN file</summary><input id="importFile" type="file" accept=".json,.pgn,application/json" aria-label="Hive JSON or PGN file"><p id="importStatus" class="caption" hidden></p></details></div><details id="linkEntry"><summary>Import a hivegame.com link</summary><label for="gameLink">Game link (finished or in progress)</label><input id="gameLink" type="url"><div class="two"><button id="loadLink">Import game</button><button id="clearLink">Clear</button><button id="pasteLink" aria-label="Paste hivegame.com link">Paste</button></div></details><details id="manualEntry"><summary>Paste or enter moves</summary><label for="position">Position or move list</label><textarea id="position" rows="5"></textarea>
 <div class="two"><button id="load">Load position</button><button id="clearMoves">Clear</button><button id="pasteMoves" aria-label="Paste moves">Paste</button></div></details><button id="startSetup" class="wide">Set up position</button>
 <div id="positionEditor" hidden>
 <div class="setup-heading"><h3>Arrange a position</h3></div>

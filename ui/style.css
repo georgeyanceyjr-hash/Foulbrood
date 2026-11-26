@@ -917,3 +917,12 @@ body:not(.hb-live) .player.active:not(.review-insight):not(.analysis-insight) .c
 [data-theme="dark"] .player.hb-live-clock .clock.hb-ticking{background:var(--hazard)!important;color:var(--pitch)!important;padding:8px 14px!important;border-radius:2px}
 body:not(.hb-live) .player.active:not(.review-insight):not(.analysis-insight) .clock::before,
 .player.hb-live-clock .clock.hb-ticking::before{color:var(--pitch)!important;opacity:.75}
+
+/* "Open a Hive JSON or PGN file" folds away like the two entries under it. */
+aside #fileEntry>summary{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:5px 0}
+aside #fileEntry>summary:hover{color:var(--ink)}
+#fileEntry{margin-top:0}
+/* Online: the engine-insight controls show whenever its own switch is on (by hand or with the bot playing); the Local page's "Show suggestions" box is not part of it. */
+body.hb-live.hb-insight #engineInsightPanel{display:block!important}
+body.hb-live #engineInsightPanel .switch:has(#hints),body.hb-live #engineInsightPanel label:has(#hints){display:none!important}
+#hbInsightRow{margin-top:12px}
