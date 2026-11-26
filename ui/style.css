@@ -989,3 +989,6 @@ body.moves-max #historyPanel:not([hidden]) .moves,body.moves-max #historyPanel:n
 #moves .history-move[data-verdict]{border-color:var(--v);background:color-mix(in srgb,var(--v) 14%,transparent)}
 #moves .history-move[data-verdict].current{box-shadow:inset 0 0 0 2px var(--v);background:color-mix(in srgb,var(--v) 30%,transparent)}
 #moves .history-move .move-rating{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;color:var(--v,var(--muted))}
+
+/* Game review: the graph is retired; the History list carries the colours and ratings */
+#reviewGraph,.review-graph-labels{display:none!important}
