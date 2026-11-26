@@ -189,7 +189,6 @@ function renderReviewFacts(s){
  const lastBook=rows.filter(r=>r.label==='Book move').reduce((m,r)=>Math.max(m,r.ply),0),opening=reviewOpening(s.review_game||s.game);
  const key=JSON.stringify([sides,lastBook,opening,turn&&turn.ply,names,s.ply===(turn&&turn.ply),rows.length,ingame.length&&ingame[0].by]);
  if(box.dataset.key!==key){box.dataset.key=key;box.replaceChildren();
-  if(ingame.length){const line=document.createElement('p');line.className='review-fact muted';line.textContent=`${ingame[0].by}'s own ratings from the game are shown on its moves until they are reviewed.`;box.append(line)}
   for(const side of rows.length?sides:[]){const line=document.createElement('p');line.className='review-fact';const who=document.createElement('b');who.textContent=side.side===0?'White':'Black';
    const bits=[side.accuracy==null?'—':side.accuracy+'%'];if(side.slips)bits.push(side.slips+' inaccurac'+(side.slips===1?'y':'ies'));if(side.mistakes)bits.push(side.mistakes+' mistake'+(side.mistakes===1?'':'s'));if(side.blunders)bits.push(side.blunders+' blunder'+(side.blunders===1?'':'s'));
    line.append(who,' '+bits.join(' · '));line.title='Accuracy: 100% means every move matched the engine\'s choice or cost nothing.';box.append(line)}
