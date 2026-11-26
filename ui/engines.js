@@ -256,6 +256,15 @@ function renderReviewThought(strip,s,side,engine){
  fields.heading.classList.toggle('has-reviewed-move',!!row&&!pending);
  {const verdict=row&&!pending?({'Best move':'good','Book move':'good','No clear error':'good','Inaccuracy':'mid','Uncertain':'mid','Mistake':'poor','Blunder':'bad','Missed win':'bad'})[row.label]||'':'';fields.heading.dataset.verdict=verdict;fields.played.box.dataset.verdict=verdict;}
  {const short={'No clear error':'Fine','Not reviewed yet':'No review','Game review unavailable':'No review','Starting position':'Start','Reviewing…':'Reviewing','Book move':'Book','Missed win':'Missed win','Uncertain':'Unclear'};const parts=fields.heading.textContent.split('\n').map(t=>short[t]||t);if(parts.length===1)fields.heading.textContent=parts[0];if(parts.length===2){const top=document.createElement('small'),main=document.createElement('span');top.textContent=parts[0];main.textContent=parts[1];fields.heading.replaceChildren(top,main)}}
+ { // How long the move actually took (when the game recorded it), beside the move number.
+  const all=window.foulbroodOpenedTimes?window.foulbroodOpenedTimes(s):null,t=all&&s.ply&&!otherTurn?all[s.ply-1]:null;
+  if(t!=null&&t>=0.1&&!pending){
+   const spent=t<60?(t<10?t.toFixed(1):Math.round(t))+'s':Math.floor(t/60)+':'+String(Math.round(t%60)).padStart(2,'0');
+   let top=fields.heading.querySelector('small');
+   if(!top){const text=fields.heading.textContent;top=document.createElement('small');top.textContent='Move '+s.ply;const main=document.createElement('span');main.textContent=text;fields.heading.replaceChildren(top,main)}
+   const clock=document.createElement('b');clock.className='review-move-time';clock.textContent=' · '+spent;clock.title='Time spent on this move';top.append(clock);
+  }
+ }
  fields.heading.classList.toggle('search-activity',pending);
  fields.heading.title=row?.label==='Uncertain'?'Comparison inconclusive at this depth.':row?.label==='Missed win'?'The preferred line retains a forced win.':'';
  const difference=reviewMoveDifference(row);
@@ -265,7 +274,7 @@ function renderReviewThought(strip,s,side,engine){
  const game=row?botThoughtGame({game:s.review_game||s.game},row):null;
  for(const [key,move,score,depth]of [['played',row?.move,row?.score??point?.score,row?.depth??point?.depth],['preferred',row?.alternative,row?.best_score,row?.best_depth]]){
   const field=fields[key];field.move.textContent=row&&move?insightMoveText(game,move,notationFollowsBoard()):'—';field.move.title=field.move.textContent;
-  updatePositionScore(field.score,{score,side:0},null,{side});field.depth.textContent=depth==null?'Depth —':'Depth '+depth;field.depth.dataset.d=depth==null?'':'D'+depth;if(key==='played'&&row){const all=window.foulbroodOpenedTimes?window.foulbroodOpenedTimes(s):null,t=all?all[row.ply-1]:null;if(t!=null&&t>=0.1)field.depth.dataset.d=(field.depth.dataset.d?field.depth.dataset.d+' · ':'')+(t<60?(t<10?t.toFixed(1):Math.round(t))+'s':Math.floor(t/60)+':'+String(Math.round(t%60)).padStart(2,'0'))}
+  updatePositionScore(field.score,{score,side:0},null,{side});field.depth.textContent=depth==null?'Depth —':'Depth '+depth;field.depth.dataset.d=depth==null?'':'D'+depth;
   const book=row?.label==='Book move';field.box.hidden=pending||((book||row?.ingame)&&key==='preferred')||(otherTurn&&!row);field.score.box.hidden=book;field.depth.hidden=book;
  }
  return !pending&&!!row&&row.ply===s.ply;

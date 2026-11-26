@@ -1119,3 +1119,4 @@ aside #reviewExtra .review-line button{font-family:ui-monospace,monospace;font-s
 #moves .history-move .move-time,#moves .history-move .move-rating{flex:none;white-space:nowrap}
 #moves .history-move .move-time{margin-left:0}
 #moves .history-move .move-time+.move-rating{margin-left:2px}
+.review-thought-heading>small .review-move-time{color:var(--ink);font-weight:800}
