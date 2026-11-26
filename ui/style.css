@@ -1009,3 +1009,4 @@ aside #histExport .hist-export-row button{width:100%;margin:0;padding:6px 4px;wh
 /* History: the last line says how the game ended */
 #moves .history-end{grid-column:1/-1;margin:4px 0 0;padding:8px 10px;border-left:4px solid var(--hazard);background:var(--bg);color:var(--ink);font:700 11px/1.3 Archivo,-apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:.12em;text-transform:uppercase}
 aside #gameResult{display:none!important}
+#reviewSummary{display:none!important}
