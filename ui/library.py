@@ -6,6 +6,7 @@ all land on one entry.
 """
 import hashlib
 import json
+import math
 import os
 import re
 import threading
@@ -155,11 +156,199 @@ def listing(query=''):
     return rows
 
 
+# ---- Report: patterns across a set of games, seen from one player's side ----
+def _view(score):
+    """The viewer's -100..+100 scale."""
+    if abs(score) > 99000:
+        return 100 if score > 0 else -100
+    return max(-99, min(99, round(100 * math.tanh(score / 300))))
+
+
+def _bot_evals():
+    """What the bot itself believed during its games: {hivegame id: (bot name, {turn: score})}."""
+    out = {}
+    try:
+        with (ROOT.parent / 'hivegame-bot' / 'games.jsonl').open() as rows:
+            for line in rows:
+                try:
+                    row = json.loads(line)
+                    evals = {int(k): v[1] for k, v in (row.get('evals') or {}).items()
+                             if isinstance(v, list) and len(v) > 1 and isinstance(v[1], (int, float))}
+                    if evals:
+                        out[str(row.get('id'))] = (row.get('bot'), evals)
+                except (ValueError, TypeError):
+                    continue
+    except OSError:
+        pass
+    return out
+
+
+def report(ids, me):
+    """Counts and patterns for the listed games from `me`'s side. Every finding carries its numbers."""
+    wanted = set(ids or [])
+    games = [g for g in listing('') if g.get('id') in wanted and me in (g.get('white'), g.get('black'))]
+    evals = _bot_evals()
+    def outcome(g):
+        r = str(g.get('result') or '')
+        side = 'white' if r.startswith('White won') else 'black' if r.startswith('Black won') else 'draw' if r.startswith('Draw') else ''
+        return '' if not side else 'draw' if side == 'draw' else 'won' if g.get(side) == me else 'lost'
+    def tally(rows):
+        return dict(games=len(rows), won=sum(outcome(g) == 'won' for g in rows), lost=sum(outcome(g) == 'lost' for g in rows),
+                    drawn=sum(outcome(g) == 'draw' for g in rows))
+    def colour(g):
+        return 'white' if g.get('white') == me else 'black'
+    def groups(key):
+        found = {}
+        for g in games:
+            found.setdefault(key(g), []).append(g)
+        return sorted(((k, tally(v)) for k, v in found.items() if k), key=lambda kv: -kv[1]['games'])
+    opponents = sorted({g.get('black') if colour(g) == 'white' else g.get('white') for g in games} - {None})
+    out = dict(me=me, opponents=opponents, total=tally(games),
+               colours=[dict(colour=k, **t) for k, t in groups(colour)],
+               clocks=[dict(clock=k, **t) for k, t in groups(lambda g: str(g.get('time_control') or '').split(' ')[0])],
+               openings=[dict(colour=k[0], opening=k[1], **t) for k, t in groups(lambda g: (colour(g), g.get('opening')) if g.get('opening') else None)])
+    lengths = {k: [g.get('moves') or 0 for g in games if outcome(g) == k and g.get('moves')] for k in ('won', 'lost')}
+    out['length'] = {k: (round(sum(v) / len(v)) if v else None) for k, v in lengths.items()}
+    endings = {}
+    for g in games:
+        r = str(g.get('result') or '')
+        if outcome(g) in ('won', 'lost'):
+            kind = 'resignation' if 'by resignation' in r else 'on time' if 'on time' in r else 'not recorded'
+            endings.setdefault(outcome(g), {}).setdefault(kind, 0)
+            endings[outcome(g)][kind] += 1
+    out['endings'] = endings
+    # What the player's own engine believed, move by move (bot games only).
+    scale = lambda x: (100 if x > 0 else -100) if abs(x) > 99000 else max(-99.0, min(99.0, 100 * math.tanh(x / 600)))
+    turning, ahead, never, tracked = [], [], [], 0
+    for g in games:
+        gid = str(g.get('url') or '').rsplit('/', 1)[-1]
+        bot, series = evals.get(gid, (None, None))
+        if bot != me or not series or len(series) < 3:
+            continue
+        tracked += 1
+        if outcome(g) != 'lost':
+            continue
+        turns = sorted(series)
+        best = None
+        for i in range(1, len(turns)):
+            before, after = scale(series[turns[i - 1]]), scale(series[turns[i]])
+            drop = before - after
+            if drop < 10:
+                continue
+            lasting = before > -25 and all(scale(series[t]) <= -25 for t in turns[i:])
+            weight = drop + (1000 if lasting else 0)
+            if best is None or weight > best[0]:
+                best = (weight, turns[i - 1], turns[i])
+        peak_turn = max(turns, key=lambda t: series[t])
+        peak = _view(series[peak_turn])
+        opponent = g.get('black') if colour(g) == 'white' else g.get('white')
+        ref = dict(id=g.get('id'), opponent=opponent, played=g.get('played') or g.get('saved'), colour=colour(g), moves=g.get('moves'), clock=str(g.get('time_control') or '').split(' ')[0])
+        if best:
+            turning.append(dict(ref, move=best[1] + 1, before=_view(series[best[1]]), after=_view(series[best[2]])))
+        if peak >= 60:
+            ahead.append(dict(ref, move=peak_turn + 1, peak=peak))
+        elif peak < 20:
+            never.append(dict(ref, peak=peak))
+    turning.sort(key=lambda t: t['move'])
+    ahead.sort(key=lambda t: -t['peak'])
+    out.update(tracked=tracked, turning=turning, ahead=ahead, never=never)
+    # Saved Game reviews: who made the graded errors, and when.
+    def review_rows(g):
+        try:
+            import base64
+            text = _review_path(g['id']).read_text(encoding='utf-8')
+            block = re.findall(r'\{FoulBroodReview\s+([^}]*)\}', text, re.S)
+            if not block:
+                block = re.findall(r'\{[A-Za-z]*Review[A-Za-z]*\s+([^}]*)\}', text, re.S)
+            encoded = block[0].partition('\n')[2]
+            return json.loads(base64.b64decode(''.join(encoded.split())))['rows']
+        except Exception:
+            return None
+    def grade(row):
+        if row.get('label') in ('Book move', 'Best move') or row.get('alternative') == row.get('move'):
+            return ''
+        best, played = row.get('best_score'), row.get('score')
+        if best is None or played is None:
+            return ''
+        sign = 1 if row.get('side') == 0 else -1
+        best, played = best * sign, played * sign
+        if abs(best) > 99000 and abs(played) > 99000 and (best > 0) == (played > 0):
+            return ''
+        loss = max(0, scale(best) - scale(played))
+        return 'blunder' if loss >= 46 or (best > 99000 and scale(played) < 90) else 'mistake' if loss >= 24 else ''
+    reviewed, errors = 0, dict(me=dict(mistake=0, blunder=0), them=dict(mistake=0, blunder=0))
+    phases = dict(opening=0, middle=0, late=0)
+    for g in games:
+        info = g.get('review') or {}
+        if not info.get('total') or info.get('reviewed', 0) < info.get('total', 0):
+            continue
+        rows = review_rows(g)
+        if not rows:
+            continue
+        reviewed += 1
+        mine = 0 if colour(g) == 'white' else 1
+        for row in rows:
+            kind = grade(row)
+            if not kind:
+                continue
+            who = 'me' if row.get('side') == mine else 'them'
+            errors[who][kind] += 1
+            if who == 'me':
+                phases['opening' if row.get('ply', 0) <= 16 else 'middle' if row.get('ply', 0) <= 40 else 'late'] += 1
+    out.update(reviewed=reviewed, errors=errors, phases=phases)
+    # Findings in plain words, each with the counts behind it.
+    findings = []
+    total = out['total']
+    if total['games']:
+        findings.append('%s won %d and lost %d of %d games%s.' % (me, total['won'], total['lost'], total['games'], (' against ' + opponents[0]) if len(opponents) == 1 else ''))
+    for c in out['colours']:
+        if c['games'] >= 3:
+            findings.append('As %s: %d won, %d lost.' % (c['colour'].capitalize(), c['won'], c['lost']))
+    for o in out['openings']:
+        decided = o['won'] + o['lost']
+        if decided >= 3 and (o['lost'] == decided or o['won'] == decided):
+            findings.append('As %s with %s: %s all %d.' % (o['colour'].capitalize(), o['opening'], 'lost' if o['lost'] else 'won', decided))
+        elif decided >= 5 and (o['won'] / decided <= .2 or o['won'] / decided >= .8):
+            findings.append('As %s with %s: won %d of %d.' % (o['colour'].capitalize(), o['opening'], o['won'], decided))
+    lost_tracked = len([1 for t in turning]) or 0
+    if turning:
+        moves = sorted(t['move'] for t in turning)
+        findings.append('Losses turn around move %d (from move %d to %d, %d games).' % (moves[len(moves) // 2], moves[0], moves[-1], len(moves)))
+        high = [t for t in turning if t['before'] >= 30]
+        if high:
+            findings.append('In %d of %d losses %s still rated itself ahead (+30 or more) on its last move before the turn.' % (len(high), len(turning), me))
+    if ahead:
+        findings.append('%s rated itself clearly winning (+60 or more) at some point in %d games it went on to lose.' % (me, len(ahead)))
+    if never:
+        findings.append('In %d losses it was never ahead (peak below +20): behind from the opening.' % len(never))
+    if out['length']['won'] and out['length']['lost']:
+        findings.append('Wins last %d moves on average, losses %d.' % (out['length']['won'], out['length']['lost']))
+    if reviewed:
+        mine, theirs = errors['me'], errors['them']
+        findings.append('In the %d reviewed game%s: %s made %d mistake%s and %d blunder%s, the other side %d and %d.' % (
+            reviewed, '' if reviewed == 1 else 's', me, mine['mistake'], '' if mine['mistake'] == 1 else 's', mine['blunder'], '' if mine['blunder'] == 1 else 's', theirs['mistake'], theirs['blunder']))
+        if sum(phases.values()) >= 3:
+            worst = max(phases, key=phases.get)
+            findings.append('Most of its graded errors come in the %s (%d of %d).' % ({'opening': 'first 16 moves', 'middle': 'middle game (moves 17 to 40)', 'late': 'late game (after move 40)'}[worst], phases[worst], sum(phases.values())))
+    if reviewed < total['games']:
+        missing = total['games'] - reviewed
+        findings.append('Game review has not been done on %d of these %d games. Review them for a fuller report (mistakes and blunders by each side, and when they happen).' % (missing, total['games']))
+    if tracked < total['games']:
+        findings.append('The move-by-move findings use %d of the %d games: only games played by the bot record what it was thinking.' % (tracked, total['games']))
+    out['findings'] = findings
+    return out
+
+
 def library_action(payload):
     action = payload.get('action')
     if action == 'library_list':
         rows = listing(payload.get('query'))
         return dict(games=rows[:500], total=len(rows))
+    if action == 'library_report':
+        ids = payload.get('ids')
+        if not isinstance(ids, list) or not isinstance(payload.get('me'), str) or not payload.get('me'):
+            raise ValueError('Choose a player for the report.')
+        return report([i for i in ids if isinstance(i, str)][:2000], payload['me'])
     if action == 'library_save':
         return dict(id=add(payload))
     if action == 'library_review':

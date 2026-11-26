@@ -609,9 +609,30 @@
   return {shown,totals};
  };
  for(const id of ['histMe','histOpp','histColour','histResult','histOpening'])el(id).addEventListener('change',()=>{if(id==='histMe')meChosen=true;draw(null)});
+ // Report: patterns across the games shown, from the chosen player's side. Every line carries its counts and links to its games.
+ let shownGames=[];
+ const day=text=>{const d=new Date(text);return isNaN(d)?'':d.toLocaleDateString(undefined,{month:'short',day:'numeric'})};
+ const signed=n=>(n>0?'+':n<0?'−':'')+Math.abs(n);
+ const showReport=r=>{
+  const box=el('histReport');box.replaceChildren();box.hidden=false;
+  const make=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e};
+  const head=make('div','hist-report-head');head.append(make('h3','',`${r.me}${r.opponents.length===1?' vs '+r.opponents[0]:''} · ${r.total.games} game${r.total.games===1?'':'s'}`));
+  const close=make('button','small','Close');close.type='button';close.onclick=()=>{box.hidden=true;box.replaceChildren()};head.append(close);box.append(head);
+  const list=make('ul','hist-report-findings');for(const f of r.findings)list.append(make('li','',f));box.append(list);
+  const section=(title,rows,line)=>{if(!rows.length)return;box.append(make('h4','',title));const wrap=make('div','hist-report-rows');
+   for(const row of rows.slice(0,40)){const b=make('button','hist-report-row');b.type='button';line(row,b);wrap.append(b)}box.append(wrap)};
+  section('Openings',r.openings.filter(o=>o.games>=2),(o,b)=>{b.append(make('span','',`${o.colour==='white'?'White':'Black'} · ${o.opening}`),make('strong','',`${o.won} won · ${o.lost} lost`));b.title='Show these games';
+   b.onclick=()=>{el('histColour').value=o.colour;draw(null);el('histOpening').value=o.opening;draw(null)}});
+  const where=t=>[`vs ${t.opponent}`,t.colour==='white'?'White':'Black',t.clock,day(t.played)].filter(Boolean).join(' · ');
+  section('Where the losses turned',r.turning,(t,b)=>{b.append(make('span','',`Move ${t.move} · ${where(t)}`),make('strong','',`${signed(t.before)} → ${signed(t.after)}`));b.title='Open this game at that move';b.onclick=()=>openGame(t.id,t.move).catch(e=>toast(e.message))});
+  section('Rated itself winning, then lost',r.ahead,(t,b)=>{b.append(make('span','',`Move ${t.move} · ${where(t)}`),make('strong','',signed(t.peak)));b.title='Open this game at that move';b.onclick=()=>openGame(t.id,t.move).catch(e=>toast(e.message))});
+ };
+ el('histReportGo').onclick=async()=>{const me=el('histMe').value;if(!me){toast('Choose a player first.');return}
+  try{showReport(await call('report',{me,ids:shownGames.map(g=>g.id)}))}catch(e){toast(window.plainMessage?window.plainMessage(e.message):e.message)}};
  const draw=data=>{
   if(data){allGames=data.games||[];draw.total=data.total||0}
   const {shown,totals}=applyFilters();data={games:shown,total:shown.length};
+  shownGames=shown;el('histReportGo').disabled=!el('histMe').value||!shown.length;
   el('histFilters').hidden=!allGames.length;
   const list=el('histList');list.replaceChildren();
   el('histCount').textContent=data.total?`${data.total} game${data.total===1?'':'s'} · ${totals}`:(allGames.length||el('histSearch').value.trim()?'No games match.':'No games yet. Finished games appear here on their own.');
@@ -670,7 +691,7 @@
  // How the game opened from History ended, while it is still the game on the Analysis board ("... by resignation" / "... on time").
  window.foulbroodOpenedTimes=s=>{try{if(!opened||!opened.moves||!Array.isArray(opened.times)||!s)return null;const now=movesOf(s.review_game||s.game);return now===opened.moves||now.startsWith(opened.moves+';')||opened.moves.startsWith(now+';')?opened.times:null}catch(e){return null}};
  window.foulbroodOpenedResult=s=>{try{if(!opened||!opened.moves||!s)return '';const now=movesOf(s.review_game||s.game);return now===opened.moves||now.startsWith(opened.moves+';')||opened.moves.startsWith(now+';')?String(opened.result||''):''}catch(e){return ''}};
- const openGame=async id=>{
+ const openGame=async(id,ply)=>{
   const g=await call('get',{id});
   const loads=[];
   if(g.review_text)loads.push({action:'review_load',text:g.review_text,filename:'history.pgn'});
@@ -685,6 +706,7 @@
     const done=await action(confirmed?{...payload,confirm_review_clear:true}:payload); // unconfirmed: the viewer asks by itself if Analysis holds a game
     if(done||document.getElementById('resignDialog').open)break;
    }
+   if(typeof ply==='number'){await free();try{if(typeof state!=='undefined'&&state&&ply<=(state.review_total??ply))await action({action:'navigate',ply})}catch(e){}}
   };
   // Live may be holding the board with the Analysis game set aside: that set-aside game is what would be replaced.
   if(L().boardIsLive()){
