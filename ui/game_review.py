@@ -1,5 +1,6 @@
 """Cancellable full-history review, using equal budgets for compared continuations."""
 import subprocess
+from pathlib import Path
 import math
 import threading
 import time
@@ -206,8 +207,12 @@ class Review:
                 self.check(generation)
                 engine=UHP(self.engine['path']);self.process=engine.proc
             info=engine.reply();flags=set(';'.join(info).split(';'))
-            self.book_review_supported='FoulBroodBookMoves' in flags
-            if not self.book_review_supported:return []
+            if 'FoulBroodBookMoves' not in flags:
+                # No membership command: read the engine's own book file, using its position-key commands.
+                moves=self.book_file_moves(engine,data)
+                with self.app.lock:self.check(generation)
+                return moves
+            self.book_review_supported=True
             engine.command('newgame '+data['game'])
             lines=engine.command('bookmoves')
             moves=[m for line in lines for m in line.split(';') if m]
@@ -220,11 +225,48 @@ class Review:
             with self.app.lock:
                 if engine and self.process is engine.proc:self.process=None
 
+    def book_file_moves(self,engine,data):
+        """Book moves for this position from `thoraxrex-book.txt` beside the engine. The book stores one
+        orientation of each position, so all 12 turns and mirrors are tried, as the engine itself does."""
+        if getattr(self,'book_misses',0)>=6:return []          # well out of book: stop asking
+        book=getattr(self,'book_file',None)
+        if book is None:
+            book={}
+            try:
+                for line in (Path(self.engine['path']).parent/'thoraxrex-book.txt').read_text().splitlines():
+                    parts=line.split(None,2)
+                    if len(parts)==3 and len(parts[0])==16 and parts[1].isdigit() and int(parts[1])>0:book.setdefault(parts[0],[]).append(parts[2].strip())
+            except OSError:pass
+            self.book_file=book
+        if not book:self.book_review_supported=False;return []
+        engine.command('newgame '+data['game'])
+        found=[]
+        for turn in range(12):
+            reply=engine.command('key' if turn==0 else f'symkey {turn}')
+            key=reply[0].strip() if reply else ''
+            if len(key)!=16:self.book_review_supported=False;return []   # an engine without these commands
+            for stored in book.get(key,[]):
+                candidates=[stored]
+                if turn and ' ' in stored:
+                    # Turn the stored move back: the orientation u that `turn` maps onto the stored move.
+                    candidates=[]
+                    for u in range(12):
+                        back=(engine.command(f'symmove {u} {stored}') or [''])[0].strip()
+                        if back and (engine.command(f'symmove {turn} {back}') or [''])[0].strip()==stored:candidates.append(back)
+                for candidate in candidates:
+                    try:move=canonical_move(self.snapshot,data,candidate)
+                    except Exception:continue
+                    if move not in found:found.append(move)
+            if found:break
+        self.book_misses=0 if found else getattr(self,'book_misses',0)+1
+        return found
+
     def start(self):
         resume=self.can_resume()
         self.stop()
         if not resume:self.rows=[];self.points=[];self.before=None;self.pending_played=None
         if not resume:self.extras={}
+        self.book_misses=0
         self.engine=dict(self.app.engines.get(self.app.engines.analysis_engine) or {});self.error='';self.status='running';self.milliseconds=self.app.analysis_ms
         self.book_review_supported=None
         def usable(result):
