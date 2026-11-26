@@ -262,7 +262,7 @@ function renderReviewThought(strip,s,side,engine){
    const spent=t<60?(t<10?t.toFixed(1):Math.round(t))+'s':Math.floor(t/60)+':'+String(Math.round(t%60)).padStart(2,'0');
    let top=fields.heading.querySelector('small');
    if(!top){const text=fields.heading.textContent;top=document.createElement('small');top.textContent='Move '+s.ply;const main=document.createElement('span');main.textContent=text;fields.heading.replaceChildren(top,main)}
-   const clock=document.createElement('b');clock.className='review-move-time';clock.textContent=' · '+spent;clock.title='Time spent on this move';top.append(clock);
+   const clock=document.createElement('b');clock.className='review-move-time';clock.textContent=spent;clock.title='Time spent on this move';top.append(clock);
   }
  }
  fields.heading.classList.toggle('search-activity',pending);
