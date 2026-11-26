@@ -569,6 +569,11 @@ class App:
                 if self.engines.analysis_engine==key:raise ValueError('Disconnect this engine before removing it.')
                 self.engines.remove(key)
                 self.saved_reviews={k:r for k,r in self.saved_reviews.items() if r.engine.get('id')!=key}
+            elif action=='server_restart':
+                # Load new server code: the helper stops this server, then reopens the app, which starts a fresh one.
+                script=Path.home()/'Documents'/'Codex'/'FoulBroodData'/'hivegame-bot'/'restart-viewer.sh'
+                if not script.exists():raise ValueError('The restart helper is missing.')
+                subprocess.Popen(['/bin/bash',str(script)],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
             elif action=='review_side':
                 if not self.review or self.mode!='analysis':raise ValueError('Open Game review first.')
                 kind=payload.get('kind');ply=payload.get('ply');move=payload.get('move')
