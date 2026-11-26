@@ -672,6 +672,12 @@
   opened={moves:movesOf(g.game)};for(const k of ['white','black','white_kind','black_kind','white_rating','black_rating','white_change','black_change','time_control','played','source','result'])if(g[k]!=null)opened[k]=g[k];if(Array.isArray(g.times))opened.times=g.times;
   try{localStorage.setItem('foulbrood_analysis_players',JSON.stringify(opened))}catch(e){}
  };
+ let wantPly=null;
+ const seekPly=s=>{
+  if(!wantPly||!s)return;if(Date.now()>wantPly.until){wantPly=null;return}
+  if(s.mode!=='analysis'||movesOf(s.review_game||s.game)!==wantPly.moves||(typeof busy!=='undefined'&&busy)||document.querySelector('dialog[open]'))return;
+  const ply=wantPly.ply;wantPly=null;if(s.ply!==ply&&ply<=(s.review_total??ply))action({action:'navigate',ply});
+ };
  const showPlayers=s=>{
   if(!opened||!s||s.mode!=='analysis'||document.body.classList.contains('hb-live'))return;
   const now=movesOf(s.review_game||s.game);if(!opened.moves||!(now===opened.moves||now.startsWith(opened.moves+';')||opened.moves.startsWith(now+';')||now===''&&false))return; // still that game (stepped back, or played on from it)
@@ -698,6 +704,7 @@
   if(g.url&&/;InProgress;/.test(g.game||'')&&g.result&&g.result!=='In progress')loads.push({action:'load_link',url:g.url}); // the site's record carries the result
   loads.push({action:'load',text:g.game});
   rememberPlayers(g);
+  wantPly=typeof ply==='number'?{moves:movesOf(g.game),ply,until:Date.now()+30000}:null; // go to this move once the game is on the board (also after a confirm dialog)
   const go=async confirmed=>{
    show(false);if(typeof enginePageOpen!=='undefined')enginePageOpen=false;L().setLive(false);
    await free();await action({action:'mode',mode:'analysis'});
@@ -706,7 +713,6 @@
     const done=await action(confirmed?{...payload,confirm_review_clear:true}:payload); // unconfirmed: the viewer asks by itself if Analysis holds a game
     if(done||document.getElementById('resignDialog').open)break;
    }
-   if(typeof ply==='number'){await free();try{if(typeof state!=='undefined'&&state&&ply<=(state.review_total??ply))await action({action:'navigate',ply})}catch(e){}}
   };
   // Live may be holding the board with the Analysis game set aside: that set-aside game is what would be replaced.
   if(L().boardIsLive()){
@@ -757,7 +763,7 @@
   }
  };
  const earlier=window.renderBotThoughts;
- window.renderBotThoughts=s=>{if(earlier)earlier(s);try{observe(s)}catch(e){}try{showPlayers(s)}catch(e){}};
+ window.renderBotThoughts=s=>{if(earlier)earlier(s);try{observe(s)}catch(e){}try{showPlayers(s)}catch(e){}try{seekPly(s)}catch(e){}};
 })();
 
 // ---- Sound effects with the FoulBrood attitude (all generated here, no audio files) ----
