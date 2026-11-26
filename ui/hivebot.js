@@ -557,12 +557,36 @@
  el('histSearch').addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(refresh,200)});
 
  const free=async()=>{for(let i=0;i<40&&typeof busy!=='undefined'&&busy;i++)await new Promise(r=>setTimeout(r,100))};
+ // A game opened from History keeps its players on the Analysis status bars: name, rating and change, and what kind of game it was.
+ const movesOf=game=>String(game||'').split(';').slice(3).map(m=>m.trim()).filter(Boolean).join(';');
+ let opened=null;try{opened=JSON.parse(localStorage.getItem('foulbrood_analysis_players')||'null')}catch(e){}
+ const rememberPlayers=g=>{
+  opened={moves:movesOf(g.game)};for(const k of ['white','black','white_kind','black_kind','white_rating','black_rating','white_change','black_change','time_control','played','source','result'])if(g[k]!=null)opened[k]=g[k];
+  try{localStorage.setItem('foulbrood_analysis_players',JSON.stringify(opened))}catch(e){}
+ };
+ const showPlayers=s=>{
+  if(!opened||!s||s.mode!=='analysis'||document.body.classList.contains('hb-live'))return;
+  const now=movesOf(s.review_game||s.game);if(!opened.moves||!(now===opened.moves||now.startsWith(opened.moves+';')||opened.moves.startsWith(now+';')||now===''&&false))return; // still that game (stepped back, or played on from it)
+  const day=String(opened.played||'').slice(0,10);
+  for(const color of ['white','black']){
+   const who=opened[color];if(!who)continue;
+   const name=el(color+'Name'),label=document.createElement('span');label.className='fb-nm';label.textContent=who;const parts=[label];
+   const rating=opened[color+'_rating'],change=opened[color+'_change'];
+   if(rating!=null){const rate=document.createElement('span');rate.className='fb-rt';rate.textContent=Math.round(rating);
+    if(change!=null){const d=Math.round(change),delta=document.createElement('b');delta.className=d>0?'up':d<0?'down':'';delta.textContent=(d>0?'+':d<0?'−':'±')+Math.abs(d);rate.append(' ',delta)}
+    parts.push(rate)}
+   name.replaceChildren(...parts);name.title=rating!=null?'Rating at the time of this game, and the change from it':who;
+   const source=el(color+'InsightSource');if(source){const bits=[opened[color+'_kind'],opened.time_control,opened.source==='Live'?'hivegame.com':opened.source,day].filter(Boolean);
+    if(bits.length){source.hidden=false;source.style.visibility='';source.textContent=bits.join(' · ');source.title=source.textContent}}
+  }
+ };
  const openGame=async id=>{
   const g=await call('get',{id});
   const loads=[];
   if(g.review_text)loads.push({action:'review_load',text:g.review_text,filename:'history.pgn'});
   if(g.url&&/;InProgress;/.test(g.game||'')&&g.result&&g.result!=='In progress')loads.push({action:'load_link',url:g.url}); // the site's record carries the result
   loads.push({action:'load',text:g.game});
+  rememberPlayers(g);
   const go=async confirmed=>{
    show(false);if(typeof enginePageOpen!=='undefined')enginePageOpen=false;L().setLive(false);
    await free();await action({action:'mode',mode:'analysis'});
@@ -621,7 +645,7 @@
   }
  };
  const earlier=window.renderBotThoughts;
- window.renderBotThoughts=s=>{if(earlier)earlier(s);try{observe(s)}catch(e){}};
+ window.renderBotThoughts=s=>{if(earlier)earlier(s);try{observe(s)}catch(e){}try{showPlayers(s)}catch(e){}};
 })();
 
 // ---- Sound effects with the FoulBrood attitude (all generated here, no audio files) ----
