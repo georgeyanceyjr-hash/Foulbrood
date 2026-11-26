@@ -27,7 +27,8 @@ function renderReviewMarks(s){
   const [x,baseY]=xy(...to),height=Math.max(0,s.pieces.filter(p=>p.q===to[0]&&p.r===to[1]).length-1),y=baseY-height*10;
   const verdict=tried.status==='ready'?reviewTryGrade(s,tried):null,label=verdict?verdict.text:'…',width=Math.max(34,label.length*8.5+14);
   const badge=node('g',{class:'review-marks review-try-badge'+(verdict?'':' waiting'),'data-verdict':verdict?verdict.verdict:'',style:'cursor:pointer'});
-  badge.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();setReviewPreview(null);
+  badge.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();if(!verdict)return; // still being graded: leave it alone
+   setReviewPreview(null);
    if(reviewTryOn&&reviewTryOn.ply===tried.ply){reviewTry={game:reviewTryOn.game,ply:tried.ply};setTimeout(()=>action({action:'navigate',ply:tried.ply-1}),0)}}); // ready for the next try // click the grade: the tried move and its result go away
   {const tip=node('title',{});tip.textContent='Click to take this tried move off the board';badge.append(tip)}
   badge.append(node('polygon',{points:hex(x,y,40),fill:'transparent',stroke:'none'})); // the whole piece is the click target, not just the number
@@ -254,6 +255,15 @@ function reviewTryGrade(s,tried){
  const rating=tried.score==null?null:reviewPoint(tried.score),name=({'No clear error':'Fine','Uncertain':'Unclear','Best move':'Best'}[grade[0]]||grade[0]);
  return {name,rating,verdict:historyVerdicts[grade[0]]||'',text:rating==null?name:(rating>0?'+':'')+rating};
 }
+// A tried move on the board: a click anywhere on the board, or reaching for a bug, takes it off (and, while Try a move is on,
+// goes back to the position to try from). Nothing happens while it is still being graded.
+document.addEventListener('pointerdown',e=>{
+ if(!reviewPreview||!/^try/.test(reviewPreview.key)||!e.target.closest||!e.target.closest('#board,.reserve'))return;
+ e.stopPropagation();e.preventDefault();
+ const shown=window.reviewTriedShown(state);if(shown&&shown.status==='running')return;
+ const ply=reviewPreview.ply;setReviewPreview(null);
+ if(reviewTryOn&&reviewTryOn.ply===ply){reviewTry={game:reviewTryOn.game,ply};setTimeout(()=>action({action:'navigate',ply:ply-1}),0)}
+},true);
 function setReviewPreview(next){reviewPreview=next;lastBoardKey='';
  // Make sure the previewed move is in view: refit the board when it falls outside the current frame (and when the preview is cleared after that).
  try{autoFitKey=null;const to=next&&next.last_move&&next.last_move.to;if(to&&boardFrame){const [px,py]=xy(...to);if(Math.abs(px-boardFrame.x)>boardFrame.w/2-45||Math.abs(py-boardFrame.y)>boardFrame.h/2-45){boardFrame=null;boardZoom=1;panX=panY=0;setReviewPreview.refit=true}}else if(!next&&setReviewPreview.refit){boardFrame=null;boardZoom=1;panX=panY=0;setReviewPreview.refit=false}}catch(e){}
@@ -278,7 +288,11 @@ function renderReviewExtra(s){
  const button=(label,title,click,pressed)=>{const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;if(title)b.title=title;b.onclick=click;if(pressed)b.setAttribute('aria-pressed','true');return b};
  const controls=document.createElement('div');controls.className='review-extra-row';
  if(!line||line.status==='error')controls.append(button('Engine line','Show the moves the engine expected after its preferred move',()=>{if(reviewLineHidden.delete(ply)&&lineFound&&lineFound.status==='ready'){box.dataset.key='';renderReviewExtra(state);return}action({action:'review_side',kind:'line',ply})}));
- controls.append(reviewTry||reviewTryOn?button('Stop trying','Leave Try a move',()=>{const back=(reviewTry||reviewTryOn).ply;reviewTry=null;reviewTryOn=null;if(reviewPreview)setReviewPreview(null);action({action:'navigate',ply:back})},true)
+ controls.append(reviewTry||reviewTryOn?button('Stop trying','Leave Try a move',async()=>{const back=(reviewTry||reviewTryOn).ply,grading=found&&found.status==='running';reviewTry=null;reviewTryOn=null;reviewTryShow=null;
+   if(grading)reviewTryDismissed.add(found.ply+'|'+found.move); // stopped in the middle of thinking: no result for that move
+   if(reviewPreview)setReviewPreview(null);
+   if(grading){await action({action:'review_stop'});for(let i=0;i<20&&busy;i++)await new Promise(r=>setTimeout(r,50))}
+   action({action:'navigate',ply:back})},true)
   :button('Try a move','Play different moves for this turn on the board and have each one graded',async()=>{if(reviewPreview)setReviewPreview(null);reviewTry={game,ply};reviewTryOn={game,ply};await action({action:'navigate',ply:ply-1})}));
  box.append(controls);
  const note=t=>{const p=document.createElement('p');p.className='review-fact muted';p.textContent=t;box.append(p)};
