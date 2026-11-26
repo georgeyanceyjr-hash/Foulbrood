@@ -241,19 +241,20 @@ function normalizeEngineNames(s){
 // A game starts level: the starting position and the first move are shown at evaluation 0 in a review,
 // whatever the engine reported for a nearly empty board.
 function zeroOpening(s){const r=s?.game_review;if(!r)return;for(const p of r.points||[])if(p.ply<=1&&p.score!=null)p.score=0;for(const row of r.rows||[])if(row.ply===1){if(row.score!=null)row.score=0;if(row.best_score!=null)row.best_score=0;if(row.symbol){row.symbol='';row.label='No clear error'}}}
-// Move grades, measured on the viewer scale (-100..+100, mover's side): how far the played move moved the bar
-// compared with the engine's choice. 20 = inaccuracy, 40 = mistake, 60 = blunder. Staying inside a forced win
-// or a forced loss is not an error; a small gap between searches of unequal depth is called unclear.
+// Move grades: how much the played move gave up against the engine's choice, from the mover's side.
+// In a close game the cut-offs are the engine's raw 60 / 150 / 300 (inaccuracy / mistake / blunder); the further the
+// position is already decided, the less the same raw drop counts (losses are measured on 100*tanh(score/600)).
+// Staying inside a forced win or a forced loss is not an error; a small gap between searches of unequal depth is unclear.
 function gradeReviewMove(best,played,bestDepth,playedDepth){
- const mate=x=>Math.abs(x)>99000,v=x=>mate(x)?Math.sign(x)*100:Math.max(-99,Math.min(99,Math.round(100*Math.tanh(x/300))));
+ const mate=x=>Math.abs(x)>99000,v=x=>mate(x)?Math.sign(x)*100:Math.max(-99,Math.min(99,100*Math.tanh(x/600)));
  if(best==null||played==null)return ['Uncertain',''];
  if(mate(best)&&mate(played)&&Math.sign(best)===Math.sign(played))return ['No clear error',''];
  const vb=v(best),vp=v(played),loss=Math.max(0,vb-vp);
  if(best>99000&&vp<90)return ['Missed win','∅'];
  const uneven=bestDepth!=null&&playedDepth!=null&&bestDepth!==playedDepth&&!mate(best)&&!mate(played);
- if(loss>=60)return ['Blunder','??'];
- if(loss>=40)return ['Mistake','?'];
- if(loss>=20)return uneven?['Uncertain','']:['Inaccuracy','?!'];
+ if(loss>=46)return ['Blunder','??'];
+ if(loss>=24)return ['Mistake','?'];
+ if(loss>=10)return uneven?['Uncertain','']:['Inaccuracy','?!'];
  return ['No clear error',''];
 }
 function regradeReview(s){const r=s?.game_review;if(!r)return;for(const row of r.rows||[]){

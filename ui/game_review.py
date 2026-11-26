@@ -10,19 +10,19 @@ from live_analysis import history_points
 TERMINAL=('WhiteWins','BlackWins','Draw')
 
 def classify(best, played, same_move=False, best_depth=None, played_depth=None):
-    """Scores are from the mover's perspective. Graded on the viewer scale (-100..+100):
-    how far the played move moved the bar against the engine's choice (20/40/60)."""
+    """Scores are from the mover's perspective. Raw 60/150/300 cut-offs in a close game,
+    fading as the position is decided (losses measured on 100*tanh(score/600))."""
     if same_move:return 'Best move',''
     if best is None or played is None:return 'Uncertain',''
     mate=lambda x:abs(x)>99000
-    view=lambda x:(100 if x>0 else -100) if mate(x) else max(-99,min(99,round(100*math.tanh(x/300))))
+    view=lambda x:(100 if x>0 else -100) if mate(x) else max(-99,min(99,100*math.tanh(x/600)))
     if mate(best) and mate(played) and (best>0)==(played>0):return 'No clear error',''
     vb,vp=view(best),view(played);loss=max(0,vb-vp)
     if best>99000 and vp<90:return 'Missed win','∅'
     uneven=best_depth is not None and played_depth is not None and best_depth!=played_depth and not mate(best) and not mate(played)
-    if loss>=60:return 'Blunder','??'
-    if loss>=40:return 'Mistake','?'
-    if loss>=20:return ('Uncertain','') if uneven else ('Inaccuracy','?!')
+    if loss>=46:return 'Blunder','??'
+    if loss>=24:return 'Mistake','?'
+    if loss>=10:return ('Uncertain','') if uneven else ('Inaccuracy','?!')
     return 'No clear error',''
 
 def white_score(result):
