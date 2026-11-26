@@ -960,3 +960,7 @@ aside .hb-open-grid #hbTake{grid-column:2;grid-row:2}
 #positionEditor .setup-side-field>span{margin-bottom:6px}
 #positionEditor .setup-footer{padding-top:14px;gap:8px}
 #positionEditor #setupBlank{margin-top:0}
+
+/* History: the hivegame.com link sits under the result line. */
+.hist-link{font-size:12px;color:inherit;text-decoration:underline;text-underline-offset:2px;justify-self:start;width:max-content}
+.hist-link:hover{color:var(--ink)}
