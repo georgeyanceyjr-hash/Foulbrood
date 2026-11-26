@@ -223,6 +223,7 @@
   document.body.classList.toggle('hb-manual',on);
   document.body.classList.toggle('hb-insight',connected&&el('hbInsight').checked);
   el('hbManualRow').hidden=!connected;if(document.activeElement!==el('hbManual'))el('hbManual').checked=on;
+  if('reopen' in bot&&document.activeElement!==el('hbReopen')&&Date.now()-(render.reopenAt||0)>3000)el('hbReopen').checked=!!bot.reopen;
   el('hbResignRow').hidden=!connected||!('resign_lost' in bot);if(document.activeElement!==el('hbResignLost'))el('hbResignLost').checked=!!bot.resign_lost;
   el('hbInsightRow').hidden=!connected;el('hbHandRow').hidden=!card;
   const s=typeof state!=='undefined'?state:null;
@@ -234,6 +235,7 @@
    if(!first){handSent='';shown={id:null,turn:-1};if(typeof toast==='function')toast('hivegame.com did not accept that move.')}
   }
  };
+ el('hbReopen').onchange=async()=>{render.reopenAt=Date.now();try{bot=await post({action:'hivebot_reopen',on:el('hbReopen').checked})}catch(e){el('hbStatus').textContent=e.message;el('hbStatus').hidden=false}render()};
  el('hbResignLost').onchange=async()=>{try{bot=await post({action:'hivebot_resign_lost',on:el('hbResignLost').checked})}catch(e){el('hbStatus').textContent=e.message;el('hbStatus').hidden=false}render()};
  el('hbManual').onchange=async()=>{try{bot=await post({action:'hivebot_manual',on:el('hbManual').checked})}catch(e){el('hbStatus').textContent=e.message;el('hbStatus').hidden=false}render()};
  try{el('hbInsight').checked=localStorage.getItem('foulbrood_live_insight')==='1'}catch(e){}

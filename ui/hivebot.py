@@ -494,7 +494,7 @@ class HiveBot:
                 if not game.get('finished'):
                     game.update(finished=True, result='Aborted or ended', our_turn=False, updated=time.time())
                     self.log.append('The game %s vs %s was aborted.' % (game.get('white') or 'White', game.get('black') or 'Black'))
-                    if standing_get() and not any(not g.get('finished') for g in self.games.values()):
+                    if standing_get() and reopen_get() and not any(not g.get('finished') for g in self.games.values()):
                         self.reopen, resync = True, True
                 if self.thinking == event['id']:
                     self.thinking = None
@@ -563,7 +563,7 @@ class HiveBot:
                     timer = threading.Timer(ABORT_AFTER, self._abort_if_idle, args=(gid, self.generation))
                     timer.daemon = True
                     timer.start()
-                if game['finished'] and not was_finished and standing_get() and not any(not g.get('finished') for g in self.games.values()):
+                if game['finished'] and not was_finished and standing_get() and reopen_get() and not any(not g.get('finished') for g in self.games.values()):
                     self.reopen, resync = True, True
                 if game['finished'] and self.thinking == gid:
                     self.thinking = None
@@ -714,7 +714,7 @@ class HiveBot:
                         online=list(getattr(self, 'online', [])) if self.state == 'connected' else [],
                         site=True if self.state == 'connected' else site_online(),
                         manual=bool(self.manual) and self.state == 'connected', refused=self.refused, cleared=cleared_get(),
-                        resign_lost=resign_lost_get(), standing=len(standing_get()))
+                        resign_lost=resign_lost_get(), standing=len(standing_get()), reopen=reopen_get())
 
 
 _CLEARED = {}
@@ -728,6 +728,27 @@ def cleared_get():
         except Exception:
             _CLEARED['v'] = None
     return _CLEARED['v']
+
+
+_REOPEN = {}
+
+
+def reopen_get():
+    """Whether open challenges are put back up after each game (on unless switched off); kept in a file."""
+    if 'v' not in _REOPEN:
+        try:
+            _REOPEN['v'] = (BOT_DIR / 'reopen-challenges.txt').read_text().strip() != '0'
+        except Exception:
+            _REOPEN['v'] = True
+    return _REOPEN['v']
+
+
+def reopen_set(on):
+    _REOPEN['v'] = bool(on)
+    try:
+        (BOT_DIR / 'reopen-challenges.txt').write_text('1' if on else '0')
+    except Exception:
+        pass
 
 
 _STANDING = {}
@@ -898,6 +919,9 @@ def hivebot_action(payload, engines):
     if action == 'hivebot_status':
         if payload.get('lobby'):
             BOT.refresh_lobby()
+        return BOT.view()
+    if action == 'hivebot_reopen':
+        reopen_set(payload.get('on'))
         return BOT.view()
     if action == 'hivebot_resign_lost':
         resign_lost_set(payload.get('on'))

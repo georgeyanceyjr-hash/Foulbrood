@@ -45,7 +45,8 @@
 <label for="hbPick">Open Challenges</label><div class="hb-pick"><select id="hbPick" aria-label="Waiting challenges"><option value="">Loading…</option></select><button id="hbTake" disabled>Accept</button></div><div id="hbLobby" class="hb-lobby"></div>
 <div id="hbDirectBox" hidden><span class="hb-pick-label">Direct challenges</span><div id="hbDirect" class="hb-mine-list"></div></div>
 </details>
-<details class="hb-sub panel hivebot-panel" open><summary><strong>Open a challenge</strong></summary>
+<details class="hb-sub hb-open-box panel hivebot-panel" open><summary><strong>Open a challenge</strong></summary>
+<label class="switch hb-keep" title="After each game the bot puts its open challenges back up. Untick to let them lapse once a game has been played."><input id="hbReopen" type="checkbox" checked>Reopen challenges after each game</label>
 <div id="hbBand" class="hb-accept"><label>Ratings from<input id="hbMinRating" type="number" min="0" max="4000" step="50" placeholder="any"></label><label>to<input id="hbMaxRating" type="number" min="0" max="4000" step="50" placeholder="any"></label></div>
 <div class="hb-accept hb-row"><label>Time<select id="hbOTime"><option value="60+2">1+2</option><option value="180+3">3+3</option><option value="300+4">5+4</option><option value="600+10" selected>10+10</option><option value="1200+20">20+20</option></select></label><label>We play<select id="hbOColor"><option value="Random" selected>Either colour</option><option value="White">White</option><option value="Black">Black</option></select></label><label class="switch"><input id="hbORated" type="checkbox" checked>Rated</label></div><button id="hbOpen" class="wide">Open challenge</button><div id="hbMineOpen" class="hb-mine-list"></div>
 </details>
