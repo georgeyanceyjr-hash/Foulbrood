@@ -184,11 +184,12 @@ def _bot_evals():
 
 
 def _logged_times(gid, total, side):
-    """Seconds the bot thought on each of its own moves, from the bot client's log (older games have no
-    other record). The opponent's moves stay unknown."""
+    """Seconds each move took, from the bot client's log (older games have no other record): the bot's
+    moves from when it started thinking to when it played, the opponent's from then until the bot was
+    asked to think again."""
     if not gid or not total:
         return None
-    spans, started = [], None
+    events = []  # ('think' | 'play', time)
     stamp = lambda line: time.mktime(time.strptime(line[:19], '%Y-%m-%dT%H:%M:%S')) + float('0.' + (line[20:23] if line[19:20] == '.' else '0'))
     try:
         for path in sorted((ROOT.parent / 'hivegame-bot' / 'logs').glob('hive-hydra.log.*')):
@@ -198,22 +199,25 @@ def _logged_times(gid, total, side):
                         continue
                     try:
                         if ' thinking ' in line:
-                            started = stamp(line)
-                        elif ' playing move ' in line and started is not None:
-                            spans.append(round(max(0.0, stamp(line) - started), 1))
-                            started = None
+                            events.append(('think', stamp(line)))
+                        elif ' playing move ' in line:
+                            events.append(('play', stamp(line)))
                     except ValueError:
                         continue
     except OSError:
         return None
-    if not spans:
-        return None
-    times = [None] * total
-    for i, seconds in enumerate(spans):
-        ply = 2 * i + side
-        if ply < total:
-            times[ply] = seconds
-    return times
+    times, ply, started, played = [None] * total, side, None, None
+    for kind, at in events:
+        if kind == 'think':
+            if played is not None and 0 <= ply - 1 < total and times[ply - 1] is None:
+                times[ply - 1] = round(max(0.0, at - played), 1)   # the opponent's move in between
+            started, played = at, None
+        elif started is not None:
+            if ply < total:
+                times[ply] = round(max(0.0, at - started), 1)
+            started, played = None, at
+            ply += 2
+    return times if any(t is not None for t in times) else None
 
 
 def report(ids, me):
