@@ -283,7 +283,8 @@ function renderReviewExtra(s){
  if(line&&line.status==='running')note('Finding the engine line…');
  if(line&&line.status==='error')note(line.error||'The engine line is not available.');
  if(line&&line.status==='ready'&&!reviewTry){
-  const chips=document.createElement('div');chips.className='review-line';const label=document.createElement('span');label.className='review-line-label';label.textContent='Line';chips.append(label);
+  const title=document.createElement('span');title.className='review-line-label review-line-title';title.textContent='Engine line';box.append(title);
+  const chips=document.createElement('div');chips.className='review-line review-line-moves';
   line.moves.forEach((m,i)=>{const k='line'+ply+'-'+i,on=reviewPreview&&reviewPreview.key===k;const step=line.steps[i];
    chips.append(button(text(m),'Show the board after this move of the line',()=>setReviewPreview(on?null:{game,ply,pieces:step.pieces,last_move:step.last_move,key:k}),on))});
   box.append(chips);
