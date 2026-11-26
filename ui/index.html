@@ -72,7 +72,7 @@
 
 <section id="reviewRankingPanel" class="panel review-ranking-panel" hidden><div class="review-ranking-title"><h2>Move difference</h2><button id="reviewRankingOrder" type="button" class="small">Largest</button></div><div class="review-ranking-head"><span>Move</span><span>Difference</span></div><p id="reviewRankingEmpty" class="caption">Reviewed moves appear here.</p><div id="reviewRankingList" class="review-ranking-list" role="group" aria-label="Moves ranked by difference"></div></section>
 
-<section id="historyPanel" class="panel moves-panel"><div class="row"><h2>History</h2></div>
+<section id="historyPanel" class="panel moves-panel"><button id="historyMax" type="button" aria-pressed="false" title="Expand the history to the full side panel" aria-label="Expand the history to the full side panel">⤢</button><div class="row"><h2>History</h2></div>
 <label>Notation<select id="notation"><option value="traditional">Traditional notation</option><option value="analytic">Analytic notation</option></select></label>
 <label id="perspectiveOption" class="switch" hidden><input id="followBoard" type="checkbox">Notation flips and rotates with the board</label><div id="gameResult" class="game-result" hidden></div><div id="moves" class="moves"><p class="muted">Your game starts here.</p></div><p id="notationStatus" class="caption" hidden></p><button id="copyHistory" class="small wide">Copy history</button><div class="two"><button id="exportPgn" class="small">Export PGN</button><button id="exportJson" class="small">Export JSON</button></div>
 </section>

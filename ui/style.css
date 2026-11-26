@@ -967,3 +967,13 @@ aside .hb-open-grid #hbTake{grid-column:2;grid-row:2}
 
 /* ... on the same line, after the result. */
 .hist-last{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+
+/* ---- History expander: one button in the corner of the box; expanded, the move list fills the side of the board ---- */
+#historyPanel{position:relative}
+aside #historyMax,#historyMax{position:absolute;top:10px;right:10px;width:30px;min-height:28px;height:28px;padding:0;font-size:15px;line-height:1;letter-spacing:0;z-index:2}
+#historyMax[aria-pressed="true"]{background:var(--hazard);border-color:var(--hazard);color:var(--pitch)}
+body.moves-max:has(#historyPanel:not([hidden])) aside>:not(#historyPanel){display:none!important}
+body.moves-max:has(#historyPanel:not([hidden])) aside{position:relative;align-self:stretch;min-height:360px}
+body.moves-max #historyPanel:not([hidden]){position:absolute;inset:0;margin:0;display:flex!important;flex-direction:column}
+body.moves-max #historyPanel:not([hidden])>*{flex:none}
+body.moves-max #historyPanel:not([hidden]) .moves,body.moves-max #historyPanel:not([hidden]) #moves{flex:1 1 auto;min-height:0;max-height:none;overflow:auto;align-content:start}
