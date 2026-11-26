@@ -1001,7 +1001,7 @@ body.moves-max:has(#historyPanel:not([hidden])) aside>#analysisModes:not([hidden
 body.moves-max:has(#historyPanel:not([hidden])) aside:has(>#analysisModes:not([hidden])){display:flex;flex-direction:column}
 body.moves-max aside:has(>#analysisModes:not([hidden]))>#historyPanel:not([hidden]){position:relative;inset:auto;flex:1 1 0;height:0;min-height:0}
 /* History: copy and export in one row, behind an arrow */
-aside #histExport{margin-top:10px}
+aside #histExport{margin-top:4px}
 aside #histExport>summary{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:5px 0}
 aside #histExport>summary:hover{color:var(--ink)}
 aside #histExport .hist-export-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:6px}
