@@ -113,8 +113,11 @@
   // Stepped back through this same game while it is being played: stay on that move when the next one arrives
   // (as on Local); the Live button is the way back to the current position.
   const back=botBoard()&&shown.id===g.id&&!g.finished&&typeof state!=='undefined'&&state&&typeof state.ply==='number'&&state.ply<(state.review_total??state.ply)?state.ply:null;
+  // Another open window already put this move on the shared board: leave it be, so a stepped-back view is not pulled forward.
+  const have=botBoard()&&shown.id===g.id&&!g.finished&&typeof state!=='undefined'&&state&&(state.review_total||0)===g.turn&&g.turn>0;
   botBoard(true);
   shown={id:g.id,turn:g.turn};
+  if(have)return;
   if(g.finished&&/^Aborted/.test(g.result||''))return; // an aborted game has no record on hivegame.com to load
   try{await action({action:'load_link',url:g.url,confirm_review_clear:true});if(back!=null)await whenFree(()=>action({action:'navigate',ply:back}))}catch(e){}
  };
