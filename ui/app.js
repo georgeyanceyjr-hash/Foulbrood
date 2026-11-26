@@ -547,7 +547,10 @@ $('clearMoves').onclick=()=>{$('position').value='';$('position').focus()};
 
 function setupInventory(){const base=editorDraft?.variant||serverState.game.split(';')[0].split('~')[0];const bugs='QABGS'+(base==='Base'?'':base.slice(5));const counts={A:3,B:2,G:3,S:2};return ['w','b'].flatMap(c=>[...bugs].flatMap(b=>Array.from({length:counts[b]||1},(_,i)=>c+b+(counts[b]?i+1:''))))}
 function setupHex(e){const p=pointOnBoard(e);if(!p)return null;const r=p.y/60,q=p.x/(Math.sqrt(3)*40)-r/2;let x=Math.round(q),z=Math.round(r),y=Math.round(-q-r);const dx=Math.abs(x-q),dz=Math.abs(z-r),dy=Math.abs(y+q+r);if(dx>dy&&dx>dz)x=-y-z;else if(dz>dy)z=-x-y;let h=[x,z];if(boardMirrored)h=[-h[0]-h[1],h[1]];for(let i=0;i<(6-boardRotation)%6;i++)h=[-h[1],h[0]+h[1]];return Math.abs(h[0])<=SETUP_LIMIT&&Math.abs(h[1])<=SETUP_LIMIT?h:null}
-function redrawSetup(){editorVersion++;lastBoardKey='';render(serverState)}
+// The arrangement being worked on is kept (in this browser) until it is changed: leaving Arrange, or the page, does not lose it.
+function saveSetupDraft(){try{if(editorDraft)localStorage.setItem('foulbrood_arrange_draft',JSON.stringify(editorDraft))}catch(e){}}
+function savedSetupDraft(){try{const d=JSON.parse(localStorage.getItem('foulbrood_arrange_draft')||'null');return d&&Array.isArray(d.pieces)&&d.pieces.length?d:null}catch(e){return null}}
+function redrawSetup(){editorVersion++;lastBoardKey='';saveSetupDraft();render(serverState)}
 function setupMinimumTurn(){const w=editorDraft.pieces.filter(p=>p.id[0]==='w').length,b=editorDraft.pieces.length-w;return Math.max(1,w+(editorDraft.side===0?1:0),b+1)}
 function renderSetupControls(){const editing=!!editorDraft;$('analysisImportHeader').hidden=editing;$('engineInsightPanel').hidden=editing;$('historyPanel').hidden=editing;$('positionEditor').hidden=!editing;$('startSetup').hidden=editing;$('rearrangeSetup').hidden=editing;$('rearrangeSetup').disabled=!serverState?.pieces?.length;$('importFile').disabled=editing;for(const id of ['linkEntry','manualEntry','clearAnalysis'])$(id).hidden=editing;
  for(const id of ['copyHistory','exportPgn','exportJson'])$(id).disabled=editing;$('hints').disabled=editing;if(!editing)return;$('historyNav').hidden=true;$('pass').hidden=true;$('turn').textContent='Set up position';$('hints').disabled=true;$('analyze').disabled=true;$('setupSideWhite').setAttribute('aria-pressed',String(editorDraft.side===0));$('setupSideBlack').setAttribute('aria-pressed',String(editorDraft.side===1));if(document.activeElement!==$('setupTurn'))$('setupTurn').value=editorDraft.turn;$('setupTurnToggle').textContent=`Turn ${editorDraft.turn} · ${$('setupTurnField').hidden?'Edit':'Done'}`;
@@ -566,7 +569,7 @@ async function openPositionSetup(rearrange){
  if(busy)return;
  if(serverState?.game_review){const exited=await action({action:'review_exit'});if(!exited||exited.game_review)return;}
  const s=await action({action:'stop_analysis'});if(!s||s.mode!=='analysis')return;
- editorDraft=rearrange?{pieces:s.pieces.map(p=>({...p})),side:s.side,turn:Number(s.game.split(';')[2]?.match(/\d+/)?.[0]||1),last:null}:{pieces:[],side:0,turn:1,last:null};
+ editorDraft=rearrange?{pieces:s.pieces.map(p=>({...p})),side:s.side,turn:Number(s.game.split(';')[2]?.match(/\d+/)?.[0]||1),last:null}:(savedSetupDraft()||{pieces:[],side:0,turn:1,last:null}); // coming back to Arrange: the arrangement as it was left
  pendingMove=null;selected=null;editorTool=null;$('setupTurnField').hidden=true;$('setupTurnToggle').setAttribute('aria-expanded','false');redrawSetup();
 }
 async function importSetupPosition(source,confirmed=false){
