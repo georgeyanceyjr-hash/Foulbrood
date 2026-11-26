@@ -903,3 +903,6 @@ body.hb-live.hb-manual.hb-insight #engineInsightPanel{display:block!important}
 /* During a game a box with a waiting challenge of ours stays, showing just that list. */
 .hb-ingame details.hb-sub:has(.hb-mine-row){display:block}
 .hb-ingame details.hb-sub:not(:first-of-type):has(.hb-mine-row)>:not(summary):not(.hb-mine-list){display:none}
+
+/* History keeps every review, so the save and load review buttons are gone. */
+#saveReviewedGame,#loadReviewedGame{display:none!important}
