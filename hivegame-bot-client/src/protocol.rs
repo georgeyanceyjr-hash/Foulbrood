@@ -53,6 +53,9 @@ pub struct Game {
     pub game_start: String,
     // A finished game sends `{"Finished": <result>}` here, not a string.
     pub game_status: Value,
+    /// HotFrass patch: how a finished game ended ("Board", "Resigned", "Timeout", "Repetition", ...).
+    #[serde(default)]
+    pub conclusion: Value,
     // Clock fields (HotFrass patch): used to budget the engine's time per move.
     #[serde(default)]
     pub time_mode: Option<String>,
@@ -335,6 +338,7 @@ mod tests {
             turn: history.len(),
             game_start: "Moves".to_string(),
             game_status: json!("InProgress"),
+            conclusion: Value::Null,
             time_mode: None,
             time_increment: None,
             time_base: None,

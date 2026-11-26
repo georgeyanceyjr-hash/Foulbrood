@@ -110,10 +110,13 @@
   if(!g||typeof action!=='function')return;
   if(typeof busy!=='undefined'&&busy)return;
   if(!botBoard()&&typeof state!=='undefined'&&state&&hasGame(state.game))stash(state.game);
+  // Stepped back through this same game while it is being played: stay on that move when the next one arrives
+  // (as on Local); the Live button is the way back to the current position.
+  const back=botBoard()&&shown.id===g.id&&!g.finished&&typeof state!=='undefined'&&state&&typeof state.ply==='number'&&state.ply<(state.review_total??state.ply)?state.ply:null;
   botBoard(true);
   shown={id:g.id,turn:g.turn};
   if(g.finished&&/^Aborted/.test(g.result||''))return; // an aborted game has no record on hivegame.com to load
-  try{await action({action:'load_link',url:g.url,confirm_review_clear:true})}catch(e){}
+  try{await action({action:'load_link',url:g.url,confirm_review_clear:true});if(back!=null)await whenFree(()=>action({action:'navigate',ply:back}))}catch(e){}
  };
  // Clocks tick locally between status updates.
  const fmt=t=>{if(t==null||!Number.isFinite(t))return '—';t=Math.max(0,t);const m=Math.floor(t/60),sec=Math.floor(t%60);return (m<10?'0':'')+m+':'+(sec<10?'0':'')+sec};
@@ -824,13 +827,13 @@ window.foulbroodSfx=(()=>{
    const base={key:'live|'+card.id,moves:card.turn||0,white:card.white||'White',black:card.black||'Black'};
    if(!card.finished)state={...base,progress:true,moves:(card.turn||0)+1};
    else if((s.review_total||0)<(card.turn||0))state={...base,progress:true,moves:(card.turn||0)}; // the result is in but the last move is not on the board yet: wait, so the stamp is right first time
-   else if(card.result==='White won'||card.result==='Black won'){const winner=card.result==='White won'?0:1;state={...base,winner,how:boxed(s,winner?'wQ':'bQ')?'queen':'other'}}
+   else if(card.result==='White won'||card.result==='Black won'){const winner=card.result==='White won'?0:1;const ended={Resigned:'resign',Timeout:'time'}[card.how];state={...base,winner,how:ended||(boxed(s,winner?'wQ':'bQ')?'queen':'other')}} // the site says how it ended: resignation and time-outs get their own stamp
    else if(card.result==='Draw')state={...base,winner:null,how:boxed(s,'wQ')&&boxed(s,'bQ')?'both':'repeat'};
   }
   // One message on the board, everywhere: the move being shown when stepped back, else the result, else the game in progress.
   const ply=s.ply||0,total=s.review_total??ply,br=document.getElementById('boardResult');
   let text='';
-  if(typeof editorDraft!=='undefined'&&editorDraft)text='Set up position';
+  if(typeof editorDraft!=='undefined'&&editorDraft)text='Arrange a position';
   else if(ply<total)text=`Move ${ply} of ${total}`;
   else if(br&&!br.hidden&&br.textContent)text=br.textContent+' · move '+total;
   else if(state&&!state.progress&&card&&card.result)text=card.result+' · move '+total;

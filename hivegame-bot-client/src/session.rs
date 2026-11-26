@@ -542,7 +542,7 @@ impl Session {
             }
             protocol::hb(serde_json::json!({
                 "ev": "game", "id": game.game_id, "turn": game.turn, "finished": game.finished,
-                "status": game.game_status, "white": game.player_name(true), "black": game.player_name(false),
+                "status": game.game_status, "how": game.conclusion, "white": game.player_name(true), "black": game.player_name(false),
                 "our_turn": game.is_turn_of(&self.me.uid),
                 "white_left": game.seconds_left(true), "black_left": game.seconds_left(false),
                 "increment": game.time_increment, "timed": game.time_mode.as_deref() == Some("RealTime"),

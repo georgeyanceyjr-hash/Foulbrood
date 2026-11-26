@@ -552,6 +552,8 @@ class HiveBot:
                             our_turn=bool(event.get('our_turn')), updated=time.time(),
                             timed=bool(event.get('timed')), increment=event.get('increment'),
                             white_left=event.get('white_left'), black_left=event.get('black_left'))
+                if event.get('finished') and isinstance(event.get('how'), str):
+                    game['how'] = event['how'][:20]  # Board, Resigned, Timeout, Repetition ...: for the end-of-game stamp
                 # The clocks count down from when they last CHANGED: the site can repeat an update mid-move
                 # with the same figures, and restarting the count there made the opponent's clock jump back up.
                 clocks = (game.get('turn'), game.get('white_left'), game.get('black_left'))
