@@ -116,6 +116,23 @@ const renderReview=window.renderGameReview;
 // Game review in the History list: each move takes the colour of its verdict (as in the status bar) and shows the position rating after it.
 const historyVerdicts={'Best move':'good','Book move':'good','No clear error':'good','Inaccuracy':'mid','Uncertain':'mid','Mistake':'poor','Blunder':'bad','Missed win':'bad'};
 let reviewWasRunning=null;
+function historyEnding(s){
+ if(!s||editorDraft)return '';
+ const side=['White','Black'],won=w=>side[w]+' won',board=(s.review_game||s.game||'').split(';')[1];
+ if(s.resigned_side!=null)return `${won(1-s.resigned_side)} · ${side[s.resigned_side]} resigned`;
+ if(s.timeout_side!=null)return `${won(1-s.timeout_side)} · ${side[s.timeout_side]} ran out of time`;
+ const final=s.mode==='play'?(s.play_finished?s.completed_state:null):board;
+ if(final==='WhiteWins'||final==='BlackWins')return `${won(final==='WhiteWins'?0:1)} · queen surrounded`;
+ if(final==='Draw')return 'Draw';
+ if(s.mode==='play')return '';
+ const reported={WhiteWins:0,BlackWins:1,'1-0':0,'0-1':1}[s.reported_result];
+ if(reported!=null){ // the board itself is not over: someone resigned or ran out of time
+  let how='';try{const L=window.foulbroodLive,c=document.body.classList.contains('hb-live')&&L&&L.card?L.card():null;if(c&&c.finished)how={Resigned:'resigned',Timeout:'ran out of time'}[c.how]||''}catch(e){}
+  return `${won(reported)} · ${side[1-reported]} ${how||'resigned or ran out of time'}`;
+ }
+ if(s.reported_result==='Draw'||s.reported_result==='1/2-1/2')return 'Draw';
+ return '';
+}
 // The review's progress and summary sit at the top of the History box (the separate bar under the board is retired).
 const reviewInfo=(()=>{const box=document.createElement('div');box.id='reviewInfo';box.className='review-panel';box.hidden=true;
  for(const id of ['reviewProgress','reviewRemaining','reviewProgressBar','reviewSummary']){const e=$(id);if(e)box.append(e)}
@@ -138,6 +155,10 @@ window.decorateHistory=s=>{
   if(tag.textContent!==text)tag.textContent=text;
   item.title=row.label+(rating==null?'':' · position '+text);item.dataset.reviewTitle='1';
  }
+ // Last line of the list: how the game ended.
+ let end=list.querySelector('.history-end');const ending=historyEnding(s);
+ if(!ending||!list.querySelector('button.history-move')){if(end)end.remove()}
+ else{if(!end){end=document.createElement('p');end.className='history-end'}if(list.lastElementChild!==end)list.append(end);if(end.textContent!==ending)end.textContent=ending}
 };
 window.renderGameReview=s=>{$('hintsLabel').hidden=false;$('bookEnabled').closest('label').hidden=false;renderReview(s);window.decorateHistory(s)};
 if(state)window.renderGameReview(state);
