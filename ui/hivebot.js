@@ -681,8 +681,11 @@
  // A game opened from History keeps its players on the Analysis status bars: name, rating and change, and what kind of game it was.
  const movesOf=game=>String(game||'').split(';').slice(3).map(m=>m.trim()).filter(Boolean).join(';');
  let opened=null;try{opened=JSON.parse(localStorage.getItem('foulbrood_analysis_players')||'null')}catch(e){}
+ // After a page reload, fetch the opened game's details again so newer ones (move times, in-game ratings) appear without reopening it.
+ if(opened&&opened.id)setTimeout(()=>call('get',{id:opened.id}).then(g=>{if(!opened||opened.id!==g.id)return;if(Array.isArray(g.times))opened.times=g.times;if(g.bot_evals&&g.bot_name){opened.evals=g.bot_evals;opened.bot=g.bot_name}if(g.result)opened.result=g.result;
+  try{localStorage.setItem('foulbrood_analysis_players',JSON.stringify(opened))}catch(e){}try{if(typeof lastBoardKey!=='undefined')lastBoardKey='';if(typeof render==='function'&&typeof serverState!=='undefined'&&(serverState||state))render(serverState||state)}catch(e){}}).catch(()=>{}),600);
  const rememberPlayers=g=>{
-  opened={moves:movesOf(g.game)};for(const k of ['white','black','white_kind','black_kind','white_rating','black_rating','white_change','black_change','time_control','played','source','result'])if(g[k]!=null)opened[k]=g[k];if(Array.isArray(g.times))opened.times=g.times;if(g.bot_evals&&g.bot_name){opened.evals=g.bot_evals;opened.bot=g.bot_name}
+  opened={moves:movesOf(g.game),id:g.id};for(const k of ['white','black','white_kind','black_kind','white_rating','black_rating','white_change','black_change','time_control','played','source','result'])if(g[k]!=null)opened[k]=g[k];if(Array.isArray(g.times))opened.times=g.times;if(g.bot_evals&&g.bot_name){opened.evals=g.bot_evals;opened.bot=g.bot_name}
   try{localStorage.setItem('foulbrood_analysis_players',JSON.stringify(opened))}catch(e){}
  };
  let wantPly=null;
