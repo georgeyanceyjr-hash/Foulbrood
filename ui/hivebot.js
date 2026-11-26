@@ -50,9 +50,14 @@
   try{localStorage.removeItem('foulbrood_review_resume')}catch(e){}
   if(!state.game_review)await action({action:'review_enter'});
  };
- el('liveTab').onclick=()=>{noteReview();setLive(true);if(typeof enginePageOpen!=='undefined')enginePageOpen=false;shown={id:null,turn:-1};action({action:'mode',mode:'analysis'});setTimeout(()=>{fixTabs();takeBoard().catch(()=>{}).then(()=>render())},300)};
+ // A position still being arranged is put aside while Online is open, and comes back with the Analysis tab.
+ let parkedDraft=null;
+ const parkDraft=()=>{try{if(typeof editorDraft!=='undefined'&&editorDraft){parkedDraft=editorDraft;editorDraft=null;editorTool=null;lastBoardKey='';if(typeof render==='function'&&serverState)render(serverState)}}catch(e){}};
+ const unparkDraft=()=>{try{if(parkedDraft&&typeof editorDraft!=='undefined'&&!editorDraft){editorDraft=parkedDraft;parkedDraft=null;lastBoardKey='';if(typeof redrawSetup==='function')redrawSetup()}}catch(e){}};
+ el('liveTab').onclick=()=>{noteReview();parkDraft();setLive(true);if(typeof enginePageOpen!=='undefined')enginePageOpen=false;shown={id:null,turn:-1};action({action:'mode',mode:'analysis'});setTimeout(()=>{fixTabs();takeBoard().catch(()=>{}).then(()=>render())},300)};
  el('playTab').addEventListener('click',noteReview,true); // before the viewer's own handler changes the mode
- for(const id of ['playTab','analysisTab','engineTab'])el(id).addEventListener('click',()=>{setLive(false);setTimeout(fixTabs,50);if(id==='analysisTab')setTimeout(()=>releaseBoard().catch(()=>{}).then(resumeReview),300)});
+ el('playTab').addEventListener('click',()=>{parkedDraft=null}); // Local discards a position being arranged, as it always has
+ for(const id of ['playTab','analysisTab','engineTab'])el(id).addEventListener('click',()=>{setLive(false);setTimeout(fixTabs,50);if(id==='analysisTab')setTimeout(()=>releaseBoard().catch(()=>{}).then(resumeReview).then(unparkDraft,unparkDraft),300)});
  const remember=()=>{try{localStorage.setItem('foulbrood_hivebot',JSON.stringify({login:el('hbLogin').value,engine:el('hbEngine').value,follow:el('hbFollow').checked,direct:el('hbAuto').checked,color:el('hbColor').value,acceptTime:el('hbAcceptTime').value,max:el('hbMax').value,only:el('hbOnly').value}))}catch(e){}};
  if(saved.login)el('hbLogin').value=saved.login;
  el('hbMax').closest('label').style.display='none';
