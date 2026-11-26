@@ -37,12 +37,13 @@
 <section id="hbChallengesPanel" class="hb-chal-wrap" hidden>
 <div id="hbChallenges" class="hb-challenge" hidden>
 <details class="hb-sub panel hivebot-panel" open><summary><strong>Accept a challenge</strong></summary>
-<label class="switch hb-auto"><input id="hbAuto" type="checkbox" checked>Take all comers automatically</label>
-<label class="switch"><input id="hbHumans" type="checkbox">Humans only (hide and skip bots)</label>
+<label class="switch hb-auto" title="Challenges sent to this account by name are accepted as they arrive. Never while a game is being played."><input id="hbAuto" type="checkbox" checked>Accept all direct challenges</label>
+<label class="switch" hidden><input id="hbHumans" type="checkbox">Humans only</label>
 <label>Time control<select id="hbAcceptTime"><option value="60+2">1+2 only</option><option value="180+3">3+3 only</option><option value="300+4">5+4 only</option><option value="600+10" selected>10+10 only</option><option value="1200+20">20+20 only</option><option value="any">Any, 10 min or longer</option></select></label><label hidden>Games<input id="hbMax" type="number" min="1" max="50" value="4"></label>
-<label>Only from<input id="hbOnly" type="text" placeholder="Usernames, comma separated — blank for anyone"></label>
+<label hidden>Only from<input id="hbOnly" type="text"></label>
 <p id="hbAccepting" class="caption"></p>
-<label for="hbPick">Waiting on hivegame.com</label><div class="hb-pick"><select id="hbPick" aria-label="Waiting challenges"><option value="">Loading…</option></select><button id="hbTake" disabled>Accept</button></div><div id="hbLobby" class="hb-lobby"></div>
+<label for="hbPick">Open Challenges</label><div class="hb-pick"><select id="hbPick" aria-label="Waiting challenges"><option value="">Loading…</option></select><button id="hbTake" disabled>Accept</button></div><div id="hbLobby" class="hb-lobby"></div>
+<div id="hbDirectBox" hidden><span class="hb-pick-label">Direct challenges</span><div id="hbDirect" class="hb-mine-list"></div></div>
 </details>
 <details class="hb-sub panel hivebot-panel" open><summary><strong>Open a challenge</strong></summary>
 <div id="hbBand" class="hb-accept"><label>Ratings from<input id="hbMinRating" type="number" min="0" max="4000" step="50" placeholder="any"></label><label>to<input id="hbMaxRating" type="number" min="0" max="4000" step="50" placeholder="any"></label></div>

@@ -53,12 +53,12 @@
  el('liveTab').onclick=()=>{noteReview();setLive(true);if(typeof enginePageOpen!=='undefined')enginePageOpen=false;shown={id:null,turn:-1};action({action:'mode',mode:'analysis'});setTimeout(()=>{fixTabs();takeBoard().catch(()=>{}).then(()=>render())},300)};
  el('playTab').addEventListener('click',noteReview,true); // before the viewer's own handler changes the mode
  for(const id of ['playTab','analysisTab','engineTab'])el(id).addEventListener('click',()=>{setLive(false);setTimeout(fixTabs,50);if(id==='analysisTab')setTimeout(()=>releaseBoard().catch(()=>{}).then(resumeReview),300)});
- const remember=()=>{try{localStorage.setItem('foulbrood_hivebot',JSON.stringify({login:el('hbLogin').value,engine:el('hbEngine').value,follow:el('hbFollow').checked,auto:el('hbAuto').checked,humans:el('hbHumans').checked,color:el('hbColor').value,acceptTime:el('hbAcceptTime').value,max:el('hbMax').value,only:el('hbOnly').value}))}catch(e){}};
+ const remember=()=>{try{localStorage.setItem('foulbrood_hivebot',JSON.stringify({login:el('hbLogin').value,engine:el('hbEngine').value,follow:el('hbFollow').checked,direct:el('hbAuto').checked,color:el('hbColor').value,acceptTime:el('hbAcceptTime').value,max:el('hbMax').value,only:el('hbOnly').value}))}catch(e){}};
  if(saved.login)el('hbLogin').value=saved.login;
  el('hbMax').closest('label').style.display='none';
  el('hbFollow').checked=true;el('hbFollow').closest('label').style.display='none'; // following the bot's game is simply how Live works
- if(saved.humans)el('hbHumans').checked=true;if(saved.color)el('hbColor').value=saved.color;
- if('auto' in saved)el('hbAuto').checked=!!saved.auto;
+ el('hbHumans').checked=false;el('hbOnly').value='';if(saved.color)el('hbColor').value=saved.color;
+ el('hbAuto').checked='direct' in saved?!!saved.direct:true; // "Accept all direct challenges"
  if(saved.acceptTime)el('hbAcceptTime').value=saved.acceptTime;
  if(saved.max)el('hbMax').value=saved.max;
  el('hbOnly').value='';el('hbOnly').closest('label').style.display='none'; // no name filter: automatic accepting takes anyone who matches
@@ -74,8 +74,10 @@
  // Challenge rules as the server wants them.
  const onlyList=()=>[...new Set(el('hbOnly').value.split(',').map(x=>x.trim()).filter(x=>/^[A-Za-z0-9_-]{1,40}$/.test(x)))];
  const rules=()=>{
-  const only=onlyList(),auto=el('hbAuto').checked,v=el('hbAcceptTime').value;
-  return {humans:el('hbHumans').checked,accept:auto?only:[],anyone:auto&&!only.length,max_games:auto?1000000:0,clock:v==='any'?null:v.split('+').map(Number)};
+  // Open challenges are never taken automatically any more: only challenges sent to this account by name,
+  // and only with the box ticked. (The time control now just filters the Open Challenges list.)
+  const v=el('hbAcceptTime').value;
+  return {direct:el('hbAuto').checked,humans:false,accept:[],anyone:false,max_games:0,clock:v==='any'?null:v.split('+').map(Number)};
  };
  const names=g=>`${g.white||'White'} vs ${g.black||'Black'}`;
  // Live borrows the Analysis board. Whatever game was in Analysis is set aside first and put back when
@@ -153,7 +155,8 @@
    }}
   const box=el('hbLobby'),tcv=el('hbAcceptTime').value,tcOk=c=>tcv==='any'?c.mode==='RealTime'&&(c.base||0)>=600:c.mode==='RealTime'&&`${c.base}+${c.increment||0}`===tcv,rows=(bot.lobby||[]).filter(c=>!c.mine&&!c.to&&tcOk(c)&&!(el('hbHumans').checked&&c.bot)).sort((a,b)=>speed(a)-speed(b)||(b.rating||0)-(a.rating||0));
   const mine=(bot.lobby||[]).filter(c=>c.mine);
-  const key=JSON.stringify([rows,mine,playing]);if(box.dataset.key===key)return;box.dataset.key=key;box.replaceChildren();
+  const direct=(bot.lobby||[]).filter(c=>!c.mine&&c.to&&String(c.to).toLowerCase()===String(bot.user||'').toLowerCase());
+  const key=JSON.stringify([rows,mine,direct,playing,el('hbAuto').checked]);if(box.dataset.key===key)return;box.dataset.key=key;box.replaceChildren();
   // Our own waiting challenges are listed where they were made: open ones under "Open a challenge", sent ones under "Send a challenge".
   for(const [id,list] of [['hbMineOpen',mine.filter(c=>!c.to)],['hbMineSent',mine.filter(c=>c.to)]]){
    const host=el(id);host.replaceChildren();host.hidden=!list.length;
@@ -163,6 +166,17 @@
     cancel.className='small';cancel.textContent='Cancel';cancel.title='Take this challenge back';
     cancel.onclick=async()=>{cancel.disabled=true;try{bot=await post({action:'hivebot_withdraw',id:c.id})}catch(e){el('hbStatus').textContent=(window.plainMessage?window.plainMessage(e.message):e.message)}render()};
     row.append(text,cancel);host.append(row)}
+  }
+  // Challenges sent to us by name: listed with Accept and Reject while the automatic box is off (or a game is on).
+  {const host=el('hbDirect');host.replaceChildren();el('hbDirectBox').hidden=!direct.length;
+   for(const c of direct){
+    const row=document.createElement('div'),text=document.createElement('span'),yes=document.createElement('button'),no=document.createElement('button');row.className='hb-mine-row';
+    text.textContent=[(c.who||'Someone')+(c.rating?' ('+c.rating+')':''),clockText(c),c.rated===false?'casual':'rated',c.color?'they take '+c.color:''].filter(Boolean).join(' · ');
+    yes.className='small';yes.textContent='Accept';yes.disabled=playing;yes.title=playing?'Not while a game is being played':'Play this challenge';
+    no.className='small';no.textContent='Reject';
+    const run=(button,what)=>async()=>{button.disabled=true;try{bot=await post({action:what,id:c.id})}catch(e){el('hbStatus').textContent=(window.plainMessage?window.plainMessage(e.message):e.message);el('hbStatus').hidden=false}render()};
+    yes.onclick=run(yes,'hivebot_take');no.onclick=run(no,'hivebot_reject');
+    const buttons=document.createElement('span');buttons.className='hb-row-buttons';buttons.append(yes,no);row.append(text,buttons);host.append(row)}
   }
   // The waiting challenges as one menu (people first, then bots, fastest time control first) and one Accept button.
   const sel=el('hbPick'),keep=sel.value;sel.replaceChildren();
@@ -273,10 +287,10 @@
   el('hbToAnalysis').textContent='Open in Analysis';
   clockCard=card||null;clockFetched=Date.now();drawClocks();drawThought(card);
   if(connected){
-   {const real=!!bot.max_games&&(!!bot.anyone||(bot.accept||[]).length>0),box=el('hbAuto');if(box.checked!==real&&Date.now()-(render.autoAt||0)>4000)box.checked=real} // the switch shows what the bot is really doing, in every window
+   {const real=!!bot.direct,box=el('hbAuto');if(box.checked!==real&&Date.now()-(render.autoAt||0)>4000)box.checked=real} // the switch shows what the bot is really doing, in every window
    const who=bot.anyone?'anyone':(bot.accept||[]).join(', ');
    const tc=bot.clock?`${bot.clock[0]/60}+${bot.clock[1]} only`:'10 minutes or longer';
-   el('hbAccepting').textContent=who&&bot.max_games?`Accepting open challenges from ${who}, ${tc}, one game at a time until you untick the box.`:'';
+   el('hbAccepting').textContent='';
    el('hbAccepting').hidden=!el('hbAccepting').textContent;
    drawLobby(!!g);
   }

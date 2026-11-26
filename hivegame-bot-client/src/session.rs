@@ -97,7 +97,9 @@ fn listen_for_commands(outbox: mpsc::UnboundedSender<Outgoing>, auto: Arc<AutoSt
                 };
                 protocol::hb(serde_json::json!({"ev": "rules", "from": from, "max_games": max_games, "anyone": anyone}));
                 let humans_only = command.get("humans").and_then(|h| h.as_bool()).unwrap_or(false);
-                *auto.rules.lock().unwrap() = AutoRules { from, min_base_secs, max_games, anyone, clock, humans_only };
+                // "direct": accept challenges sent to us by name (only while no game is being played).
+                let direct = command.get("direct").and_then(|d| d.as_bool()).unwrap_or(false);
+                *auto.rules.lock().unwrap() = AutoRules { from, min_base_secs, max_games, anyone, clock, humans_only, direct };
                 // A fresh allowance from now, and a new lobby snapshot to act on at once.
                 auto.accepted.store(0, std::sync::atomic::Ordering::Relaxed);
                 if outbox.send(Outgoing::Resync).is_err() {
@@ -174,7 +176,13 @@ fn listen_for_commands(outbox: mpsc::UnboundedSender<Outgoing>, auto: Arc<AutoSt
             }
             if cmd == "take" {
                 // {"cmd":"take","id":"<challenge id>"}: accept one challenge picked in the viewer.
+                if auto.busy() {
+                    // One game at a time: nothing is accepted while a game is being played.
+                    protocol::hb(serde_json::json!({"ev": "busy"}));
+                    continue;
+                }
                 if let Some(id) = command.get("id").and_then(|i| i.as_str()) {
+                    auto.active.lock().unwrap().insert(format!("pending-{id}"), Instant::now() - Duration::from_secs(1740));
                     protocol::hb(serde_json::json!({"ev": "accept", "id": id, "open": false, "from": ""}));
                     let request = ClientRequest::Challenge(ChallengeAction::Accept(id.to_string()));
                     if outbox.send(Outgoing::Request(request)).is_err() {
@@ -245,6 +253,7 @@ struct AutoRules {
     clock: Option<(i64, i64)>,
     /// Skip challenges from bot accounts.
     humans_only: bool,
+    direct: bool,
 }
 
 impl AutoState {
@@ -288,6 +297,7 @@ pub async fn run(bot: BotConfig, shared: Arc<Shared>) {
         anyone: false,
         clock: None,
         humans_only: false,
+        direct: true, // as hive-hydra itself behaves, until the viewer sends its rules (it does so at start)
     };
     listen_for_commands(outbox.clone(), auto.clone());
     let mut reconnect_delay = RECONNECT_DELAY_MIN;
@@ -580,15 +590,22 @@ impl Session {
             if !addressed_to_us && !self.wants_open(&challenge) {
                 continue;
             }
-            if !addressed_to_us {
+            if addressed_to_us {
+                // A challenge sent to us by name: only with the "accept all direct challenges" rule on,
+                // and never while a game is being played. Otherwise it waits in the lobby for the user.
+                let direct = self.auto.rules.lock().unwrap().direct;
+                if !direct || self.auto.busy() {
+                    continue;
+                }
+            } else {
                 self.auto.accepted.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                // Counts as running until the server tells us about the game.
-                self.auto
-                    .active
-                    .lock()
-                    .unwrap()
-                    .insert(format!("pending-{}", challenge.challenge_id), Instant::now() - Duration::from_secs(1740));
             }
+            // Counts as running until the server tells us about the game (so two are never accepted at once).
+            self.auto
+                .active
+                .lock()
+                .unwrap()
+                .insert(format!("pending-{}", challenge.challenge_id), Instant::now() - Duration::from_secs(1740));
             info!(bot = %self.bot.name, challenge_id = %challenge.challenge_id, "accepting challenge");
             protocol::hb(serde_json::json!({
                 "ev": "accept", "id": challenge.challenge_id, "open": !addressed_to_us,

@@ -926,3 +926,8 @@ aside #fileEntry>summary:hover{color:var(--ink)}
 body.hb-live.hb-insight #engineInsightPanel{display:block!important}
 body.hb-live #engineInsightPanel .switch:has(#hints),body.hb-live #engineInsightPanel label:has(#hints){display:none!important}
 #hbInsightRow{margin-top:12px}
+
+/* Direct challenges: same rows as our own waiting challenges, with Accept and Reject. */
+#hbDirectBox{margin-top:12px}#hbDirectBox[hidden]{display:none}
+.hb-row-buttons{display:flex;gap:6px;flex:none}
+.hb-ingame details.hb-sub:first-of-type:has(#hbDirect .hb-mine-row)>#hbDirectBox{display:block}

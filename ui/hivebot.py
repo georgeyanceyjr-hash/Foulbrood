@@ -328,6 +328,20 @@ class HiveBot:
         self._send(dict(cmd='resync'))
         return self.view()
 
+    def reject(self, challenge_id):
+        """Turn down a challenge someone sent to us by name."""
+        if not GAME_ID.match(str(challenge_id)):
+            raise ValueError('That challenge is no longer available.')
+        with self.lock:
+            if self.state != 'connected':
+                raise ValueError('Start the bot and wait until it is connected.')
+            if not any(c.get('id') == challenge_id and not c.get('mine') and c.get('to') for c in self.lobby):
+                raise ValueError('That challenge is no longer available.')
+            self.rejected = (getattr(self, 'rejected', []) + [str(challenge_id)])[-60:]
+            self.lobby = [c for c in self.lobby if c.get('id') != challenge_id]
+        self._send(dict(cmd='withdraw', id=str(challenge_id)))
+        return self.view()
+
     def refresh_lobby(self):
         """Ask for a fresh list of open challenges, at most every few seconds."""
         with self.lock:
@@ -351,7 +365,8 @@ class HiveBot:
 
     def _rules_command(self):
         command = dict(cmd='accept', max_games=self.max_games, min_base=600, anyone=self.anyone,
-                       humans=bool(getattr(self, 'humans', False)), **{'from': self.accept})
+                       humans=bool(getattr(self, 'humans', False)), direct=bool(getattr(self, 'direct', False)),
+                       **{'from': self.accept})
         if self.clock:
             command.update(base=self.clock[0], increment=self.clock[1])
         return json.dumps(command)
@@ -445,7 +460,7 @@ class HiveBot:
             elif kind == 'lobby':
                 rows = []
                 for c in (event.get('challenges') or [])[:60]:
-                    if not isinstance(c, dict) or not GAME_ID.match(str(c.get('id'))):
+                    if not isinstance(c, dict) or not GAME_ID.match(str(c.get('id'))) or c.get('id') in getattr(self, 'rejected', []):
                         continue
                     rows.append(dict(id=c['id'], who=str(c.get('from') or '')[:40], mine=bool(c.get('mine')),
                                      to=(str(c.get('to'))[:40] if c.get('to') else None), rating=c.get('rating'),
@@ -694,7 +709,7 @@ class HiveBot:
                         current=current, games=games, accepted=self.accepted, log=list(self.log)[-6:],
                         client_ready=(CLIENT_DIR / 'Cargo.toml').exists(), needs_build=_needs_build(),
                         saved_login=saved_login(), accept=list(self.accept), max_games=self.max_games,
-                        anyone=self.anyone, humans=bool(getattr(self, 'humans', False)), clock=list(self.clock) if self.clock else None,
+                        anyone=self.anyone, humans=bool(getattr(self, 'humans', False)), direct=bool(getattr(self, 'direct', False)), clock=list(self.clock) if self.clock else None,
                         lobby=list(self.lobby) if self.state == 'connected' else [],
                         online=list(getattr(self, 'online', [])) if self.state == 'connected' else [],
                         site=True if self.state == 'connected' else site_online(),
@@ -892,6 +907,8 @@ def hivebot_action(payload, engines):
         return BOT.view()
     if action == 'hivebot_withdraw':
         return BOT.withdraw(payload.get('id'))
+    if action == 'hivebot_reject':
+        return BOT.reject(payload.get('id'))
     if action == 'hivebot_take':
         return BOT.take(payload.get('id'))
     if action == 'hivebot_manual':
@@ -908,6 +925,7 @@ def hivebot_action(payload, engines):
                              payload.get('min_rating'), payload.get('max_rating'))
     if action in ('hivebot_accept', 'hivebot_start'):
         BOT.humans = payload.get('humans') is True
+        BOT.direct = payload.get('direct') is True  # accept challenges sent to us by name (never during a game)
     if action == 'hivebot_accept':
         return BOT.set_accept(payload.get('accept'), payload.get('max_games'), payload.get('anyone') is True,
                               payload.get('clock'))
