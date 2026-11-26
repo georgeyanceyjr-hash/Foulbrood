@@ -910,3 +910,10 @@ body.hb-live.hb-manual.hb-insight #engineInsightPanel{display:block!important}
 /* Position / Game / Setup: as wide as the boxes below, three equal parts. */
 aside .analysis-modes,.analysis-modes{width:auto;max-width:none;align-self:stretch;display:grid;grid-template-columns:repeat(3,1fr);box-sizing:border-box}
 .analysis-modes button{flex:none;width:100%;padding:10px 6px}
+/* The clock that is running sits in a yellow box, on Local and Online alike, with room around the time. */
+body:not(.hb-live) .player.active:not(.review-insight):not(.analysis-insight) .clock,
+.player.hb-live-clock .clock.hb-ticking,
+[data-theme="dark"] body:not(.hb-live) .player.active:not(.review-insight):not(.analysis-insight) .clock,
+[data-theme="dark"] .player.hb-live-clock .clock.hb-ticking{background:var(--hazard)!important;color:var(--pitch)!important;padding:8px 14px!important;border-radius:2px}
+body:not(.hb-live) .player.active:not(.review-insight):not(.analysis-insight) .clock::before,
+.player.hb-live-clock .clock.hb-ticking::before{color:var(--pitch)!important;opacity:.75}
