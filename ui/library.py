@@ -165,14 +165,14 @@ def _view(score):
 
 
 def _bot_evals():
-    """What the bot itself believed during its games: {hivegame id: (bot name, {turn: score})}."""
+    """What the bot itself believed during its games: {hivegame id: (bot name, {turn: (depth, score)})}."""
     out = {}
     try:
         with (ROOT.parent / 'hivegame-bot' / 'games.jsonl').open() as rows:
             for line in rows:
                 try:
                     row = json.loads(line)
-                    evals = {int(k): v[1] for k, v in (row.get('evals') or {}).items()
+                    evals = {int(k): (v[0] if isinstance(v[0], int) else 0, v[1]) for k, v in (row.get('evals') or {}).items()
                              if isinstance(v, list) and len(v) > 1 and isinstance(v[1], (int, float))}
                     if evals:
                         out[str(row.get('id'))] = (row.get('bot'), evals)
@@ -181,6 +181,39 @@ def _bot_evals():
     except OSError:
         pass
     return out
+
+
+def _logged_times(gid, total, side):
+    """Seconds the bot thought on each of its own moves, from the bot client's log (older games have no
+    other record). The opponent's moves stay unknown."""
+    if not gid or not total:
+        return None
+    spans, started = [], None
+    stamp = lambda line: time.mktime(time.strptime(line[:19], '%Y-%m-%dT%H:%M:%S')) + float('0.' + (line[20:23] if line[19:20] == '.' else '0'))
+    try:
+        for path in sorted((ROOT.parent / 'hivegame-bot' / 'logs').glob('hive-hydra.log.*')):
+            with path.open(errors='replace') as lines:
+                for line in lines:
+                    if 'game_id=' + gid not in line:
+                        continue
+                    try:
+                        if ' thinking ' in line:
+                            started = stamp(line)
+                        elif ' playing move ' in line and started is not None:
+                            spans.append(round(max(0.0, stamp(line) - started), 1))
+                            started = None
+                    except ValueError:
+                        continue
+    except OSError:
+        return None
+    if not spans:
+        return None
+    times = [None] * total
+    for i, seconds in enumerate(spans):
+        ply = 2 * i + side
+        if ply < total:
+            times[ply] = seconds
+    return times
 
 
 def report(ids, me):
@@ -222,7 +255,8 @@ def report(ids, me):
     turning, ahead, never, tracked = [], [], [], 0
     for g in games:
         gid = str(g.get('url') or '').rsplit('/', 1)[-1]
-        bot, series = evals.get(gid, (None, None))
+        bot, deep = evals.get(gid, (None, None))
+        series = {t: v[1] for t, v in deep.items()} if deep else None
         if bot != me or not series or len(series) < 3:
             continue
         tracked += 1
@@ -349,6 +383,11 @@ def library_action(payload):
         if not isinstance(ids, list) or not isinstance(payload.get('me'), str) or not payload.get('me'):
             raise ValueError('Choose a player for the report.')
         return report([i for i in ids if isinstance(i, str)][:2000], payload['me'])
+    if action in ('library_batch_start', 'library_batch_stop', 'library_batch_status'):
+        import batch_review  # kept loaded across reloads of this module, so a running batch carries on
+        if action == 'library_batch_start':
+            return batch_review.start(payload.get('ids') or [], payload.get('seconds'))
+        return batch_review.stop() if action == 'library_batch_stop' else batch_review.status()
     if action == 'library_save':
         return dict(id=add(payload))
     if action == 'library_review':
@@ -368,7 +407,12 @@ def library_action(payload):
                     review = _review_path(gid).read_text(encoding='utf-8')
                 except OSError:
                     review = None
-            return dict(entry, review_text=review)
+            # What the bot was thinking during this game, for Game review to show until a review is run.
+            bot, deep = _bot_evals().get(str(entry.get('url') or '').rsplit('/', 1)[-1], (None, None))
+            out = dict(entry, review_text=review, bot_name=bot, bot_evals={str(t): list(v) for t, v in deep.items()} if deep else None)
+            if not out.get('times') and bot:
+                out['times'] = _logged_times(str(entry.get('url') or '').rsplit('/', 1)[-1], len(_moves(entry.get('game'))), 0 if entry.get('white') == bot else 1)
+            return out
         if action == 'library_star':
             entry['starred'] = payload.get('starred') is True
             _save(games)

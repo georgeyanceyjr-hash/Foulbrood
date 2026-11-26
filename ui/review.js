@@ -154,8 +154,17 @@ function reviewOpening(game){ // the first three bugs each side put down, e.g. "
  const bugs=[[],[]];moves.slice(0,6).forEach((m,i)=>{const piece=m.trim().split(' ')[0]||'';bugs[i%2].push(piece.replace(/^[wb]/,'').replace(/\d/,'')||'–')});
  return bugs[0].join('·')+' vs '+bugs[1].join('·');
 }
+// Until a review is run, a bot game shows what the bot itself rated each of its moves while playing ("In-game").
+function reviewInGameRows(s){
+ const data=s?.game_review&&window.foulbroodOpenedEvals?window.foulbroodOpenedEvals(s):null;if(!data)return [];
+ const moves=(s.review_game||s.game).split(';').slice(3),real=new Set((s.game_review.rows||[]).map(r=>r.ply)),sign=data.side===0?1:-1,out=[];
+ for(const [turn,v]of Object.entries(data.evals)){const ply=+turn+1;if(+turn%2!==data.side||ply>moves.length||real.has(ply)||!Array.isArray(v))continue;
+  out.push({ply,side:data.side,move:moves[ply-1],score:v[1]*sign,depth:v[0],label:'In-game',symbol:'',best_score:null,alternative:null,ingame:true,by:data.bot})}
+ return out.sort((a,b)=>a.ply-b.ply);
+}
+window.reviewInGameRow=(s,side)=>reviewInGameRows(s).find(r=>r.ply===s.ply&&r.side===side)||null;
 function reviewTurningPoint(s){ // the move where the loser's position dropped the most and never came back
- const review=s?.game_review,rows=(review?.rows||[]).filter(r=>r.score!=null).sort((a,b)=>a.ply-b.ply);if(rows.length<4)return null;
+ const review=s?.game_review,rows=[...reviewInGameRows(s),...(review?.rows||[])].filter(r=>r.score!=null).sort((a,b)=>a.ply-b.ply);if(rows.length<4)return null;
  const board=(s.review_game||s.game||'').split(';')[1],reported={WhiteWins:0,BlackWins:1,'1-0':0,'0-1':1}[s.reported_result];
  const winner=s.resigned_side!=null?1-s.resigned_side:s.timeout_side!=null?1-s.timeout_side:board==='WhiteWins'?0:board==='BlackWins'?1:reported!=null?reported:null;
  const sign=winner===0?-1:1; // the loser's side of the bar (White's when there is no winner)
@@ -171,15 +180,17 @@ function reviewTurningPoint(s){ // the move where the loser's position dropped t
 }
 function renderReviewFacts(s){
  const box=reviewFacts,review=s?.game_review,rows=review?.rows||[];
- const show=!!review&&!editorDraft&&rows.length>0;box.hidden=!show;if(!show){box.dataset.key='';return null}
+ const ingame=reviewInGameRows(s);
+ const show=!!review&&!editorDraft&&(rows.length>0||ingame.length>0);box.hidden=!show;if(!show){box.dataset.key='';return null}
  const turn=reviewTurningPoint(s),names=s.player_names||[];
  const sides=[0,1].map(side=>{const own=rows.filter(r=>r.side===side&&r.label!=='Book move'&&r.score!=null&&r.best_score!=null),count=l=>rows.filter(r=>r.side===side&&l.includes(r.label)).length;
   const mean=own.length?own.reduce((t,r)=>t+Math.min(50,reviewRowLoss(r)),0)/own.length:null;
   return {side,accuracy:mean==null?null:Math.max(0,Math.round(100-2*mean)),slips:count(['Inaccuracy']),mistakes:count(['Mistake']),blunders:count(['Blunder','Missed win'])}});
  const lastBook=rows.filter(r=>r.label==='Book move').reduce((m,r)=>Math.max(m,r.ply),0),opening=reviewOpening(s.review_game||s.game);
- const key=JSON.stringify([sides,lastBook,opening,turn&&turn.ply,names,s.ply===(turn&&turn.ply)]);
+ const key=JSON.stringify([sides,lastBook,opening,turn&&turn.ply,names,s.ply===(turn&&turn.ply),rows.length,ingame.length&&ingame[0].by]);
  if(box.dataset.key!==key){box.dataset.key=key;box.replaceChildren();
-  for(const side of sides){const line=document.createElement('p');line.className='review-fact';const who=document.createElement('b');who.textContent=side.side===0?'White':'Black';
+  if(ingame.length){const line=document.createElement('p');line.className='review-fact muted';line.textContent=`${ingame[0].by}'s own ratings from the game are shown on its moves until they are reviewed.`;box.append(line)}
+  for(const side of rows.length?sides:[]){const line=document.createElement('p');line.className='review-fact';const who=document.createElement('b');who.textContent=side.side===0?'White':'Black';
    const bits=[side.accuracy==null?'—':side.accuracy+'%'];if(side.slips)bits.push(side.slips+' inaccurac'+(side.slips===1?'y':'ies'));if(side.mistakes)bits.push(side.mistakes+' mistake'+(side.mistakes===1?'':'s'));if(side.blunders)bits.push(side.blunders+' blunder'+(side.blunders===1?'':'s'));
    line.append(who,' '+bits.join(' · '));line.title='Accuracy: 100% means every move matched the engine\'s choice or cost nothing.';box.append(line)}
   if(opening||lastBook){const line=document.createElement('p');line.className='review-fact muted';line.textContent=[opening?'Opening '+opening:'',lastBook?'book to move '+lastBook:''].filter(Boolean).join(' · ');line.title='The first three bugs each side placed (White vs Black)';box.append(line)}
@@ -275,7 +286,7 @@ window.decorateHistory=s=>{
  reviewWasRunning=running;
  const turning=renderReviewFacts(s);
  renderReviewExtra(s);
- const rows=new Map((review?.rows||[]).map(r=>[r.ply,r]));
+ const rows=new Map([...reviewInGameRows(s),...(review?.rows||[])].map(r=>[r.ply,r]));
  // Seconds each move took (hivegame.com games saved from now on), shown small beside the move.
  {const times=window.foulbroodOpenedTimes?window.foulbroodOpenedTimes(s):null;
   for(const item of list.querySelectorAll('button.history-move')){const number=item.querySelector('.move-number'),ply=number?parseInt(number.textContent,10):0,t=times&&ply?times[ply-1]:null;let tag=item.querySelector('.move-time');
@@ -287,13 +298,14 @@ window.decorateHistory=s=>{
   const number=item.querySelector('.move-number'),ply=number?parseInt(number.textContent,10):0,row=review&&ply?rows.get(ply):null;
   const verdict=row?historyVerdicts[row.label]||'':'';
   let tag=item.querySelector('.move-rating');
-  if(!row){item.classList.remove('turning');if(tag)tag.remove();delete item.dataset.verdict;if(item.dataset.reviewTitle){item.title='';delete item.dataset.reviewTitle}continue}
+  if(!row){item.classList.remove('turning','ingame');if(tag)tag.remove();delete item.dataset.verdict;if(item.dataset.reviewTitle){item.title='';delete item.dataset.reviewTitle}continue}
   if(verdict)item.dataset.verdict=verdict;else delete item.dataset.verdict;
   item.classList.toggle('turning',!!turning&&turning.ply===ply);
+  item.classList.toggle('ingame',!!row.ingame);
   const rating=row.label==='Book move'&&row.score==null?null:reviewPoint(row.score),text=rating==null?(row.label==='Book move'?'Book':''):(rating>0?'+':'')+rating;
   if(!tag){tag=document.createElement('span');tag.className='move-rating';item.append(tag)}
   if(tag.textContent!==text)tag.textContent=text;
-  item.title=row.label+(rating==null?'':' · position '+text);item.dataset.reviewTitle='1';
+  item.title=(row.ingame?`${row.by}'s rating while playing (depth ${row.depth})`:row.label)+(rating==null?'':' · position '+text);item.dataset.reviewTitle='1';
  }
  // Last line of the list: how the game ended.
  let end=list.querySelector('.history-end');const ending=historyEnding(s);

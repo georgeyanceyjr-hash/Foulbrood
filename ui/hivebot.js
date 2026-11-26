@@ -621,6 +621,19 @@
   const list=make('ul','hist-report-findings');for(const f of r.findings)list.append(make('li','',f));box.append(list);
   const section=(title,rows,line)=>{if(!rows.length)return;box.append(make('h4','',title));const wrap=make('div','hist-report-rows');
    for(const row of rows.slice(0,40)){const b=make('button','hist-report-row');b.type='button';line(row,b);wrap.append(b)}box.append(wrap)};
+  // Review the games that have none yet, in the background (the Analysis board is not used).
+  const missing=r.total.games-(r.reviewed||0),bar=make('div','hist-report-batch');box.append(bar);
+  const drawBatch=st=>{bar.replaceChildren();
+   if(st&&st.running){const moves=st.moves?` · move ${Math.min(st.ply+1,st.moves)} of ${st.moves}`:'';bar.append(make('span','',st.paused?`Paused while ${r.me} plays · game ${st.done+1} of ${st.total}`:`Reviewing game ${Math.min(st.done+1,st.total)} of ${st.total}${st.current?' · '+st.current:''}${moves}`));
+    const stop=make('button','small','Stop');stop.type='button';stop.onclick=async()=>{try{drawBatch(await call('batch_stop'))}catch(e){toast(e.message)}};bar.append(stop);return}
+   if(st&&st.error)bar.append(make('span','',st.error));
+   if(missing>0){const time=document.createElement('select');for(const [v,t]of [[2,'2 seconds a move'],[5,'5 seconds a move'],[10,'10 seconds a move']]){const o=make('option','',t);o.value=v;time.append(o)}time.value='5';time.setAttribute('aria-label','Thinking time for each move');
+    const go=make('button','small primary',`Review these games (${missing})`);go.type='button';go.title='Runs Game review on each game that has none, one at a time, in the background';
+    go.onclick=async()=>{try{const ids=shownGames.filter(g=>!(g.review&&g.review.total&&g.review.reviewed>=g.review.total)).map(g=>g.id);drawBatch(await call('batch_start',{ids,seconds:+time.value}));poll()}catch(e){toast(window.plainMessage?window.plainMessage(e.message):e.message)}};
+    bar.append(go,time)}
+  };
+  let pollTimer=null;const poll=()=>{clearTimeout(pollTimer);pollTimer=setTimeout(async()=>{if(box.hidden||!bar.isConnected)return;try{const st=await call('batch_status');drawBatch(st);if(st.running)poll();else{refresh().then(()=>el('histReportGo').click()).catch(()=>{})}}catch(e){}},3000)};
+  drawBatch(null);call('batch_status').then(st=>{if(st.running){drawBatch(st);poll()}}).catch(()=>{});
   section('Openings',r.openings.filter(o=>o.games>=2),(o,b)=>{b.append(make('span','',`${o.colour==='white'?'White':'Black'} · ${o.opening}`),make('strong','',`${o.won} won · ${o.lost} lost`));b.title='Show these games';
    b.onclick=()=>{el('histColour').value=o.colour;draw(null);el('histOpening').value=o.opening;draw(null)}});
   const where=t=>[`vs ${t.opponent}`,t.colour==='white'?'White':'Black',t.clock,day(t.played)].filter(Boolean).join(' · ');
@@ -669,7 +682,7 @@
  const movesOf=game=>String(game||'').split(';').slice(3).map(m=>m.trim()).filter(Boolean).join(';');
  let opened=null;try{opened=JSON.parse(localStorage.getItem('foulbrood_analysis_players')||'null')}catch(e){}
  const rememberPlayers=g=>{
-  opened={moves:movesOf(g.game)};for(const k of ['white','black','white_kind','black_kind','white_rating','black_rating','white_change','black_change','time_control','played','source','result'])if(g[k]!=null)opened[k]=g[k];if(Array.isArray(g.times))opened.times=g.times;
+  opened={moves:movesOf(g.game)};for(const k of ['white','black','white_kind','black_kind','white_rating','black_rating','white_change','black_change','time_control','played','source','result'])if(g[k]!=null)opened[k]=g[k];if(Array.isArray(g.times))opened.times=g.times;if(g.bot_evals&&g.bot_name){opened.evals=g.bot_evals;opened.bot=g.bot_name}
   try{localStorage.setItem('foulbrood_analysis_players',JSON.stringify(opened))}catch(e){}
  };
  let wantPly=null;
@@ -696,6 +709,7 @@
  };
  // How the game opened from History ended, while it is still the game on the Analysis board ("... by resignation" / "... on time").
  window.foulbroodOpenedTimes=s=>{try{if(!opened||!opened.moves||!Array.isArray(opened.times)||!s)return null;const now=movesOf(s.review_game||s.game);return now===opened.moves||now.startsWith(opened.moves+';')||opened.moves.startsWith(now+';')?opened.times:null}catch(e){return null}};
+ window.foulbroodOpenedEvals=s=>{try{if(!opened||!opened.moves||!opened.evals||!s)return null;const now=movesOf(s.review_game||s.game);if(!(now===opened.moves||now.startsWith(opened.moves+';')||opened.moves.startsWith(now+';')))return null;return {bot:opened.bot,side:opened.white===opened.bot?0:1,evals:opened.evals}}catch(e){return null}};
  window.foulbroodOpenedResult=s=>{try{if(!opened||!opened.moves||!s)return '';const now=movesOf(s.review_game||s.game);return now===opened.moves||now.startsWith(opened.moves+';')||opened.moves.startsWith(now+';')?String(opened.result||''):''}catch(e){return ''}};
  const openGame=async(id,ply)=>{
   const g=await call('get',{id});
