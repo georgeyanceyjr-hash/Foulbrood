@@ -787,4 +787,8 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
  window.setMovesMax=set;sync();setInterval(sync,200);
 })();
 
-(()=>{const d=document.getElementById('histExport');if(!d)return;try{d.open=localStorage.getItem('foulbrood_hist_export')==='1'}catch(e){}d.addEventListener('toggle',()=>{try{localStorage.setItem('foulbrood_hist_export',d.open?'1':'0')}catch(e){}})})();
+(()=>{const d=document.getElementById('histExport'),t=document.getElementById('histExportToggle');if(!d||!t)return;
+ const set=on=>{d.hidden=!on;t.setAttribute('aria-expanded',String(on));t.textContent=(on?'▾':'▸')+' Copy or export';try{localStorage.setItem('foulbrood_hist_export',on?'1':'0')}catch(e){}};
+ t.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();set(d.hidden)});
+ let on=false;try{on=localStorage.getItem('foulbrood_hist_export')==='1'}catch(e){}set(on);
+})();
