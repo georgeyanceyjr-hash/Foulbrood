@@ -1017,3 +1017,10 @@ aside #gameResult{display:none!important}
 #reviewInfo .review-info-line{display:flex;align-items:center;gap:10px}
 #reviewInfo .review-info-line>#reviewProgress{flex:1 1 auto;min-width:0;margin:0}
 aside #reviewInfo #reviewGo{flex:none;width:auto;margin:0;white-space:nowrap}
+/* Game review status bar without Difference: verdict, then Played and Preferred share the rest of the bar */
+@container (min-width:781px){
+ .player.review-insight .review-thought-strip{justify-self:stretch;width:100%;justify-content:flex-start}
+ .player.review-insight .review-thought-heading,.player.review-insight .review-thought-heading.has-reviewed-move{flex:none;min-width:8.5em;padding-right:0}
+ .player.review-insight .review-thought-cell{flex:1 1 0;justify-content:flex-start}
+ .player.review-insight .review-thought-cell>.review-thought-depth{margin-left:auto}
+}
