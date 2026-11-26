@@ -297,7 +297,6 @@ function renderReviewExtra(s){
  box.append(controls);
  const note=t=>{const p=document.createElement('p');p.className='review-fact muted';p.textContent=t;box.append(p)};
  if(reviewTry)note(`Move a ${row.side===0?'White':'Black'} bug on the board to grade it.`);
- else if(reviewTryOn&&reviewPreview&&reviewPreview.key.startsWith('try'+ply+'|')&&!(tried&&tried.status==='running'))note('Click the piece to try another move.');
  if(line&&line.status==='running')note('Finding the engine line…');
  if(line&&line.status==='error')note(line.error||'The engine line is not available.');
  if(line&&line.status==='ready'&&!reviewTry){
