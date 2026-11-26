@@ -1028,3 +1028,12 @@ aside #reviewInfo #reviewGo{flex:none;width:auto;margin:0;white-space:nowrap}
 #moves{grid-auto-rows:max-content}
 #moves .history-move{min-height:32px;flex-wrap:nowrap}
 #moves .history-end{box-sizing:border-box;min-height:32px;overflow-wrap:anywhere}
+/* Game review: one box. Engine and thinking time at its top; the other two boxes are put away. */
+body.review-mode aside>#analysisSetup,body.review-mode aside>#engineInsightPanel{display:none!important}
+#reviewSettings{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:end;margin:10px 0 2px}
+#reviewSettings>label{margin:0;min-width:0}
+#reviewSettings>label[hidden]{display:none}
+#reviewSettings>label:only-child,#reviewSettings>label[hidden]+label{grid-column:1/-1}
+#reviewSettings select{width:100%;margin-top:0}
+#reviewSettings>label:not(.insight-engine-choice){font-size:0;letter-spacing:0}
+body.review-mode #histExportToggle,body.review-mode #histExport{display:none!important}

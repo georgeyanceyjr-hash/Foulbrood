@@ -141,9 +141,24 @@ const reviewInfo=(()=>{const box=document.createElement('div');box.id='reviewInf
  go.onclick=()=>{const b=$('analyze');if(b&&!b.disabled)b.click()};
  const first=box.querySelector('#reviewProgress');if(first){box.prepend(line);line.append(first,go)}
  const panel=$('historyPanel'),head=panel?.querySelector(':scope > .row');const under=$('histExport')||head;if(under)under.after(box);return box})();
+// In Game review the History box is the whole workspace: it is titled "Game review" and carries the engine and
+// thinking-time choices at its top; the Explore a game and Engine insight boxes are put away until Position is chosen.
+const reviewSettingsBox=(()=>{const d=document.createElement('div');d.id='reviewSettings';d.hidden=true;reviewInfo.before(d);return d})();
+const reviewMoved=[];let reviewSettingsOn=false;
+function reviewSettings(on){
+ if(on===reviewSettingsOn)return;reviewSettingsOn=on;
+ document.body.classList.toggle('review-mode',on);reviewSettingsBox.hidden=!on;
+ const title=$('historyPanel')?.querySelector(':scope > .row > h2');if(title)title.textContent=on?'Game review':'History';
+ if(on){
+  for(const node of [$('insightEngineChoice'),$('analysisTime')?.closest('label')]){if(!node)continue;reviewMoved.push([node,node.parentNode,node.nextSibling]);reviewSettingsBox.append(node)}
+ }else{
+  for(const [node,parent,next]of reviewMoved.splice(0).reverse())parent.insertBefore(node,next&&next.parentNode===parent?next:null);
+ }
+}
 window.decorateHistory=s=>{
  const review=s?.game_review,list=$('moves');if(!list)return;
  reviewInfo.hidden=!review||!!editorDraft;
+ reviewSettings(!!review&&!editorDraft&&s.mode==='analysis');
  {const go=$('reviewGo'),src=$('analyze');if(go&&src){if(go.textContent!==src.textContent)go.textContent=src.textContent;go.disabled=src.disabled;go.hidden=!review}}
  const running=review?.status==='running';
  if(reviewWasRunning===false&&running)window.setMovesMax?.(true); // a review just started: give the history the whole side panel
