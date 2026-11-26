@@ -1142,3 +1142,6 @@ body.review-grading .board-wrap{animation:fbTryPulse 1.1s ease-in-out infinite}
 aside #reviewExtra .review-line-moves button{width:100%;min-width:0;padding:5px 2px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 aside #reviewExtra .review-line-clear{display:inline-block;width:auto;min-height:0;height:auto;margin:0 0 0 6px;padding:0 3px;border:0;background:none;color:var(--muted);font-size:12px;font-weight:700;line-height:1;letter-spacing:0;vertical-align:baseline;cursor:pointer}
 aside #reviewExtra .review-line-clear:hover{color:var(--ink);background:none}
+#reviewExtra .review-tried{flex-wrap:nowrap}
+#reviewExtra .review-tried .review-try-verdict{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+aside #reviewExtra .review-tried .review-line-clear{margin-left:auto;font-size:14px}
