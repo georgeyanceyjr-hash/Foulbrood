@@ -1014,3 +1014,6 @@ aside #gameResult{display:none!important}
 .review-thought-difference{display:none!important}
 #reviewInfo{margin:8px 0 0}
 #historyPanel:has(#reviewInfo:not([hidden])) #moves{margin-top:10px}
+#reviewInfo .review-info-line{display:flex;align-items:center;gap:10px}
+#reviewInfo .review-info-line>#reviewProgress{flex:1 1 auto;min-width:0;margin:0}
+aside #reviewInfo #reviewGo{flex:none;width:auto;margin:0;white-space:nowrap}

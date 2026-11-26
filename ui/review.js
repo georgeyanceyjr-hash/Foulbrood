@@ -66,11 +66,11 @@ window.renderGameReview=s=>{
  $('analysisSetup').hidden=false;$('historyPanel').hidden=false;
  $('analyze').disabled=!review.total;$('stopAnalysis').hidden=true;
  $('hintsLabel').hidden=true;$('bookEnabled').closest('label').hidden=true;$('calculateInstead').hidden=true;
- $('reviewProgress').textContent=review.source==='in_game'?`${review.recorded_count} positions with in-game analysis`:review.resume_engine_missing?`Saved results loaded. Connect ${review.engine} to continue reviewing.`:review.error||(!review.total?'Import a game to get started.':review.status==='running'?`${reviewActivityText(review)} · ${review.rows.length} reviewed`:review.status==='complete'?`${review.total} moves reviewed`:review.status==='stopped'?`Stopped · ${review.rows.length} of ${review.total} reviewed`:`${review.total} moves · Click Start review`);
+ $('reviewProgress').textContent=review.source==='in_game'?`${review.recorded_count} positions with in-game analysis`:review.resume_engine_missing?`Saved results loaded. Connect ${review.engine} to continue reviewing.`:review.error||(!review.total?'Import a game to get started.':review.status==='running'?`${reviewActivityText(review)} · ${review.rows.length} reviewed`:review.status==='complete'?`${review.total} moves reviewed`:review.status==='stopped'?`Stopped · ${review.rows.length} of ${review.total} reviewed`:`${review.total} moves`);
  const remaining=review.status==='ready'||review.status==='complete'?(review.status==='complete'?0:(2*review.total+1)*s.analysis_ms/1000):review.remaining_seconds;
  $('reviewRemaining').hidden=!review.total||review.source==='in_game';$('reviewProgressBar').hidden=review.source==='in_game';
  const minutes=Math.max(1,Math.ceil(remaining/60));
- $('reviewRemaining').textContent=review.status==='complete'?'Review complete':review.status==='stopped'?(review.can_resume?'Completed assessments are kept. Click Resume review to continue.':'Completed assessments are kept.'):`Up to about ${minutes} ${minutes===1?'minute':'minutes'} remaining`;
+ $('reviewRemaining').textContent=review.status==='complete'?'Review complete':review.status==='stopped'?'Completed assessments are kept.':`Up to about ${minutes} ${minutes===1?'minute':'minutes'} remaining`;
  $('reviewProgress').classList.toggle('search-activity',review.status==='running');
  $('reviewProgressBar').max=Math.max(1,review.total);$('reviewProgressBar').value=review.rows.length;
  $('turn').hidden=true;
@@ -136,10 +136,15 @@ function historyEnding(s){
 // The review's progress and summary sit at the top of the History box (the separate bar under the board is retired).
 const reviewInfo=(()=>{const box=document.createElement('div');box.id='reviewInfo';box.className='review-panel';box.hidden=true;
  for(const id of ['reviewProgress','reviewRemaining','reviewProgressBar','reviewSummary']){const e=$(id);if(e)box.append(e)}
+ // Start / stop sits beside the progress line; it presses the same button as the Engine insight box.
+ const line=document.createElement('div'),go=document.createElement('button');line.className='review-info-line';go.id='reviewGo';go.type='button';go.className='primary small';
+ go.onclick=()=>{const b=$('analyze');if(b&&!b.disabled)b.click()};
+ const first=box.querySelector('#reviewProgress');if(first){box.prepend(line);line.append(first,go)}
  const panel=$('historyPanel'),head=panel?.querySelector(':scope > .row');const under=$('histExport')||head;if(under)under.after(box);return box})();
 window.decorateHistory=s=>{
  const review=s?.game_review,list=$('moves');if(!list)return;
  reviewInfo.hidden=!review||!!editorDraft;
+ {const go=$('reviewGo'),src=$('analyze');if(go&&src){if(go.textContent!==src.textContent)go.textContent=src.textContent;go.disabled=src.disabled;go.hidden=!review}}
  const running=review?.status==='running';
  if(reviewWasRunning===false&&running)window.setMovesMax?.(true); // a review just started: give the history the whole side panel
  reviewWasRunning=running;
