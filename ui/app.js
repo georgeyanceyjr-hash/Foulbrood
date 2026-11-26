@@ -786,3 +786,5 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
  b.onclick=()=>set(!document.body.classList.contains('moves-max'));
  window.setMovesMax=set;sync();setInterval(sync,200);
 })();
+
+(()=>{const d=document.getElementById('histExport');if(!d)return;try{d.open=localStorage.getItem('foulbrood_hist_export')==='1'}catch(e){}d.addEventListener('toggle',()=>{try{localStorage.setItem('foulbrood_hist_export',d.open?'1':'0')}catch(e){}})})();
