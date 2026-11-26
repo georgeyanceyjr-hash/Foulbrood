@@ -61,7 +61,7 @@ async function engineRequest(payload){
  else{render(data);if(payload.action==='engine_add'){$('enginePath').value='';status.textContent='Engine connected.';}}
  }catch(e){status.textContent=e.message}finally{busy=false;for(const id of ['browseEngine','addEngine','discoverEngines'])$(id).disabled=false}
 }
-$('engineTab').onclick=async()=>{if(state?.game_review?.status==='running')await action({action:'review_stop'});else if(state?.running)await action({action:'toggle'});else if(state?.job)await action({action:'stop_analysis'});enginePageOpen=true;render(serverState||state)};
+$('engineTab').onclick=async()=>{if(state?.game_review?.status==='running'){/* a running review carries on while the Engine page is open */}else if(state?.running)await action({action:'toggle'});else if(state?.job)await action({action:'stop_analysis'});enginePageOpen=true;render(serverState||state)};
 for(const id of ['playTab','analysisTab'])$(id).addEventListener('click',()=>{enginePageOpen=false;if(state)renderEngines(state)});
 $('browseEngine').onclick=()=>engineRequest({action:'engine_browse'});
 $('addEngine').onclick=()=>engineRequest({action:'engine_add',path:$('enginePath').value.trim()});

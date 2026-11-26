@@ -84,7 +84,7 @@
  // Entering Live: set the Analysis game aside and start from an empty board (the bot's game is loaded next, if any).
  const takeBoard=async()=>{
   if(botBoard()||typeof state==='undefined'||!state||state.mode!=='analysis')return;
-  if(hasGame(state.game))stash(state.game);
+  if(hasGame(state.review_game||state.game))stash(state.review_game||state.game); // the whole game, so its review is found again on coming back
   botBoard(true);shown={id:null,turn:-1};
   if(hasGame(state.game))await whenFree(()=>action({action:'load',text:state.game.split(';')[0].split('~')[0],confirm_review_clear:true}));
  };

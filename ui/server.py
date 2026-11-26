@@ -187,9 +187,11 @@ class App:
         # Use the same clock allocation as a player, with UHP's one-second floor.
         return max(1000,budget_ms(s.clock.values()[s.data['side']],s.clock.increment))
 
-    def leave_review(self):
+    def leave_review(self,stop=False):
+        # Leaving the review page does not stop a running review: it carries on in the background
+        # (it has its own engine process) and is picked up again, with its progress, on coming back.
         if self.review:
-            self.review.stop()
+            if stop or self.review.status!='running':self.review.stop()
             self.hints=self.review.saved_hints
             key=(self.review.game,self.review.engine.get('id'),self.review.engine.get('path'))
             self.saved_reviews[key]=self.review
@@ -202,9 +204,16 @@ class App:
     def analysis_review_available(self):
         return bool(self.analysis and (self.analysis.analysis_history or any(r.game==self.analysis.review_game for r in self.reviews_with_work())))
 
-    def discard_analysis_reviews(self):
+    def discard_analysis_reviews(self,keep=False):
         game=self.analysis.review_game if self.analysis else None
-        self.leave_review()
+        if keep:
+            # Another game is taking the Analysis board (opened from a file, History or the Online tab):
+            # the review of the game that was there is kept, still running if it was.
+            self.leave_review()
+            return
+        self.leave_review(stop=True)
+        for r in self.saved_reviews.values():
+            if r.game==game:r.stop()
         self.saved_reviews={k:r for k,r in self.saved_reviews.items() if r.game!=game}
 
     def review_clear_warning(self,payload):
@@ -814,7 +823,7 @@ class App:
                         move=saved['pending_played']['move']
                         if move and move not in {m['move'] for m in after['legal']}:raise ValueError('Saved review contains an unavailable reply.')
                 stay_in_review=self.review is not None
-                self.discard_analysis_reviews()
+                self.discard_analysis_reviews(keep=data['game']!=(self.analysis.review_game if self.analysis else None))
                 self.pause();self.mode='analysis';self.analysis=Session(data,players=['Human','Human']);self.analysis.import_info=info;self.analysis.reported_result=reported_result(text);self.analysis.player_names=player_names(text);self.analysis.setup_placed=placed
                 if saved:
                     self.analysis.analysis_history=saved['in_game_history']
