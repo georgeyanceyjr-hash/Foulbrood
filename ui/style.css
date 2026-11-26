@@ -1025,5 +1025,6 @@ aside #reviewInfo #reviewGo{flex:none;width:auto;margin:0;white-space:nowrap}
  .player.review-insight .review-thought-cell>.review-thought-depth{margin-left:auto}
 }
 /* Move boxes keep their height however long the game is */
-#moves{grid-auto-rows:minmax(32px,max-content)}
+#moves{grid-auto-rows:max-content}
 #moves .history-move{min-height:32px;flex-wrap:nowrap}
+#moves .history-end{box-sizing:border-box;min-height:32px;overflow-wrap:anywhere}
