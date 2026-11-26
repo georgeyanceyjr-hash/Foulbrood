@@ -978,3 +978,14 @@ body.moves-max:has(#historyPanel:not([hidden])) aside{position:relative;align-se
 body.moves-max #historyPanel:not([hidden]){position:absolute;inset:0;margin:0;display:flex!important;flex-direction:column}
 body.moves-max #historyPanel:not([hidden])>*{flex:none}
 body.moves-max #historyPanel:not([hidden]) .moves,body.moves-max #historyPanel:not([hidden]) #moves{flex:1 1 auto;min-height:0;max-height:none;overflow:auto;align-content:start}
+
+/* ---- Game review in the History list: verdict colour and position rating on each move ---- */
+#moves{--verdict-good:#2fae52;--verdict-mid:#d9a900;--verdict-poor:#e8842a;--verdict-bad:#e0392b}
+[data-theme="dark"] #moves{--verdict-good:#35c25a;--verdict-mid:#f2c20a;--verdict-poor:#f0913a;--verdict-bad:#f0483a}
+#moves .history-move[data-verdict="good"]{--v:var(--verdict-good)}
+#moves .history-move[data-verdict="mid"]{--v:var(--verdict-mid)}
+#moves .history-move[data-verdict="poor"]{--v:var(--verdict-poor)}
+#moves .history-move[data-verdict="bad"]{--v:var(--verdict-bad)}
+#moves .history-move[data-verdict]{border-color:var(--v);background:color-mix(in srgb,var(--v) 14%,transparent)}
+#moves .history-move[data-verdict].current{box-shadow:inset 0 0 0 2px var(--v);background:color-mix(in srgb,var(--v) 30%,transparent)}
+#moves .history-move .move-rating{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;color:var(--v,var(--muted))}

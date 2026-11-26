@@ -113,7 +113,28 @@ window.renderGameReview=s=>{
 };
 // Restore controls after leaving review; the normal render controls their state.
 const renderReview=window.renderGameReview;
-window.renderGameReview=s=>{$('hintsLabel').hidden=false;$('bookEnabled').closest('label').hidden=false;renderReview(s)};
+// Game review in the History list: each move takes the colour of its verdict (as in the status bar) and shows the position rating after it.
+const historyVerdicts={'Best move':'good','Book move':'good','No clear error':'good','Inaccuracy':'mid','Uncertain':'mid','Mistake':'poor','Blunder':'bad','Missed win':'bad'};
+let reviewWasRunning=null;
+window.decorateHistory=s=>{
+ const review=s?.game_review,list=$('moves');if(!list)return;
+ const running=review?.status==='running';
+ if(reviewWasRunning===false&&running)window.setMovesMax?.(true); // a review just started: give the history the whole side panel
+ reviewWasRunning=running;
+ const rows=new Map((review?.rows||[]).map(r=>[r.ply,r]));
+ for(const item of list.querySelectorAll('button.history-move')){
+  const number=item.querySelector('.move-number'),ply=number?parseInt(number.textContent,10):0,row=review&&ply?rows.get(ply):null;
+  const verdict=row?historyVerdicts[row.label]||'':'';
+  let tag=item.querySelector('.move-rating');
+  if(!row){if(tag)tag.remove();delete item.dataset.verdict;if(item.dataset.reviewTitle){item.title='';delete item.dataset.reviewTitle}continue}
+  if(verdict)item.dataset.verdict=verdict;else delete item.dataset.verdict;
+  const rating=row.label==='Book move'&&row.score==null?null:reviewPoint(row.score),text=rating==null?(row.label==='Book move'?'Book':''):(rating>0?'+':'')+rating;
+  if(!tag){tag=document.createElement('span');tag.className='move-rating';item.append(tag)}
+  if(tag.textContent!==text)tag.textContent=text;
+  item.title=row.label+(rating==null?'':' · position '+text);item.dataset.reviewTitle='1';
+ }
+};
+window.renderGameReview=s=>{$('hintsLabel').hidden=false;$('bookEnabled').closest('label').hidden=false;renderReview(s);window.decorateHistory(s)};
 if(state)window.renderGameReview(state);
 
 async function saveReviewedGame(){
