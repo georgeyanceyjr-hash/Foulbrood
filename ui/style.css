@@ -1110,3 +1110,12 @@ aside #reviewExtra .review-line button{font-family:ui-monospace,monospace;font-s
 .hist-report-batch:empty{display:none}
 .hist-report-batch select{min-height:28px;padding:3px 6px;background:var(--paper);border:1px solid var(--line);border-radius:2px;color:var(--ink);font:500 12px/1.2 inherit}
 .hist-report .small.primary{background:var(--hazard);border-color:var(--hazard);color:var(--pitch)}
+/* Move rows never push the list wider than its box: the move text gives way first */
+#moves{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+#moves .history-move{min-width:0;overflow:hidden;gap:5px}
+#moves .history-move>span:nth-child(2){flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* a row with a rating has no room for the time as well: it moves to the status bar and the tooltip */
+#moves .history-move:has(.move-rating:not(:empty)) .move-time{display:none}
+#moves .history-move .move-time,#moves .history-move .move-rating{flex:none;white-space:nowrap}
+#moves .history-move .move-time{margin-left:0}
+#moves .history-move .move-time+.move-rating{margin-left:2px}

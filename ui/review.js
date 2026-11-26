@@ -290,7 +290,7 @@ window.decorateHistory=s=>{
  // Seconds each move took (hivegame.com games saved from now on), shown small beside the move.
  {const times=window.foulbroodOpenedTimes?window.foulbroodOpenedTimes(s):null;
   for(const item of list.querySelectorAll('button.history-move')){const number=item.querySelector('.move-number'),ply=number?parseInt(number.textContent,10):0,t=times&&ply?times[ply-1]:null;let tag=item.querySelector('.move-time');
-   if(t==null){if(tag)tag.remove();continue}
+   if(t==null||t<0.1){if(tag)tag.remove();continue} // instant (book) moves show no time
    const text=t<60?(t<10?t.toFixed(1):Math.round(t))+'s':Math.floor(t/60)+':'+String(Math.round(t%60)).padStart(2,'0');
    if(!tag){tag=document.createElement('span');tag.className='move-time';tag.title='Time spent on this move';const rating=item.querySelector('.move-rating');if(rating)rating.before(tag);else item.append(tag)}
    if(tag.textContent!==text)tag.textContent=text}}
@@ -305,7 +305,7 @@ window.decorateHistory=s=>{
   const rating=row.label==='Book move'&&row.score==null?null:reviewPoint(row.score),text=rating==null?(row.label==='Book move'?'Book':''):(rating>0?'+':'')+rating;
   if(!tag){tag=document.createElement('span');tag.className='move-rating';item.append(tag)}
   if(tag.textContent!==text)tag.textContent=text;
-  item.title=(row.ingame?`${row.by}'s rating while playing (depth ${row.depth})`:row.label)+(rating==null?'':' · position '+text);item.dataset.reviewTitle='1';
+  item.title=(row.ingame?`${row.by}'s rating while playing (depth ${row.depth})`:row.label)+(rating==null?'':' · position '+text);item.dataset.reviewTitle='1';{const spent=item.querySelector('.move-time');if(spent&&spent.textContent)item.title+=' · '+spent.textContent+' thinking'}
  }
  // Last line of the list: how the game ended.
  let end=list.querySelector('.history-end');const ending=historyEnding(s);

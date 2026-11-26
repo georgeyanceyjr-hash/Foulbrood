@@ -265,7 +265,7 @@ function renderReviewThought(strip,s,side,engine){
  const game=row?botThoughtGame({game:s.review_game||s.game},row):null;
  for(const [key,move,score,depth]of [['played',row?.move,row?.score??point?.score,row?.depth??point?.depth],['preferred',row?.alternative,row?.best_score,row?.best_depth]]){
   const field=fields[key];field.move.textContent=row&&move?insightMoveText(game,move,notationFollowsBoard()):'—';field.move.title=field.move.textContent;
-  updatePositionScore(field.score,{score,side:0},null,{side});field.depth.textContent=depth==null?'Depth —':'Depth '+depth;field.depth.dataset.d=depth==null?'':'D'+depth;
+  updatePositionScore(field.score,{score,side:0},null,{side});field.depth.textContent=depth==null?'Depth —':'Depth '+depth;field.depth.dataset.d=depth==null?'':'D'+depth;if(key==='played'&&row){const all=window.foulbroodOpenedTimes?window.foulbroodOpenedTimes(s):null,t=all?all[row.ply-1]:null;if(t!=null&&t>=0.1)field.depth.dataset.d=(field.depth.dataset.d?field.depth.dataset.d+' · ':'')+(t<60?(t<10?t.toFixed(1):Math.round(t))+'s':Math.floor(t/60)+':'+String(Math.round(t%60)).padStart(2,'0'))}
   const book=row?.label==='Book move';field.box.hidden=pending||((book||row?.ingame)&&key==='preferred')||(otherTurn&&!row);field.score.box.hidden=book;field.depth.hidden=book;
  }
  return !pending&&!!row&&row.ply===s.ply;
