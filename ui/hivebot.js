@@ -43,8 +43,16 @@
   el('hivebotPanel').hidden=!on;el('hbChallengesPanel').hidden=!on||el('hbChallenges').hidden;
  };
  const setLive=v=>{live=v;try{localStorage.setItem('foulbrood_live_tab',v?'1':'0')}catch(e){}};
- el('liveTab').onclick=()=>{setLive(true);if(typeof enginePageOpen!=='undefined')enginePageOpen=false;shown={id:null,turn:-1};action({action:'mode',mode:'analysis'});setTimeout(()=>{fixTabs();takeBoard().catch(()=>{}).then(()=>render())},300)};
- for(const id of ['playTab','analysisTab','engineTab'])el(id).addEventListener('click',()=>{setLive(false);setTimeout(fixTabs,50);if(id==='analysisTab')setTimeout(()=>releaseBoard().catch(()=>{}),300)});
+ // Leaving Analysis while a game is in review: remember it, so coming back goes straight to that review again.
+ const noteReview=()=>{try{if(typeof state!=='undefined'&&state&&state.mode==='analysis'&&state.game_review&&!botBoard())localStorage.setItem('foulbrood_review_resume',state.review_game||state.game)}catch(e){}};
+ const resumeReview=async()=>{let want=null;try{want=localStorage.getItem('foulbrood_review_resume')}catch(e){}if(!want)return;
+  for(let i=0;i<30;i++){await new Promise(r=>setTimeout(r,200));if(typeof state!=='undefined'&&state&&state.mode==='analysis'&&!botBoard()&&(state.review_game||state.game)===want&&!(typeof busy!=='undefined'&&busy))break;if(i===29)return}
+  try{localStorage.removeItem('foulbrood_review_resume')}catch(e){}
+  if(!state.game_review)await action({action:'review_enter'});
+ };
+ el('liveTab').onclick=()=>{noteReview();setLive(true);if(typeof enginePageOpen!=='undefined')enginePageOpen=false;shown={id:null,turn:-1};action({action:'mode',mode:'analysis'});setTimeout(()=>{fixTabs();takeBoard().catch(()=>{}).then(()=>render())},300)};
+ el('playTab').addEventListener('click',noteReview,true); // before the viewer's own handler changes the mode
+ for(const id of ['playTab','analysisTab','engineTab'])el(id).addEventListener('click',()=>{setLive(false);setTimeout(fixTabs,50);if(id==='analysisTab')setTimeout(()=>releaseBoard().catch(()=>{}).then(resumeReview),300)});
  const remember=()=>{try{localStorage.setItem('foulbrood_hivebot',JSON.stringify({login:el('hbLogin').value,engine:el('hbEngine').value,follow:el('hbFollow').checked,auto:el('hbAuto').checked,humans:el('hbHumans').checked,color:el('hbColor').value,acceptTime:el('hbAcceptTime').value,max:el('hbMax').value,only:el('hbOnly').value}))}catch(e){}};
  if(saved.login)el('hbLogin').value=saved.login;
  el('hbMax').closest('label').style.display='none';
