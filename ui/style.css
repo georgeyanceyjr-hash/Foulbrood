@@ -1011,3 +1011,6 @@ aside #histExport .hist-export-row button{width:100%;margin:0;padding:6px 4px;wh
 aside #gameResult{display:none!important}
 #reviewSummary{display:none!important}
 #reviewRankingPanel{display:none!important}
+.review-thought-difference{display:none!important}
+#reviewInfo{margin:8px 0 0}
+#historyPanel:has(#reviewInfo:not([hidden])) #moves{margin-top:10px}
