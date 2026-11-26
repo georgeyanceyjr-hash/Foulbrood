@@ -149,6 +149,7 @@ function reviewSettings(on){
  if(on===reviewSettingsOn)return;reviewSettingsOn=on;
  document.body.classList.toggle('review-mode',on);reviewSettingsBox.hidden=!on;
  const title=$('historyPanel')?.querySelector(':scope > .row > h2');if(title)title.textContent=on?'Game review':'History';
+ {const panel=$('historyPanel');if(panel){if(on){reviewSettings.wasFolded=panel.classList.contains('hb-folded');panel.classList.remove('hb-folded')}else if(reviewSettings.wasFolded)panel.classList.add('hb-folded')}} // the only box on the page cannot be folded away
  if(on){
   for(const node of [$('insightEngineChoice'),$('analysisTime')?.closest('label')]){if(!node)continue;reviewMoved.push([node,node.parentNode,node.nextSibling]);reviewSettingsBox.append(node)}
  }else{

@@ -1044,3 +1044,5 @@ body.review-mode aside>#historyPanel:not([hidden]){position:relative;inset:auto;
 body.review-mode #historyPanel:not([hidden])>*{flex:none}
 body.review-mode #historyPanel:not([hidden]) #moves{flex:1 1 auto;min-height:0;max-height:none;overflow:auto;align-content:start}
 body.review-mode #historyMax{display:none!important}
+body.review-mode aside #historyPanel h2.hb-fold-title{pointer-events:none;cursor:default}
+body.review-mode aside #historyPanel h2.hb-fold-title::before{content:none}
