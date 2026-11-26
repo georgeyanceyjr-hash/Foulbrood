@@ -366,7 +366,7 @@ def report(ids, me):
             findings.append('Most of its graded errors come in the %s (%d of %d).' % ({'opening': 'first 16 moves', 'middle': 'middle game (moves 17 to 40)', 'late': 'late game (after move 40)'}[worst], phases[worst], sum(phases.values())))
     if reviewed < total['games']:
         missing = total['games'] - reviewed
-        findings.append('Game review has not been done on %d of these %d games. Review them for a fuller report (mistakes and blunders by each side, and when they happen).' % (missing, total['games']))
+        findings.append('Game review has not been done on %d of these %d games. Review them for a full report.' % (missing, total['games']))
     if tracked < total['games']:
         findings.append('The move-by-move findings use %d of the %d games: only games played by the bot record what it was thinking.' % (tracked, total['games']))
     out['findings'] = findings
