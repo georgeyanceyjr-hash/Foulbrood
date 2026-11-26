@@ -153,7 +153,7 @@
     }
     if(list.some(u=>u.name===keep))sel.value=keep;
    }}
-  const box=el('hbLobby'),tcv=el('hbAcceptTime').value,tcOk=c=>tcv==='any'?c.mode==='RealTime'&&(c.base||0)>=600:c.mode==='RealTime'&&`${c.base}+${c.increment||0}`===tcv,rows=(bot.lobby||[]).filter(c=>!c.mine&&!c.to&&tcOk(c)&&!(el('hbHumans').checked&&c.bot)).sort((a,b)=>speed(a)-speed(b)||(b.rating||0)-(a.rating||0));
+  const box=el('hbLobby'),tcv=el('hbAcceptTime').value,tcOk=c=>tcv==='any'?true:c.mode==='RealTime'&&`${c.base}+${c.increment||0}`===tcv,rows=(bot.lobby||[]).filter(c=>!c.mine&&!c.to&&tcOk(c)&&!(el('hbHumans').checked&&c.bot)).sort((a,b)=>speed(a)-speed(b)||(b.rating||0)-(a.rating||0));
   const mine=(bot.lobby||[]).filter(c=>c.mine);
   const direct=(bot.lobby||[]).filter(c=>!c.mine&&c.to&&String(c.to).toLowerCase()===String(bot.user||'').toLowerCase());
   const key=JSON.stringify([rows,mine,direct,playing,el('hbAuto').checked]);if(box.dataset.key===key)return;box.dataset.key=key;box.replaceChildren();

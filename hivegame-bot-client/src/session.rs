@@ -594,7 +594,11 @@ impl Session {
                 // A challenge sent to us by name: only with the "accept all direct challenges" rule on,
                 // and never while a game is being played. Otherwise it waits in the lobby for the user.
                 let direct = self.auto.rules.lock().unwrap().direct;
-                if !direct || self.auto.busy() {
+                // Only timed games of 20+20 or shorter are taken automatically; anything longer waits for the user.
+                let short_enough = challenge.time_mode.as_deref() == Some("RealTime")
+                    && challenge.time_base.is_some_and(|base| base <= 1200)
+                    && challenge.time_increment.unwrap_or(0) <= 20;
+                if !direct || !short_enough || self.auto.busy() {
                     continue;
                 }
             } else {
@@ -817,7 +821,7 @@ mod tests {
             .push(json!({"Ok": {"Ping": {"nonce": 2, "value": 0.0}}}))
             .await;
         connection
-            .push(json!({"Ok": {"Challenge": {"Direct": {"challenge_id": "ours", "opponent": user(ME)}}}}))
+            .push(json!({"Ok": {"Challenge": {"Direct": {"challenge_id": "ours", "opponent": user(ME), "time_mode": "RealTime", "time_base": 600, "time_increment": 10}}}}))
             .await;
         assert_eq!(
             connection.next_frame().await,
@@ -879,7 +883,7 @@ mod tests {
             .push(json!({"Ok": {"Challenge": {"Direct": {"challenge_id": "other", "opponent": user(THEM)}}}}))
             .await;
         connection
-            .push(json!({"Ok": {"Challenge": {"Direct": {"challenge_id": "ours", "opponent": user(ME)}}}}))
+            .push(json!({"Ok": {"Challenge": {"Direct": {"challenge_id": "ours", "opponent": user(ME), "time_mode": "RealTime", "time_base": 600, "time_increment": 10}}}}))
             .await;
 
         assert_eq!(
