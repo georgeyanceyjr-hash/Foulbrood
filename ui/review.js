@@ -139,7 +139,7 @@ const reviewInfo=(()=>{const box=document.createElement('div');box.id='reviewInf
  // Start / stop sits beside the progress line; it presses the same button as the Engine insight box.
  const line=document.createElement('div'),go=document.createElement('button');line.className='review-info-line';go.id='reviewGo';go.type='button';go.className='primary small';
  go.onclick=()=>{const b=$('analyze');if(b&&!b.disabled)b.click()};
- const first=box.querySelector('#reviewProgress');if(first){box.prepend(line);line.append(first,go)}
+ const first=box.querySelector('#reviewProgress'),rest=box.querySelector('#reviewRemaining');if(first){const text=document.createElement('div');text.className='review-info-text';box.prepend(line);text.append(first);if(rest)text.append(rest);line.append(text,go)}
  const panel=$('historyPanel'),head=panel?.querySelector(':scope > .row');const under=$('histExport')||head;if(under)under.after(box);return box})();
 // In Game review the History box is the whole workspace: it is titled "Game review" and carries the engine and
 // thinking-time choices at its top; the Explore a game and Engine insight boxes are put away until Position is chosen.
