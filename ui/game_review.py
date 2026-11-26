@@ -98,6 +98,8 @@ class Review:
                 else:
                     if move not in {m['move'] for m in data['legal']}:raise ValueError('That move is not available here.')
                     position=self.snapshot('play',data['game'],move)
+                    # The board can show the tried move straight away, while it is still being graded.
+                    with self.app.lock:self.extras[key].update(pieces=position['pieces'],last_move=position.get('last_move'),side=data['side'])
                     found=self.evaluate(position,generation)
                     result=dict(score=white_score(found),depth=found['depth'],side=data['side'],pieces=position['pieces'],last_move=position.get('last_move'))
                 with self.app.lock:

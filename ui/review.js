@@ -22,7 +22,17 @@ function reviewActivityText(review){
 const reviewMarksCache=new Map(),reviewMarksPending=new Set();
 function renderReviewMarks(s){
  const board=$('board');board.querySelectorAll('.review-marks').forEach(e=>e.remove());
- if(window.reviewPreviewActive?.())return;
+ if(window.reviewPreviewActive?.()){ // a tried move on the board carries its grade (or a waiting mark) on the piece itself
+  const tried=window.reviewTriedShown?.(s),to=tried?.last_move?.to;if(!tried||!to)return;
+  const [x,baseY]=xy(...to),height=Math.max(0,s.pieces.filter(p=>p.q===to[0]&&p.r===to[1]).length-1),y=baseY-height*10;
+  const verdict=tried.status==='ready'?reviewTryGrade(s,tried):null,label=verdict?verdict.text:'…',width=Math.max(34,label.length*8.5+14);
+  const badge=node('g',{class:'review-marks review-try-badge'+(verdict?'':' waiting'),'data-verdict':verdict?verdict.verdict:'',style:'cursor:pointer'});
+  badge.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();reviewTryDismissed.add(tried.ply+'|'+tried.move);setReviewPreview(null)}); // click the grade: the tried move and its result go away
+  {const tip=node('title',{});tip.textContent='Click to clear this tried move';badge.append(tip)}
+  badge.append(node('rect',{x:x-width/2,y:y-12,width,height:24,rx:3}));
+  const text=node('text',{x,y:y+5,'text-anchor':'middle'});text.textContent=label;badge.append(text);board.append(badge);
+  return;
+ }
  if(globalThis.insightSuggestionsVisible?.(s)===false)return;
  const row=s.game_review?.rows.find(r=>r.ply===s.ply);
  if(!row?.symbol||!row.alternative||row.alternative===row.move)return;
@@ -204,7 +214,7 @@ const reviewFacts=(()=>{const d=document.createElement('div');d.id='reviewFacts'
 // ---- The engine's line, and trying a different move ----
 // Both run one extra search on the server (action review_side) and come back in game_review.extras.
 const reviewExtraBox=(()=>{const d=document.createElement('div');d.id='reviewExtra';d.hidden=true;reviewFacts.after(d);return d})();
-let reviewPreview=null,reviewTry=null; // preview: {game,ply,pieces,last_move,key}; try: {game,ply}
+let reviewPreview=null,reviewTry=null,reviewTryShow=null;const reviewTryDismissed=new Set(); // preview: {game,ply,pieces,last_move,key}; try: {game,ply}
 window.reviewPreviewActive=()=>!!reviewPreview;
 { // Draw a previewed position (a step of the engine's line, or the tried move) in place of the real one, without touching the game.
  const realRender=render;
@@ -219,9 +229,18 @@ window.reviewPreviewActive=()=>!!reviewPreview;
  canMove=function(){return trying()||realCanMove()};
  play=function(move){
   if(!trying())return realPlay(move);
-  const ply=reviewTry.ply;reviewTry=null;
+  const ply=reviewTry.ply;reviewTry=null;reviewTryShow=ply;reviewTryDismissed.delete(ply+'|'+move); // once the server has the position, keep the tried move on the board
   (async()=>{await action({action:'review_side',kind:'try',ply,move});for(let i=0;i<20&&busy;i++)await new Promise(r=>setTimeout(r,50));await action({action:'navigate',ply})})();
  };
+}
+// The tried move currently shown on the board (if the preview is of a tried move), and its grade.
+window.reviewTriedShown=s=>{if(!reviewPreview||!/^try/.test(reviewPreview.key)||!s?.game_review)return null;return (s.game_review.extras||[]).find(e=>e.kind==='try'&&'try'+e.ply===reviewPreview.key)||null};
+function reviewTryGrade(s,tried){
+ const row=(s.game_review.rows||[]).find(r=>r.ply===tried.ply);if(!row)return null;
+ const sign=row.side===0?1:-1,best=row.best_score!=null?row.best_score:row.score;
+ const grade=tried.score==null||best==null?['Uncertain','']:(tried.move===row.alternative?['Best move','']:gradeReviewMove(best*sign,tried.score*sign,row.best_depth,tried.depth));
+ const rating=tried.score==null?null:reviewPoint(tried.score),name=({'No clear error':'Fine','Uncertain':'Unclear','Best move':'Best'}[grade[0]]||grade[0]);
+ return {name,rating,verdict:historyVerdicts[grade[0]]||'',text:rating==null?name:(rating>0?'+':'')+rating};
 }
 function setReviewPreview(next){reviewPreview=next;lastBoardKey='';if(typeof serverState!=='undefined'&&(serverState||state))render(serverState||state)}
 function renderReviewExtra(s){
@@ -229,9 +248,12 @@ function renderReviewExtra(s){
  if(reviewTry&&(!review||(s.review_game||s.game)!==reviewTry.game||(s.ply!==reviewTry.ply-1&&s.ply!==reviewTry.ply)))reviewTry=null;
  const ply=reviewTry?reviewTry.ply:s?.ply,row=review?(review.rows||[]).find(r=>r.ply===ply):null;
  const usable=!!row&&review.status!=='running'&&row.label!=='Book move'&&!editorDraft&&review.source!=='in_game';
- box.hidden=!usable;if(!usable){box.dataset.key='';return}
- const extras=review.extras||[],line=extras.find(e=>e.kind==='line'&&e.ply===ply),tried=extras.find(e=>e.kind==='try'&&e.ply===ply),game=s.review_game||s.game;
- const key=JSON.stringify([ply,line&&[line.status,line.moves,line.error],tried&&[tried.status,tried.move,tried.score,tried.depth,tried.error],reviewPreview&&reviewPreview.key,!!reviewTry,row.best_score,row.side]);
+ box.hidden=!usable;if(!usable){box.dataset.key='';document.body.classList.remove('review-grading');return}
+ const extras=review.extras||[],line=extras.find(e=>e.kind==='line'&&e.ply===ply),found=extras.find(e=>e.kind==='try'&&e.ply===ply),tried=found&&!reviewTryDismissed.has(found.ply+'|'+found.move)?found:null,game=s.review_game||s.game;
+ // A move just tried stays on the board (pulsing while it is graded) until the chip is clicked or another move is chosen.
+ if(reviewTryShow===ply&&tried&&tried.pieces&&s.ply===ply){reviewTryShow=null;const shown={game,ply,pieces:tried.pieces,last_move:tried.last_move,key:'try'+ply};setTimeout(()=>setReviewPreview(shown),0)}
+ document.body.classList.toggle('review-grading',!!tried&&tried.status==='running'&&!!reviewPreview&&reviewPreview.key==='try'+ply);
+ const key=JSON.stringify([ply,line&&[line.status,line.moves,line.error],tried&&[tried.status,tried.move,tried.score,tried.depth,tried.error],reviewPreview&&reviewPreview.key,!!reviewTry,tried&&!!tried.pieces,row.best_score,row.side]);
  if(box.dataset.key===key)return;box.dataset.key=key;box.replaceChildren();
  const text=m=>{try{return shownMove(m)}catch(e){return m}};
  const button=(label,title,click,pressed)=>{const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;if(title)b.title=title;b.onclick=click;if(pressed)b.setAttribute('aria-pressed','true');return b};
@@ -253,13 +275,11 @@ function renderReviewExtra(s){
  if(tried&&tried.status==='running'&&!reviewTry)note(`Grading ${text(tried.move)}…`);
  if(tried&&tried.status==='error'&&!reviewTry)note(tried.error||'That move could not be graded.');
  if(tried&&tried.status==='ready'&&!reviewTry){
-  const sign=row.side===0?1:-1,best=row.best_score!=null?row.best_score:row.score;
-  const grade=tried.score==null||best==null?['Uncertain','']:(tried.move===row.alternative?['Best move','']:gradeReviewMove(best*sign,tried.score*sign,row.best_depth,tried.depth));
-  const rating=tried.score==null?null:reviewPoint(tried.score),k='try'+ply,on=reviewPreview&&reviewPreview.key===k;
+  const g=reviewTryGrade(s,tried)||{name:'Unclear',rating:null,verdict:''},rating=g.rating,k='try'+ply,on=reviewPreview&&reviewPreview.key===k;
   const chips=document.createElement('div');chips.className='review-line';const label=document.createElement('span');label.className='review-line-label';label.textContent='Tried';chips.append(label);
   const b=button(text(tried.move),'Show the board after the move you tried',()=>setReviewPreview(on?null:{game,ply,pieces:tried.pieces,last_move:tried.last_move,key:k}),on);chips.append(b);
-  const verdict=document.createElement('span');verdict.className='review-try-verdict';verdict.dataset.verdict=historyVerdicts[grade[0]]||'';
-  verdict.textContent=({'No clear error':'Fine','Uncertain':'Unclear','Best move':'Best'}[grade[0]]||grade[0])+(rating==null?'':' · '+(rating>0?'+':'')+rating);chips.append(verdict);
+  const verdict=document.createElement('span');verdict.className='review-try-verdict';verdict.dataset.verdict=g.verdict;
+  verdict.textContent=g.name+(rating==null?'':' · '+(rating>0?'+':'')+rating);chips.append(verdict);
   box.append(chips);
  }
 }
