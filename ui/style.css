@@ -997,9 +997,9 @@ body.moves-max #historyPanel:not([hidden]) .moves,body.moves-max #historyPanel:n
 #reviewInfo p{margin:0}
 #reviewInfo progress{width:100%}
 /* Analysis: the expanded History starts under the Position / Game / Arrange buttons, which stay up */
-body.moves-max:has(#historyPanel:not([hidden])) aside>#analysisModes:not([hidden]){display:grid!important;flex:none}
-body.moves-max:has(#historyPanel:not([hidden])) aside:has(>#analysisModes:not([hidden])){display:flex;flex-direction:column}
-body.moves-max aside:has(>#analysisModes:not([hidden]))>#historyPanel:not([hidden]){position:relative;inset:auto;flex:1 1 0;height:0;min-height:0}
+body.moves-max:not(.hb-live):has(#historyPanel:not([hidden])) aside>#analysisModes:not([hidden]){display:grid!important;flex:none}
+body.moves-max:not(.hb-live):has(#historyPanel:not([hidden])) aside:has(>#analysisModes:not([hidden])){display:flex;flex-direction:column}
+body.moves-max:not(.hb-live) aside:has(>#analysisModes:not([hidden]))>#historyPanel:not([hidden]){position:relative;inset:auto;flex:1 1 0;height:0;min-height:0}
 /* History: copy and export in one row, opened by a small switch beside the heading */
 aside #historyPanel>.row{display:flex;align-items:center;gap:12px;padding-right:40px}
 aside #histExportToggle,aside button.hist-export-toggle{min-height:0;height:auto;padding:2px 0;border:0;background:none;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap;margin:0 0 0 auto}
