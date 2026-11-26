@@ -282,7 +282,7 @@
    else if(last){status=`Connected as ${bot.user}.\nLast game: ${names(last)} — ${last.result||'finished'}.\nWaiting for the next game.`;}
   }
   el('hbSummary').textContent=summary;el('hbLight').className='hb-light '+(connected?'on':bot.state==='starting'||bot.state==='building'?'wait':'off');site(bot.site);el('hbStatus').textContent=status;el('hbStatus').hidden=!status;
-  const card=g||last;el('hbGame').hidden=!card;
+  const card=g||last;el('hbGame').hidden=!card||(!g&&cleared===card.id); // a cleared game takes its hivegame.com link with it
   if(card){
    el('hbPlayers').textContent=names(card);el('hbPlayers').parentElement.hidden=true; // the pairing and result are in the status lines and the player bars
    const move=(card.turn||0)+1; // the viewer numbers every move on its own: White plays 1, Black plays 2
