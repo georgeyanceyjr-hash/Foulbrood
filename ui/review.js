@@ -22,6 +22,7 @@ function reviewActivityText(review){
 const reviewMarksCache=new Map(),reviewMarksPending=new Set();
 function renderReviewMarks(s){
  const board=$('board');board.querySelectorAll('.review-marks').forEach(e=>e.remove());
+ if(window.reviewPreviewActive?.())return;
  if(globalThis.insightSuggestionsVisible?.(s)===false)return;
  const row=s.game_review?.rows.find(r=>r.ply===s.ply);
  if(!row?.symbol||!row.alternative||row.alternative===row.move)return;
@@ -190,6 +191,68 @@ function renderReviewFacts(s){
 // thinking-time choices at its top; the Explore a game and Engine insight boxes are put away until Position is chosen.
 const reviewSettingsBox=(()=>{const d=document.createElement('div');d.id='reviewSettings';d.hidden=true;reviewInfo.before(d);return d})();
 const reviewFacts=(()=>{const d=document.createElement('div');d.id='reviewFacts';d.hidden=true;reviewInfo.after(d);return d})();
+// ---- The engine's line, and trying a different move ----
+// Both run one extra search on the server (action review_side) and come back in game_review.extras.
+const reviewExtraBox=(()=>{const d=document.createElement('div');d.id='reviewExtra';d.hidden=true;reviewFacts.after(d);return d})();
+let reviewPreview=null,reviewTry=null; // preview: {game,ply,pieces,last_move,key}; try: {game,ply}
+window.reviewPreviewActive=()=>!!reviewPreview;
+{ // Draw a previewed position (a step of the engine's line, or the tried move) in place of the real one, without touching the game.
+ const realRender=render;
+ render=function(s){
+  if(reviewPreview&&s&&s.game_review&&s.ply===reviewPreview.ply&&(s.review_game||s.game)===reviewPreview.game)s={...s,pieces:reviewPreview.pieces,last_move:reviewPreview.last_move||null,hint:null};
+  else if(reviewPreview){reviewPreview=null;lastBoardKey=''}
+  return realRender(s);
+ };
+ // While "Try a move" is on, the board accepts one move for the side to play, and that move is graded instead of played.
+ const trying=()=>!!reviewTry&&!!state&&!!state.game_review&&state.game_review.status!=='running'&&!editorDraft&&state.ply===reviewTry.ply-1&&(state.review_game||state.game)===reviewTry.game;
+ const realCanMove=canMove,realPlay=play;
+ canMove=function(){return trying()||realCanMove()};
+ play=function(move){
+  if(!trying())return realPlay(move);
+  const ply=reviewTry.ply;reviewTry=null;
+  (async()=>{await action({action:'review_side',kind:'try',ply,move});for(let i=0;i<20&&busy;i++)await new Promise(r=>setTimeout(r,50));await action({action:'navigate',ply})})();
+ };
+}
+function setReviewPreview(next){reviewPreview=next;lastBoardKey='';if(typeof serverState!=='undefined'&&(serverState||state))render(serverState||state)}
+function renderReviewExtra(s){
+ const box=reviewExtraBox,review=s?.game_review;
+ if(reviewTry&&(!review||(s.review_game||s.game)!==reviewTry.game||(s.ply!==reviewTry.ply-1&&s.ply!==reviewTry.ply)))reviewTry=null;
+ const ply=reviewTry?reviewTry.ply:s?.ply,row=review?(review.rows||[]).find(r=>r.ply===ply):null;
+ const usable=!!row&&review.status!=='running'&&row.label!=='Book move'&&!editorDraft&&review.source!=='in_game';
+ box.hidden=!usable;if(!usable){box.dataset.key='';return}
+ const extras=review.extras||[],line=extras.find(e=>e.kind==='line'&&e.ply===ply),tried=extras.find(e=>e.kind==='try'&&e.ply===ply),game=s.review_game||s.game;
+ const key=JSON.stringify([ply,line&&[line.status,line.moves,line.error],tried&&[tried.status,tried.move,tried.score,tried.depth,tried.error],reviewPreview&&reviewPreview.key,!!reviewTry,row.best_score,row.side]);
+ if(box.dataset.key===key)return;box.dataset.key=key;box.replaceChildren();
+ const text=m=>{try{return shownMove(m)}catch(e){return m}};
+ const button=(label,title,click,pressed)=>{const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;if(title)b.title=title;b.onclick=click;if(pressed)b.setAttribute('aria-pressed','true');return b};
+ const controls=document.createElement('div');controls.className='review-extra-row';
+ if(!line||line.status==='error')controls.append(button('Engine line','Show the moves the engine expected after its preferred move',()=>action({action:'review_side',kind:'line',ply})));
+ controls.append(reviewTry?button('Cancel try','Stop trying a move',()=>{const back=reviewTry.ply;reviewTry=null;action({action:'navigate',ply:back})},true)
+  :button('Try a move','Play a different move for this turn on the board and have it graded',async()=>{if(reviewPreview)setReviewPreview(null);reviewTry={game,ply};await action({action:'navigate',ply:ply-1})}));
+ box.append(controls);
+ const note=t=>{const p=document.createElement('p');p.className='review-fact muted';p.textContent=t;box.append(p)};
+ if(reviewTry)note(`Move a ${row.side===0?'White':'Black'} bug on the board to grade it.`);
+ if(line&&line.status==='running')note('Finding the engine line…');
+ if(line&&line.status==='error')note(line.error||'The engine line is not available.');
+ if(line&&line.status==='ready'&&!reviewTry){
+  const chips=document.createElement('div');chips.className='review-line';const label=document.createElement('span');label.className='review-line-label';label.textContent='Line';chips.append(label);
+  line.moves.forEach((m,i)=>{const k='line'+ply+'-'+i,on=reviewPreview&&reviewPreview.key===k;const step=line.steps[i];
+   chips.append(button(text(m),'Show the board after this move of the line',()=>setReviewPreview(on?null:{game,ply,pieces:step.pieces,last_move:step.last_move,key:k}),on))});
+  box.append(chips);
+ }
+ if(tried&&tried.status==='running'&&!reviewTry)note(`Grading ${text(tried.move)}…`);
+ if(tried&&tried.status==='error'&&!reviewTry)note(tried.error||'That move could not be graded.');
+ if(tried&&tried.status==='ready'&&!reviewTry){
+  const sign=row.side===0?1:-1,best=row.best_score!=null?row.best_score:row.score;
+  const grade=tried.score==null||best==null?['Uncertain','']:(tried.move===row.alternative?['Best move','']:gradeReviewMove(best*sign,tried.score*sign,row.best_depth,tried.depth));
+  const rating=tried.score==null?null:reviewPoint(tried.score),k='try'+ply,on=reviewPreview&&reviewPreview.key===k;
+  const chips=document.createElement('div');chips.className='review-line';const label=document.createElement('span');label.className='review-line-label';label.textContent='Tried';chips.append(label);
+  const b=button(text(tried.move),'Show the board after the move you tried',()=>setReviewPreview(on?null:{game,ply,pieces:tried.pieces,last_move:tried.last_move,key:k}),on);chips.append(b);
+  const verdict=document.createElement('span');verdict.className='review-try-verdict';verdict.dataset.verdict=historyVerdicts[grade[0]]||'';
+  verdict.textContent=({'No clear error':'Fine','Uncertain':'Unclear','Best move':'Best'}[grade[0]]||grade[0])+(rating==null?'':' · '+(rating>0?'+':'')+rating);chips.append(verdict);
+  box.append(chips);
+ }
+}
 const reviewMoved=[];let reviewSettingsOn=false;
 function reviewSettings(on){
  if(on===reviewSettingsOn)return;reviewSettingsOn=on;
@@ -211,6 +274,7 @@ window.decorateHistory=s=>{
  if(reviewWasRunning===false&&running)window.setMovesMax?.(true); // a review just started: give the history the whole side panel
  reviewWasRunning=running;
  const turning=renderReviewFacts(s);
+ renderReviewExtra(s);
  const rows=new Map((review?.rows||[]).map(r=>[r.ply,r]));
  // Seconds each move took (hivegame.com games saved from now on), shown small beside the move.
  {const times=window.foulbroodOpenedTimes?window.foulbroodOpenedTimes(s):null;

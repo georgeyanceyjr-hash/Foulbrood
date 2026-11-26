@@ -64,7 +64,53 @@ class Review:
         selected=self.app.engines.get(self.app.engines.analysis_engine) or {}
         missing=bool(self.portable_engine and not (selected.get('connected') and self.matches_engine(selected)))
         recorded=self.source=='in_game'
-        return dict(source=self.source,recorded_count=len(self.in_game_history),restored=bool(self.portable_engine),resume_engine_missing=missing and not recorded,can_resume=self.can_resume(),engine=self.engine.get('name',''),external=not self.portable_engine['builtin'] if self.portable_engine else self.engine.get('id')!='Computer',remaining_seconds=remaining,working_ply=self.working_ply,active=True,status='recorded' if recorded else self.status,error=self.error,total=self.total,rows=[] if recorded else self.rows.copy(),points=history_points(self.in_game_history) if recorded else self.points.copy(),milliseconds=self.milliseconds,stage=self.stage)
+        return dict(source=self.source,recorded_count=len(self.in_game_history),restored=bool(self.portable_engine),resume_engine_missing=missing and not recorded,can_resume=self.can_resume(),engine=self.engine.get('name',''),external=not self.portable_engine['builtin'] if self.portable_engine else self.engine.get('id')!='Computer',remaining_seconds=remaining,working_ply=self.working_ply,active=True,status='recorded' if recorded else self.status,error=self.error,total=self.total,rows=[] if recorded else self.rows.copy(),points=history_points(self.in_game_history) if recorded else self.points.copy(),milliseconds=self.milliseconds,stage=self.stage,extras=list(getattr(self,'extras',{}).values()))
+
+    def side(self,kind,ply,move=None):
+        """One extra search beside the finished review: the engine's line after its preferred move
+        ('line'), or a different move the user wants graded ('try')."""
+        if self.status=='running':raise ValueError('Stop the review first.')
+        if getattr(self,'side_busy',False):raise ValueError('Still working on the last request.')
+        row=next((r for r in self.rows if r['ply']==ply),None)
+        if not row:raise ValueError('Review this move first.')
+        if not hasattr(self,'extras'):self.extras={}
+        key=(kind,ply)
+        self.extras[key]=dict(kind=kind,ply=ply,status='running',move=move)
+        self.side_busy=True;generation=self.generation;units=self.remaining_units
+        def work():
+            try:
+                data=self.snapshot('snapshot',self.game)
+                while data['ply']>ply-1:data=self.snapshot('undo',data['game'])
+                if kind=='line':
+                    moves=[];steps=[];position=data
+                    following=row['alternative'] if row.get('alternative') else row['move']
+                    for k in range(4):
+                        position=self.snapshot('play',position['game'],following)
+                        moves.append(following);steps.append(dict(pieces=position['pieces'],last_move=position.get('last_move')))
+                        if position['state'] in TERMINAL or k==3:break
+                        if k==0 and row.get('reply'):following=row['reply']
+                        else:
+                            found=self.evaluate(position,generation,min(self.milliseconds,2000))
+                            if not found.get('move'):break
+                            following=found['move']
+                    result=dict(moves=moves,steps=steps)
+                else:
+                    if move not in {m['move'] for m in data['legal']}:raise ValueError('That move is not available here.')
+                    position=self.snapshot('play',data['game'],move)
+                    found=self.evaluate(position,generation)
+                    result=dict(score=white_score(found),depth=found['depth'],side=data['side'],pieces=position['pieces'],last_move=position.get('last_move'))
+                with self.app.lock:
+                    self.extras[key].update(result,status='ready')
+            except InterruptedError:
+                with self.app.lock:self.extras.pop(key,None)
+            except Exception as exc:
+                with self.app.lock:self.extras[key].update(status='error',error=str(exc))
+            finally:
+                with self.app.lock:
+                    self.side_busy=False;self.remaining_units=units;self.phase_started=None
+                    try:self.app.revision+=1
+                    except Exception:pass
+        threading.Thread(target=work,daemon=True).start()
 
     def stop(self):
         self.generation+=1
@@ -86,7 +132,7 @@ class Review:
             if session.data['game']!=data['game']:
                 session.data=data;self.app.revision+=1
 
-    def evaluate(self,data,generation):
+    def evaluate(self,data,generation,ms=None):
         with self.app.lock:
             self.check(generation)
             if data['state'] in TERMINAL:
@@ -96,13 +142,13 @@ class Review:
             if self.engine.get('id')!='Computer':
                 external=True
             else:external=False
-        if external:return self.evaluate_external(data,generation)
+        if external:return self.evaluate_external(data,generation,ms)
         with self.app.lock:
             self.check(generation)
-            proc=subprocess.Popen([str(self.root/'target/release/bench_search'),data['game'],str(self.milliseconds)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            proc=subprocess.Popen([str(self.root/'target/release/bench_search'),data['game'],str(ms or self.milliseconds)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
             self.process=proc;self.phase_started=time.monotonic()
         try:
-            stdout,stderr=proc.communicate(timeout=self.milliseconds/1000+5)
+            stdout,stderr=proc.communicate(timeout=(ms or self.milliseconds)/1000+5)
             with self.app.lock:self.check(generation)
             if proc.returncode:raise ValueError(stderr.strip() or 'Review search was interrupted.')
             depth,nodes,score,seconds,move=stdout.rstrip('\n').split('\t')
@@ -116,7 +162,7 @@ class Review:
             with self.app.lock:
                 if self.process is proc:self.process=None;self.phase_started=None
 
-    def evaluate_external(self,data,generation):
+    def evaluate_external(self,data,generation,ms=None):
         engine=None
         try:
             with self.app.lock:
@@ -126,7 +172,7 @@ class Review:
             flags=set(';'.join(info).split(';'))
             if 'FoulBroodReviewSearch' in flags:engine.command('options set ReviewSearch True')
             engine.command('newgame '+data['game'])
-            seconds=max(1,int(self.milliseconds/1000))
+            seconds=max(1,int((ms or self.milliseconds)/1000))
             limit=f'{seconds//3600:02}:{seconds//60%60:02}:{seconds%60:02}'
             lines=engine.command('bestmove time '+limit,seconds+3)
             if not lines:raise ValueError('Engine returned no move.')
@@ -178,6 +224,7 @@ class Review:
         resume=self.can_resume()
         self.stop()
         if not resume:self.rows=[];self.points=[];self.before=None;self.pending_played=None
+        if not resume:self.extras={}
         self.engine=dict(self.app.engines.get(self.app.engines.analysis_engine) or {});self.error='';self.status='running';self.milliseconds=self.app.analysis_ms
         self.book_review_supported=None
         def usable(result):
