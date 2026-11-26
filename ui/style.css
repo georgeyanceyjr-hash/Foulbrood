@@ -964,3 +964,6 @@ aside .hb-open-grid #hbTake{grid-column:2;grid-row:2}
 /* History: the hivegame.com link sits under the result line. */
 .hist-link{font-size:12px;color:inherit;text-decoration:underline;text-underline-offset:2px;justify-self:start;width:max-content}
 .hist-link:hover{color:var(--ink)}
+
+/* ... on the same line, after the result. */
+.hist-last{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
