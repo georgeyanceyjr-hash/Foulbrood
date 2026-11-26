@@ -29,6 +29,7 @@ function renderReviewMarks(s){
   const badge=node('g',{class:'review-marks review-try-badge'+(verdict?'':' waiting'),'data-verdict':verdict?verdict.verdict:'',style:'cursor:pointer'});
   badge.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();reviewTryDismissed.add(tried.ply+'|'+tried.move);setReviewPreview(null)}); // click the grade: the tried move and its result go away
   {const tip=node('title',{});tip.textContent='Click to clear this tried move';badge.append(tip)}
+  badge.append(node('polygon',{points:hex(x,y,40),fill:'transparent',stroke:'none'})); // the whole piece is the click target, not just the number
   badge.append(node('rect',{x:x-width/2,y:y-12,width,height:24,rx:3}));
   const text=node('text',{x,y:y+5,'text-anchor':'middle'});text.textContent=label;badge.append(text);board.append(badge);
   return;
