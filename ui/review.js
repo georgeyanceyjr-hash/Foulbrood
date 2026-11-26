@@ -116,8 +116,13 @@ const renderReview=window.renderGameReview;
 // Game review in the History list: each move takes the colour of its verdict (as in the status bar) and shows the position rating after it.
 const historyVerdicts={'Best move':'good','Book move':'good','No clear error':'good','Inaccuracy':'mid','Uncertain':'mid','Mistake':'poor','Blunder':'bad','Missed win':'bad'};
 let reviewWasRunning=null;
+// The review's progress and summary sit at the top of the History box (the separate bar under the board is retired).
+const reviewInfo=(()=>{const box=document.createElement('div');box.id='reviewInfo';box.className='review-panel';box.hidden=true;
+ for(const id of ['reviewProgress','reviewRemaining','reviewProgressBar','reviewSummary']){const e=$(id);if(e)box.append(e)}
+ const panel=$('historyPanel'),head=panel?.querySelector(':scope > .row');if(head)head.after(box);return box})();
 window.decorateHistory=s=>{
  const review=s?.game_review,list=$('moves');if(!list)return;
+ reviewInfo.hidden=!review||!!editorDraft;
  const running=review?.status==='running';
  if(reviewWasRunning===false&&running)window.setMovesMax?.(true); // a review just started: give the history the whole side panel
  reviewWasRunning=running;

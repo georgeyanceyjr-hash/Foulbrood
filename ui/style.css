@@ -992,3 +992,7 @@ body.moves-max #historyPanel:not([hidden]) .moves,body.moves-max #historyPanel:n
 
 /* Game review: the graph is retired; the History list carries the colours and ratings */
 #reviewGraph,.review-graph-labels{display:none!important}
+#reviewPanel{display:none!important}
+#reviewInfo{margin:10px 0 4px;display:grid;gap:6px}
+#reviewInfo p{margin:0}
+#reviewInfo progress{width:100%}
