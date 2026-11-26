@@ -558,7 +558,7 @@
  });
  el('hbLogin').addEventListener('input',render);
  // What the History tab needs from Live.
- window.foulbroodLive={stepped:s=>{try{const c=boardCard(s);return !!c&&!c.finished&&document.body.classList.contains('hb-live')&&typeof s.ply==='number'&&s.ply<(s.review_total??s.ply)}catch(e){return false}},ask,card:()=>soundCard(),setLive:v=>{setLive(v);fixTabs()},boardIsLive:()=>botBoard(),hasStash:()=>hasGame(stash()),dropStash:()=>{stash(null);botBoard(false);shown={id:null,turn:-1}}};
+ window.foulbroodLive={botName:()=>{try{return (bot&&(bot.user||bot.saved_login))||''}catch(e){return ''}},stepped:s=>{try{const c=boardCard(s);return !!c&&!c.finished&&document.body.classList.contains('hb-live')&&typeof s.ply==='number'&&s.ply<(s.review_total??s.ply)}catch(e){return false}},ask,card:()=>soundCard(),setLive:v=>{setLive(v);fixTabs()},boardIsLive:()=>botBoard(),hasStash:()=>hasGame(stash()),dropStash:()=>{stash(null);botBoard(false);shown={id:null,turn:-1}}};
  setTimeout(()=>{if(typeof state==='undefined'||!state||state.mode!=='analysis')return;(live?takeBoard():releaseBoard()).catch(()=>{})},1500);
  el('hbFollow').addEventListener('change',()=>{if(el('hbFollow').checked)shown={id:null,turn:-1};render()});
  el('hivebotDetails').addEventListener('toggle',()=>{refresh();schedule()});
@@ -589,9 +589,32 @@
   if(r!=null){text+=' '+Math.round(r);if(c!=null){const d=Math.round(c);text+=' ('+(d>0?'+':d<0?'−':'±')+Math.abs(d)+')'}}
   return text;
  };
+ // Filters across games: seen from one player's side (the bot's by default), by opponent, colour, result and opening.
+ let allGames=[],meChosen=false;
+ const fill=(select,options,keep)=>{const was=keep!=null?keep:select.value;select.replaceChildren();for(const [value,label]of options){const o=document.createElement('option');o.value=value;o.textContent=label;select.append(o)}select.value=options.some(o=>o[0]===was)?was:options[0][0]};
+ const tally=list=>{const counts=new Map();for(const x of list)if(x)counts.set(x,(counts.get(x)||0)+1);return [...counts].sort((a,b)=>b[1]-a[1])};
+ const outcomeFor=(g,me)=>{const r=String(g.result||'');const w=/^White won/.test(r)?'white':/^Black won/.test(r)?'black':/^Draw/.test(r)?'draw':'';if(!w)return '';if(w==='draw')return 'draw';if(!me)return w;return g[w]===me?'won':'lost'};
+ const applyFilters=()=>{
+  const names=tally(allGames.flatMap(g=>[g.white,g.black]));
+  let me=el('histMe').value;if(!meChosen){let bot='';try{bot=(window.foulbroodLive&&window.foulbroodLive.botName&&window.foulbroodLive.botName())||''}catch(e){}me=names.some(n=>n[0]===bot)?bot:(names[0]&&names[0][1]>1?names[0][0]:'')}
+  fill(el('histMe'),[['','Anyone'],...names.map(([n,c])=>[n,`${n} (${c})`])],me);me=el('histMe').value;
+  const mine=me?allGames.filter(g=>g.white===me||g.black===me):allGames;
+  fill(el('histOpp'),[['','Anyone'],...tally(mine.flatMap(g=>me?[g.white===me?g.black:g.white]:[g.white,g.black])).map(([n,c])=>[n,`${n} (${c})`])]);
+  fill(el('histOpening'),[['','Any'],...tally(mine.map(g=>g.opening)).map(([n,c])=>[n,`${n} (${c})`])]);
+  for(const id of ['histColour','histResult'])el(id).disabled=!me;if(!me){el('histColour').value='';el('histResult').value=''}
+  const opp=el('histOpp').value,colour=el('histColour').value,result=el('histResult').value,opening=el('histOpening').value;
+  const shown=mine.filter(g=>(!opp||g.white===opp||g.black===opp)&&(!colour||g[colour]===me)&&(!opening||g.opening===opening)&&(!result||outcomeFor(g,me)===result));
+  const n=k=>shown.filter(g=>outcomeFor(g,me)===k).length;
+  const totals=me?`${n('won')} won · ${n('lost')} lost`+(n('draw')?` · ${n('draw')} drawn`:''):`White won ${n('white')} · Black won ${n('black')}`+(n('draw')?` · ${n('draw')} drawn`:'');
+  return {shown,totals};
+ };
+ for(const id of ['histMe','histOpp','histColour','histResult','histOpening'])el(id).addEventListener('change',()=>{if(id==='histMe')meChosen=true;draw(null)});
  const draw=data=>{
+  if(data){allGames=data.games||[];draw.total=data.total||0}
+  const {shown,totals}=applyFilters();data={games:shown,total:shown.length};
+  el('histFilters').hidden=!allGames.length;
   const list=el('histList');list.replaceChildren();
-  el('histCount').textContent=data.total?`${data.total} game${data.total===1?'':'s'}`+(data.total>data.games.length?` · showing the first ${data.games.length}`:''):(el('histSearch').value.trim()?'No games match.':'No games yet. Finished games appear here on their own.');
+  el('histCount').textContent=data.total?`${data.total} game${data.total===1?'':'s'} · ${totals}`:(allGames.length||el('histSearch').value.trim()?'No games match.':'No games yet. Finished games appear here on their own.');
   for(const g of data.games){
    const row=document.createElement('div');row.className='hist-row'+(g.starred?' starred':'');
    const star=document.createElement('button');star.className='hist-star';star.textContent=g.starred?'★':'☆';star.title=g.starred?'Remove the star':'Star: keep at the top of the list';star.setAttribute('aria-pressed',String(!!g.starred));
@@ -625,7 +648,7 @@
  const movesOf=game=>String(game||'').split(';').slice(3).map(m=>m.trim()).filter(Boolean).join(';');
  let opened=null;try{opened=JSON.parse(localStorage.getItem('foulbrood_analysis_players')||'null')}catch(e){}
  const rememberPlayers=g=>{
-  opened={moves:movesOf(g.game)};for(const k of ['white','black','white_kind','black_kind','white_rating','black_rating','white_change','black_change','time_control','played','source','result'])if(g[k]!=null)opened[k]=g[k];
+  opened={moves:movesOf(g.game)};for(const k of ['white','black','white_kind','black_kind','white_rating','black_rating','white_change','black_change','time_control','played','source','result'])if(g[k]!=null)opened[k]=g[k];if(Array.isArray(g.times))opened.times=g.times;
   try{localStorage.setItem('foulbrood_analysis_players',JSON.stringify(opened))}catch(e){}
  };
  const showPlayers=s=>{
@@ -645,6 +668,7 @@
   }
  };
  // How the game opened from History ended, while it is still the game on the Analysis board ("... by resignation" / "... on time").
+ window.foulbroodOpenedTimes=s=>{try{if(!opened||!opened.moves||!Array.isArray(opened.times)||!s)return null;const now=movesOf(s.review_game||s.game);return now===opened.moves||now.startsWith(opened.moves+';')||opened.moves.startsWith(now+';')?opened.times:null}catch(e){return null}};
  window.foulbroodOpenedResult=s=>{try{if(!opened||!opened.moves||!s)return '';const now=movesOf(s.review_game||s.game);return now===opened.moves||now.startsWith(opened.moves+';')||opened.moves.startsWith(now+';')?String(opened.result||''):''}catch(e){return ''}};
  const openGame=async id=>{
   const g=await call('get',{id});

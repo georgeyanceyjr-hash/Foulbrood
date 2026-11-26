@@ -558,6 +558,8 @@ class HiveBot:
                     game['how'] = event['how'][:20]  # Board, Resigned, Timeout, Repetition ...: for the end-of-game stamp
                 # The clocks count down from when they last CHANGED: the site can repeat an update mid-move
                 # with the same figures, and restarting the count there made the opponent's clock jump back up.
+                # When each move was first seen, so the History entry can say how long every move took.
+                game.setdefault('turn_seen', {}).setdefault(int(game.get('turn') or 0), time.time())
                 clocks = (game.get('turn'), game.get('white_left'), game.get('black_left'))
                 if clocks != game.get('clock_seen') or 'clock_at' not in game:
                     game['clock_seen'], game['clock_at'] = clocks, time.time()
@@ -688,6 +690,7 @@ class HiveBot:
             # The viewer's History tab.
             import library
             n = len(moves)
+            seen = {int(k): v for k, v in (game.get('turn_seen') or {}).items()}
             cards = [game.get('white_card') or {}, game.get('black_card') or {}]
             clock = '%d+%d' % (int(game['base']) // 60, int(game.get('increment') or 0)) if game.get('base') else ''
             library.add(dict(
@@ -700,7 +703,9 @@ class HiveBot:
                 white_rating=cards[0].get('rating'), black_rating=cards[1].get('rating'),
                 white_change=cards[0].get('change'), black_change=cards[1].get('change'),
                 white_kind='Bot' if cards[0].get('bot') else 'Human', black_kind='Bot' if cards[1].get('bot') else 'Human',
-                note=('Played by ' + self.engine_name) if self.engine_name else ''))
+                note=('Played by ' + self.engine_name) if self.engine_name else '',
+                times=[(round(seen[i] - seen[i - 1], 1) if i in seen and i - 1 in seen else None) for i in range(1, n + 1)]
+                      if len(seen) > 2 else None))
         except Exception as exc:  # never let record-keeping disturb play
             self.log.append('Could not save the game record: %s' % str(exc)[:120])
 

@@ -212,6 +212,13 @@ window.decorateHistory=s=>{
  reviewWasRunning=running;
  const turning=renderReviewFacts(s);
  const rows=new Map((review?.rows||[]).map(r=>[r.ply,r]));
+ // Seconds each move took (hivegame.com games saved from now on), shown small beside the move.
+ {const times=window.foulbroodOpenedTimes?window.foulbroodOpenedTimes(s):null;
+  for(const item of list.querySelectorAll('button.history-move')){const number=item.querySelector('.move-number'),ply=number?parseInt(number.textContent,10):0,t=times&&ply?times[ply-1]:null;let tag=item.querySelector('.move-time');
+   if(t==null){if(tag)tag.remove();continue}
+   const text=t<60?(t<10?t.toFixed(1):Math.round(t))+'s':Math.floor(t/60)+':'+String(Math.round(t%60)).padStart(2,'0');
+   if(!tag){tag=document.createElement('span');tag.className='move-time';tag.title='Time spent on this move';const rating=item.querySelector('.move-rating');if(rating)rating.before(tag);else item.append(tag)}
+   if(tag.textContent!==text)tag.textContent=text}}
  for(const item of list.querySelectorAll('button.history-move')){
   const number=item.querySelector('.move-number'),ply=number?parseInt(number.textContent,10):0,row=review&&ply?rows.get(ply):null;
   const verdict=row?historyVerdicts[row.label]||'':'';

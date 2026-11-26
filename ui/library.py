@@ -87,6 +87,9 @@ def add(entry):
         if 'game' not in old or (finished(game) and not finished(old.get('game'))):
             old['game'] = game
         old['moves'] = len(_moves(old['game']))
+        times = entry.get('times')  # seconds each move took, where known
+        if isinstance(times, list) and 0 < len(times) <= 2000 and not old.get('times'):
+            old['times'] = [round(float(t), 1) if isinstance(t, (int, float)) and not isinstance(t, bool) and 0 <= t < 100000 else None for t in times]
         for key, value in fields.items():
             if key == 'source':
                 # Where it was played beats "Imported".
@@ -122,13 +125,26 @@ def set_review(game, text, reviewed, total, engine):
     return gid
 
 
+def _opening(game):
+    """The first three bugs each side put down, e.g. 'P·A·Q vs G·B·Q' (blank for set-up positions)."""
+    parts = str(game or '').split(';')
+    if len(parts) < 5 or '~' in parts[0]:
+        return ''
+    bugs = ([], [])
+    for i, move in enumerate(parts[3:9]):
+        piece = (move.strip().split(' ') or [''])[0]
+        bugs[i % 2].append(''.join(c for c in piece[1:] if not c.isdigit()) or '–')
+    return '·'.join(bugs[0]) + ' vs ' + '·'.join(bugs[1])
+
+
 def listing(query=''):
     words = [w for w in str(query or '').lower().split() if w][:8]
     with LOCK:
         games = _load()
     rows = []
     for g in games:
-        row = {k: v for k, v in g.items() if k != 'game'}
+        row = {k: v for k, v in g.items() if k not in ('game', 'times')}
+        row['opening'] = _opening(g.get('game'))
         hay = ' '.join(str(g.get(k) or '') for k in ('white', 'black', 'result', 'source', 'time_control', 'played', 'saved', 'note')).lower()
         if all(w in hay for w in words):
             rows.append(row)
