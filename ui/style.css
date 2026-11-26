@@ -1037,3 +1037,10 @@ body.review-mode aside>#analysisSetup,body.review-mode aside>#engineInsightPanel
 #reviewSettings select{width:100%;margin-top:0}
 #reviewSettings>label:not(.insight-engine-choice){font-size:0;letter-spacing:0}
 body.review-mode #histExportToggle,body.review-mode #histExport{display:none!important}
+/* Game review: the one box always runs the full height of the board column */
+body.review-mode aside{position:relative;align-self:stretch;min-height:360px;display:flex;flex-direction:column}
+body.review-mode aside>#analysisModes:not([hidden]){flex:none}
+body.review-mode aside>#historyPanel:not([hidden]){position:relative;inset:auto;margin:0;flex:1 1 0;height:0;min-height:0;display:flex!important;flex-direction:column}
+body.review-mode #historyPanel:not([hidden])>*{flex:none}
+body.review-mode #historyPanel:not([hidden]) #moves{flex:1 1 auto;min-height:0;max-height:none;overflow:auto;align-content:start}
+body.review-mode #historyMax{display:none!important}
