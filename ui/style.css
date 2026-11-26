@@ -1063,3 +1063,4 @@ body.review-mode aside #historyPanel h2.hb-fold-title::before{content:none}
 #reviewInfo progress{display:block;margin:0}
 #historyPanel:has(#reviewInfo:not([hidden])) #moves{margin-top:12px}
 #reviewRemaining:empty{display:none}
+#previousIssue,#nextIssue{display:none!important}
