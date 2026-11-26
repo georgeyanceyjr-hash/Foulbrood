@@ -692,7 +692,9 @@ class HiveBot:
             clock = '%d+%d' % (int(game['base']) // 60, int(game.get('increment') or 0)) if game.get('base') else ''
             library.add(dict(
                 game='Base+MLP;InProgress;%s[%d];%s' % ('White' if n % 2 == 0 else 'Black', n // 2 + 1, ';'.join(moves)),
-                white=game.get('white'), black=game.get('black'), result=game.get('result') or 'Finished', source='Live',
+                white=game.get('white'), black=game.get('black'),
+                result=(game.get('result') or 'Finished') + ({'Resigned': ' by resignation', 'Timeout': ' on time'}.get(str(game.get('how') or ''), '')
+                                                             if str(game.get('result') or '').endswith(' won') else ''), source='Live',
                 time_control=(clock + (' rated' if game.get('rated') else ' casual' if game.get('rated') is False else '')).strip(),
                 played=time.strftime('%Y-%m-%dT%H:%M:%S'), url='https://hivegame.com/game/' + str(game['id']),
                 white_rating=cards[0].get('rating'), black_rating=cards[1].get('rating'),

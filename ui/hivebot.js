@@ -644,6 +644,8 @@
     if(bits.length){source.hidden=false;source.style.visibility='';source.textContent=bits.join(' · ');source.title=source.textContent}}
   }
  };
+ // How the game opened from History ended, while it is still the game on the Analysis board ("... by resignation" / "... on time").
+ window.foulbroodOpenedResult=s=>{try{if(!opened||!opened.moves||!s)return '';const now=movesOf(s.review_game||s.game);return now===opened.moves||now.startsWith(opened.moves+';')||opened.moves.startsWith(now+';')?String(opened.result||''):''}catch(e){return ''}};
  const openGame=async id=>{
   const g=await call('get',{id});
   const loads=[];

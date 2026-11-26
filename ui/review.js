@@ -128,6 +128,7 @@ function historyEnding(s){
  const reported={WhiteWins:0,BlackWins:1,'1-0':0,'0-1':1}[s.reported_result];
  if(reported!=null){ // the board itself is not over: someone resigned or ran out of time
   let how='';try{const L=window.foulbroodLive,c=document.body.classList.contains('hb-live')&&L&&L.card?L.card():null;if(c&&c.finished)how={Resigned:'resigned',Timeout:'ran out of time'}[c.how]||''}catch(e){}
+  if(!how){const saved=window.foulbroodOpenedResult?window.foulbroodOpenedResult(s):'';how=/by resignation/.test(saved)?'resigned':/on time/.test(saved)?'ran out of time':''}
   return `${won(reported)} · ${side[1-reported]} ${how||'resigned or ran out of time'}`;
  }
  if(s.reported_result==='Draw'||s.reported_result==='1/2-1/2')return 'Draw';
