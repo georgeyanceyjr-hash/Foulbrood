@@ -227,6 +227,13 @@ window.reviewPreviewActive=()=>!!reviewPreview;
  // While "Try a move" is on, the board accepts one move for the side to play, and that move is graded instead of played.
  const trying=()=>!!reviewTry&&!!state&&!!state.game_review&&state.game_review.status!=='running'&&!editorDraft&&state.ply===reviewTry.ply-1&&(state.review_game||state.game)===reviewTry.game;
  const realCanMove=canMove,realPlay=play;
+ // Normally a move dropped on the board waits for a second click to confirm it (and is dropped if the window loses focus).
+ // A tried move is graded, not played, so it goes in as soon as it is dropped.
+ const realStage=stageMove;
+ stageMove=function(m,suggestion=false){
+  if(trying()&&!suggestion&&m&&m.to&&state.legal.some(x=>x.move===m.move)){selected=null;pieceDrag=null;try{removeDragGhost()}catch(e){}play(m.move);return}
+  return realStage(m,suggestion);
+ };
  canMove=function(){return trying()||realCanMove()};
  play=function(move){
   if(!trying())return realPlay(move);
