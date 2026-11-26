@@ -825,7 +825,7 @@ aside select,aside input[type=text],aside input[type=password],aside input[type=
 aside select:focus,aside input:focus,aside textarea:focus{border-color:var(--hazard)}
 aside input::placeholder,aside textarea::placeholder{color:var(--muted);opacity:.8}
 aside button:not(.hist-star){box-sizing:border-box;min-height:36px;padding:8px 10px;border:1px solid var(--line);border-radius:2px;background:transparent;color:var(--ink);font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;line-height:1.3;white-space:normal}
-aside button:not(:disabled):hover{border-color:var(--ink);background:transparent}
+aside button:not(:disabled):not([aria-pressed="true"]):hover{border-color:var(--ink);background:transparent}
 aside button:disabled{color:var(--muted);opacity:.55}
 aside button.primary,aside #analyze,aside .setup-side-buttons button[aria-pressed="true"]{background:var(--hazard);border-color:var(--hazard);color:var(--pitch)}
 aside button.primary:not(:disabled):hover,aside #analyze:not(:disabled):hover{border-color:var(--ink);background:var(--hazard)}
