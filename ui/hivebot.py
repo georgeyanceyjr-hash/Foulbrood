@@ -500,6 +500,8 @@ class HiveBot:
                     self.thinking = None
             elif kind == 'manual':
                 self.manual = bool(event.get('on'))
+            elif kind == 'busy':
+                self.log.append('Not accepted: still waiting on the last challenge. Try again in a moment.')
             elif kind == 'refused':
                 self.refused = dict(id=str(event.get('id') or ''), msg=str(event.get('msg') or '')[:200], at=time.time())
                 self.log.append('hivegame.com did not accept that: %s' % (str(event.get('msg') or 'no reason given')[:160]))

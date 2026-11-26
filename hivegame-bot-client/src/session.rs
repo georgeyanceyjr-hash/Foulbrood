@@ -182,7 +182,7 @@ fn listen_for_commands(outbox: mpsc::UnboundedSender<Outgoing>, auto: Arc<AutoSt
                     continue;
                 }
                 if let Some(id) = command.get("id").and_then(|i| i.as_str()) {
-                    auto.active.lock().unwrap().insert(format!("pending-{id}"), Instant::now() - Duration::from_secs(1740));
+                    auto.active.lock().unwrap().insert(format!("pending-{id}"), Instant::now() - Duration::from_secs(1780));
                     protocol::hb(serde_json::json!({"ev": "accept", "id": id, "open": false, "from": ""}));
                     let request = ClientRequest::Challenge(ChallengeAction::Accept(id.to_string()));
                     if outbox.send(Outgoing::Request(request)).is_err() {
@@ -262,6 +262,7 @@ impl AutoState {
         if game.finished {
             active.remove(&game.game_id);
         } else {
+            active.remove(&format!("pending-{}", game.game_id)); // the accepted challenge became this game
             active.insert(game.game_id.clone(), Instant::now());
         }
     }
@@ -609,7 +610,7 @@ impl Session {
                 .active
                 .lock()
                 .unwrap()
-                .insert(format!("pending-{}", challenge.challenge_id), Instant::now() - Duration::from_secs(1740));
+                .insert(format!("pending-{}", challenge.challenge_id), Instant::now() - Duration::from_secs(1780));
             info!(bot = %self.bot.name, challenge_id = %challenge.challenge_id, "accepting challenge");
             protocol::hb(serde_json::json!({
                 "ev": "accept", "id": challenge.challenge_id, "open": !addressed_to_us,
