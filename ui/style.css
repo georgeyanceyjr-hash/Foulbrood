@@ -1064,3 +1064,12 @@ body.review-mode aside #historyPanel h2.hb-fold-title::before{content:none}
 #historyPanel:has(#reviewInfo:not([hidden])) #moves{margin-top:12px}
 #reviewRemaining:empty{display:none}
 #previousIssue,#nextIssue{display:none!important}
+/* Game review facts: per-player summary, opening, turning point */
+#reviewFacts{display:grid;gap:4px;margin:10px 0 0}
+#reviewFacts .review-fact{margin:0;font-size:11px;line-height:1.35;color:var(--ink)}
+#reviewFacts .review-fact b{display:inline-block;min-width:3.6em;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+#reviewFacts .review-fact.muted{color:var(--muted)}
+aside #reviewFacts #reviewTurn{justify-self:start;width:auto;margin:4px 0 0}
+aside #reviewFacts #reviewTurn[aria-pressed="true"]{background:var(--hazard);border-color:var(--hazard);color:var(--pitch)}
+#moves .history-move.turning{outline:2px solid var(--hazard);outline-offset:1px}
+#moves .history-move.turning .move-number::after{content:' ★';color:var(--hazard)}

@@ -142,9 +142,54 @@ const reviewInfo=(()=>{const box=document.createElement('div');box.id='reviewInf
  go.onclick=()=>{const b=$('analyze');if(b&&!b.disabled)b.click()};
  const first=box.querySelector('#reviewProgress'),rest=box.querySelector('#reviewRemaining');if(first){const text=document.createElement('div');text.className='review-info-text';box.prepend(line);text.append(first);if(rest)text.append(rest);line.append(text,go)}
  const panel=$('historyPanel'),head=panel?.querySelector(':scope > .row');const under=$('histExport')||head;if(under)under.after(box);return box})();
+// ---- What the review adds up to: per-player summary, opening and book exit, and the turning point ----
+const reviewScale=x=>Math.abs(x)>99000?Math.sign(x)*100:Math.max(-99,Math.min(99,100*Math.tanh(x/600)));
+function reviewRowLoss(row){ // how much the played move gave up, mover's side, on the grading scale (0..200)
+ if(!row||row.score==null||row.best_score==null||row.label==='Book move'||row.label==='Best move')return 0;
+ const sign=row.side===0?1:-1;return Math.max(0,reviewScale(row.best_score*sign)-reviewScale(row.score*sign));
+}
+function reviewOpening(game){ // the first three bugs each side put down, e.g. "P·A·Q vs G·B·Q"
+ const moves=String(game||'').split(';').slice(3),root=String(game||'').split(';')[0];if(root.includes('~')||moves.length<2)return '';
+ const bugs=[[],[]];moves.slice(0,6).forEach((m,i)=>{const piece=m.trim().split(' ')[0]||'';bugs[i%2].push(piece.replace(/^[wb]/,'').replace(/\d/,'')||'–')});
+ return bugs[0].join('·')+' vs '+bugs[1].join('·');
+}
+function reviewTurningPoint(s){ // the move where the loser's position dropped the most and never came back
+ const review=s?.game_review,rows=(review?.rows||[]).filter(r=>r.score!=null).sort((a,b)=>a.ply-b.ply);if(rows.length<4)return null;
+ const board=(s.review_game||s.game||'').split(';')[1],reported={WhiteWins:0,BlackWins:1,'1-0':0,'0-1':1}[s.reported_result];
+ const winner=s.resigned_side!=null?1-s.resigned_side:s.timeout_side!=null?1-s.timeout_side:board==='WhiteWins'?0:board==='BlackWins'?1:reported!=null?reported:null;
+ const sign=winner===0?-1:1; // the loser's side of the bar (White's when there is no winner)
+ const value=r=>sign*reviewScale(r.score);
+ let best=null;
+ for(let i=1;i<rows.length;i++){
+  const drop=winner==null?Math.abs(value(rows[i-1])-value(rows[i])):value(rows[i-1])-value(rows[i]);if(drop<10)continue;
+  const never=winner!=null&&value(rows[i-1])>-25&&rows.slice(i).every(r=>value(r)<=-25); // playable before, clearly worse ever after
+  const weight=drop+(never?1000:0);
+  if(!best||weight>best.weight)best={ply:rows[i].ply,drop,weight,side:rows[i].side};
+ }
+ return best;
+}
+function renderReviewFacts(s){
+ const box=reviewFacts,review=s?.game_review,rows=review?.rows||[];
+ const show=!!review&&!editorDraft&&rows.length>0;box.hidden=!show;if(!show){box.dataset.key='';return null}
+ const turn=reviewTurningPoint(s),names=s.player_names||[];
+ const sides=[0,1].map(side=>{const own=rows.filter(r=>r.side===side&&r.label!=='Book move'&&r.score!=null&&r.best_score!=null),count=l=>rows.filter(r=>r.side===side&&l.includes(r.label)).length;
+  const mean=own.length?own.reduce((t,r)=>t+Math.min(50,reviewRowLoss(r)),0)/own.length:null;
+  return {side,accuracy:mean==null?null:Math.max(0,Math.round(100-2*mean)),slips:count(['Inaccuracy']),mistakes:count(['Mistake']),blunders:count(['Blunder','Missed win'])}});
+ const lastBook=rows.filter(r=>r.label==='Book move').reduce((m,r)=>Math.max(m,r.ply),0),opening=reviewOpening(s.review_game||s.game);
+ const key=JSON.stringify([sides,lastBook,opening,turn&&turn.ply,names,s.ply===(turn&&turn.ply)]);
+ if(box.dataset.key!==key){box.dataset.key=key;box.replaceChildren();
+  for(const side of sides){const line=document.createElement('p');line.className='review-fact';const who=document.createElement('b');who.textContent=side.side===0?'White':'Black';
+   const bits=[side.accuracy==null?'—':side.accuracy+'%'];if(side.slips)bits.push(side.slips+' inaccurac'+(side.slips===1?'y':'ies'));if(side.mistakes)bits.push(side.mistakes+' mistake'+(side.mistakes===1?'':'s'));if(side.blunders)bits.push(side.blunders+' blunder'+(side.blunders===1?'':'s'));
+   line.append(who,' '+bits.join(' · '));line.title='Accuracy: 100% means every move matched the engine\'s choice or cost nothing.';box.append(line)}
+  if(opening||lastBook){const line=document.createElement('p');line.className='review-fact muted';line.textContent=[opening?'Opening '+opening:'',lastBook?'book to move '+lastBook:''].filter(Boolean).join(' · ');line.title='The first three bugs each side placed (White vs Black)';box.append(line)}
+  if(turn){const go=document.createElement('button');go.type='button';go.id='reviewTurn';go.className='small';go.textContent='Turning point · move '+turn.ply;go.title='Where the position swung the most and never came back';go.onclick=()=>action({action:'navigate',ply:turn.ply});if(s.ply===turn.ply)go.setAttribute('aria-pressed','true');box.append(go)}
+ }
+ return turn;
+}
 // In Game review the History box is the whole workspace: it is titled "Game review" and carries the engine and
 // thinking-time choices at its top; the Explore a game and Engine insight boxes are put away until Position is chosen.
 const reviewSettingsBox=(()=>{const d=document.createElement('div');d.id='reviewSettings';d.hidden=true;reviewInfo.before(d);return d})();
+const reviewFacts=(()=>{const d=document.createElement('div');d.id='reviewFacts';d.hidden=true;reviewInfo.after(d);return d})();
 const reviewMoved=[];let reviewSettingsOn=false;
 function reviewSettings(on){
  if(on===reviewSettingsOn)return;reviewSettingsOn=on;
@@ -165,13 +210,15 @@ window.decorateHistory=s=>{
  const running=review?.status==='running';
  if(reviewWasRunning===false&&running)window.setMovesMax?.(true); // a review just started: give the history the whole side panel
  reviewWasRunning=running;
+ const turning=renderReviewFacts(s);
  const rows=new Map((review?.rows||[]).map(r=>[r.ply,r]));
  for(const item of list.querySelectorAll('button.history-move')){
   const number=item.querySelector('.move-number'),ply=number?parseInt(number.textContent,10):0,row=review&&ply?rows.get(ply):null;
   const verdict=row?historyVerdicts[row.label]||'':'';
   let tag=item.querySelector('.move-rating');
-  if(!row){if(tag)tag.remove();delete item.dataset.verdict;if(item.dataset.reviewTitle){item.title='';delete item.dataset.reviewTitle}continue}
+  if(!row){item.classList.remove('turning');if(tag)tag.remove();delete item.dataset.verdict;if(item.dataset.reviewTitle){item.title='';delete item.dataset.reviewTitle}continue}
   if(verdict)item.dataset.verdict=verdict;else delete item.dataset.verdict;
+  item.classList.toggle('turning',!!turning&&turning.ply===ply);
   const rating=row.label==='Book move'&&row.score==null?null:reviewPoint(row.score),text=rating==null?(row.label==='Book move'?'Book':''):(rating>0?'+':'')+rating;
   if(!tag){tag=document.createElement('span');tag.className='move-rating';item.append(tag)}
   if(tag.textContent!==text)tag.textContent=text;
