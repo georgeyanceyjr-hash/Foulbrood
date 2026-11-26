@@ -777,8 +777,12 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
 
 // History panel expander: the move list takes the whole side of the board, the other panels step aside; again to go back.
 (()=>{const b=document.getElementById('historyMax');if(!b)return;
- const set=on=>{document.body.classList.toggle('moves-max',on);b.setAttribute('aria-pressed',String(on));b.textContent=on?'⤡':'⤢';const t=on?'Back to all the panels':'Expand the history to the full side panel';b.title=t;b.setAttribute('aria-label',t);try{sessionStorage.setItem('foulbrood_moves_max',on?'1':'0')}catch(e){}};
+ // Expanded or not is remembered separately for Local, Online and Analysis.
+ const where=()=>document.body.classList.contains('hb-live')?'online':(typeof state!=='undefined'&&state&&state.mode==='play'?'local':'analysis');
+ const read=()=>{try{return JSON.parse(sessionStorage.getItem('foulbrood_moves_max_by')||'{}')||{}}catch(e){return {}}};
+ const show=on=>{document.body.classList.toggle('moves-max',on);b.setAttribute('aria-pressed',String(on));b.textContent=on?'⤡':'⤢';const t=on?'Back to all the panels':'Expand the history to the full side panel';b.title=t;b.setAttribute('aria-label',t)};
+ const set=on=>{const all=read();all[where()]=!!on;try{sessionStorage.setItem('foulbrood_moves_max_by',JSON.stringify(all))}catch(e){}show(!!on)};
+ const sync=()=>{const on=!!read()[where()];if(on!==document.body.classList.contains('moves-max'))show(on)};
  b.onclick=()=>set(!document.body.classList.contains('moves-max'));
- try{if(sessionStorage.getItem('foulbrood_moves_max')==='1')set(true)}catch(e){}
- window.setMovesMax=set;
+ window.setMovesMax=set;sync();setInterval(sync,200);
 })();
