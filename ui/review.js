@@ -70,7 +70,7 @@ window.renderGameReview=s=>{
  const remaining=review.status==='ready'||review.status==='complete'?(review.status==='complete'?0:(2*review.total+1)*s.analysis_ms/1000):review.remaining_seconds;
  $('reviewRemaining').hidden=!review.total||review.source==='in_game';$('reviewProgressBar').hidden=review.source==='in_game';
  const minutes=Math.max(1,Math.ceil(remaining/60));
- $('reviewRemaining').textContent=review.status==='complete'?'Review complete':review.status==='stopped'?'Completed assessments are kept.':`Up to about ${minutes} ${minutes===1?'minute':'minutes'} remaining`;
+ $('reviewRemaining').textContent=review.status==='complete'?'Review complete':review.status==='stopped'?'':`Up to about ${minutes} ${minutes===1?'minute':'minutes'} remaining`;
  $('reviewProgress').classList.toggle('search-activity',review.status==='running');
  $('reviewProgressBar').max=Math.max(1,review.total);$('reviewProgressBar').value=review.rows.length;
  $('turn').hidden=true;

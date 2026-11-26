@@ -1021,8 +1021,16 @@ aside #reviewInfo #reviewGo{flex:none;width:auto;margin:0;white-space:nowrap}
 @container (min-width:781px){
  .player.review-insight .review-thought-strip{justify-self:stretch;width:100%;justify-content:flex-start}
  .player.review-insight .review-thought-heading,.player.review-insight .review-thought-heading.has-reviewed-move{flex:none;min-width:8.5em;padding-right:0}
- .player.review-insight .review-thought-cell{flex:1 1 0;justify-content:flex-start}
- .player.review-insight .review-thought-cell>.review-thought-depth{margin-left:auto}
+ /* each box is a small card: label and depth on the top line, the move and its rating on the bottom line */
+ .player.review-insight .review-thought-cell{flex:1 1 0;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:baseline;gap:3px 12px;padding:7px 12px 8px}
+ .player.review-insight .review-thought-cell>.bot-field-label{grid-column:1;grid-row:1;justify-self:start}
+ .player.review-insight .review-thought-cell>.review-thought-depth{grid-column:2;grid-row:1;justify-self:end;margin-left:0}
+ .player.review-insight .review-thought-cell>.bot-field-value{grid-column:1;grid-row:2;justify-self:start;min-width:0;overflow:hidden;text-overflow:ellipsis}
+ .player.review-insight .review-thought-cell .position-score>.bot-field-value{grid-column:2;grid-row:2;justify-self:end}
+ .player.review-insight .review-thought-strip{align-items:stretch}
+ .player.review-insight .review-thought-cell>.review-thought-depth{font-size:0;letter-spacing:0}
+ .player.review-insight .review-thought-cell>.review-thought-depth::after{font-size:9px;font-weight:700;letter-spacing:.14em;color:var(--muted);opacity:1}
+ .player.review-insight .review-thought-heading,.player.review-insight .review-thought-heading.has-reviewed-move{align-self:center}
 }
 /* Move boxes keep their height however long the game is */
 #moves{grid-auto-rows:max-content}
@@ -1054,3 +1062,4 @@ body.review-mode aside #historyPanel h2.hb-fold-title::before{content:none}
 #reviewInfo .review-info-text>p,#reviewInfo .review-info-text>#reviewProgress,#reviewInfo .review-info-text>#reviewRemaining{margin:0!important;line-height:1.3}
 #reviewInfo progress{display:block;margin:0}
 #historyPanel:has(#reviewInfo:not([hidden])) #moves{margin-top:12px}
+#reviewRemaining:empty{display:none}
