@@ -220,7 +220,9 @@ window.reviewPreviewActive=()=>!!reviewPreview;
 { // Draw a previewed position (a step of the engine's line, or the tried move) in place of the real one, without touching the game.
  const realRender=render;
  render=function(s){
-  if(reviewPreview&&s&&s.game_review&&s.ply===reviewPreview.ply&&(s.review_game||s.game)===reviewPreview.game)s={...s,pieces:reviewPreview.pieces,last_move:reviewPreview.last_move||null,hint:null};
+  // A state that was drawn with a preview carries the real position along, so clearing the preview puts it straight back.
+  if(s&&s.previewReal){const real=s.previewReal;s={...s,...real};delete s.previewReal}
+  if(reviewPreview&&s&&s.game_review&&s.ply===reviewPreview.ply&&(s.review_game||s.game)===reviewPreview.game)s={...s,previewReal:{pieces:s.pieces,last_move:s.last_move,hint:s.hint},pieces:reviewPreview.pieces,last_move:reviewPreview.last_move||null,hint:null};
   else if(reviewPreview){reviewPreview=null;lastBoardKey=''}
   return realRender(s);
  };
@@ -231,7 +233,7 @@ window.reviewPreviewActive=()=>!!reviewPreview;
  // A tried move is graded, not played, so it goes in as soon as it is dropped.
  const realStage=stageMove;
  stageMove=function(m,suggestion=false){
-  if(trying()&&!suggestion&&m&&m.to&&state.legal.some(x=>x.move===m.move)){selected=null;pieceDrag=null;try{removeDragGhost()}catch(e){}play(m.move);return}
+  if(trying()&&!suggestion&&m&&m.to&&state.legal.some(x=>x.move===m.move)){selected=null;pieceDrag=null;try{removeDragGhost()}catch(e){}lastBoardKey='';renderBoard();play(m.move);return}
   return realStage(m,suggestion);
  };
  canMove=function(){return trying()||realCanMove()};
@@ -250,7 +252,10 @@ function reviewTryGrade(s,tried){
  const rating=tried.score==null?null:reviewPoint(tried.score),name=({'No clear error':'Fine','Uncertain':'Unclear','Best move':'Best'}[grade[0]]||grade[0]);
  return {name,rating,verdict:historyVerdicts[grade[0]]||'',text:rating==null?name:(rating>0?'+':'')+rating};
 }
-function setReviewPreview(next){reviewPreview=next;lastBoardKey='';if(typeof serverState!=='undefined'&&(serverState||state))render(serverState||state)}
+function setReviewPreview(next){reviewPreview=next;lastBoardKey='';
+ // Make sure the previewed move is in view: refit the board when it falls outside the current frame (and when the preview is cleared after that).
+ try{autoFitKey=null;const to=next&&next.last_move&&next.last_move.to;if(to&&boardFrame){const [px,py]=xy(...to);if(Math.abs(px-boardFrame.x)>boardFrame.w/2-45||Math.abs(py-boardFrame.y)>boardFrame.h/2-45){boardFrame=null;boardZoom=1;panX=panY=0;setReviewPreview.refit=true}}else if(!next&&setReviewPreview.refit){boardFrame=null;boardZoom=1;panX=panY=0;setReviewPreview.refit=false}}catch(e){}
+ if(typeof serverState!=='undefined'&&(serverState||state))render(serverState||state)}
 function renderReviewExtra(s){
  const box=reviewExtraBox,review=s?.game_review;
  if(reviewTry&&(!review||(s.review_game||s.game)!==reviewTry.game||(s.ply!==reviewTry.ply-1&&s.ply!==reviewTry.ply)))reviewTry=null;
