@@ -939,3 +939,4 @@ body.hb-live #engineInsightPanel .switch:has(#hints),body.hb-live #engineInsight
 /* (stronger than the rule that folds the other boxes away during a game) */
 .hb-ingame details.hb-sub.hb-open-box.hb-open-box{display:block!important}
 .hb-ingame details.hb-sub.hb-open-box>.hb-keep{display:flex!important}
+.hb-ingame details.hb-sub.hb-open-box>:not(summary):not(.hb-keep):not(.hb-mine-list){display:none!important}
