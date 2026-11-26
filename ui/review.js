@@ -27,7 +27,8 @@ function renderReviewMarks(s){
   const [x,baseY]=xy(...to),height=Math.max(0,s.pieces.filter(p=>p.q===to[0]&&p.r===to[1]).length-1),y=baseY-height*10;
   const verdict=tried.status==='ready'?reviewTryGrade(s,tried):null,label=verdict?verdict.text:'…',width=Math.max(34,label.length*8.5+14);
   const badge=node('g',{class:'review-marks review-try-badge'+(verdict?'':' waiting'),'data-verdict':verdict?verdict.verdict:'',style:'cursor:pointer'});
-  badge.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();reviewTryDismissed.add(tried.ply+'|'+tried.move);setReviewPreview(null)}); // click the grade: the tried move and its result go away
+  badge.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();reviewTryDismissed.add(tried.ply+'|'+tried.move);setReviewPreview(null);
+   if(reviewTryOn&&reviewTryOn.ply===tried.ply){reviewTry={game:reviewTryOn.game,ply:tried.ply};setTimeout(()=>action({action:'navigate',ply:tried.ply-1}),0)}}); // ready for the next try // click the grade: the tried move and its result go away
   {const tip=node('title',{});tip.textContent='Click to clear this tried move';badge.append(tip)}
   badge.append(node('polygon',{points:hex(x,y,40),fill:'transparent',stroke:'none'})); // the whole piece is the click target, not just the number
   badge.append(node('rect',{x:x-width/2,y:y-12,width,height:24,rx:3}));
@@ -215,7 +216,7 @@ const reviewFacts=(()=>{const d=document.createElement('div');d.id='reviewFacts'
 // ---- The engine's line, and trying a different move ----
 // Both run one extra search on the server (action review_side) and come back in game_review.extras.
 const reviewExtraBox=(()=>{const d=document.createElement('div');d.id='reviewExtra';d.hidden=true;reviewFacts.after(d);return d})();
-let reviewPreview=null,reviewTry=null,reviewTryShow=null;const reviewTryDismissed=new Set(); // preview: {game,ply,pieces,last_move,key}; try: {game,ply}
+let reviewPreview=null,reviewTry=null,reviewTryShow=null;const reviewTryDismissed=new Set();let reviewTryOn=null; // {game,ply}: Try a move stays on for this turn until its button is pressed again // preview: {game,ply,pieces,last_move,key}; try: {game,ply}
 window.reviewPreviewActive=()=>!!reviewPreview;
 { // Draw a previewed position (a step of the engine's line, or the tried move) in place of the real one, without touching the game.
  const realRender=render;
@@ -259,24 +260,26 @@ function setReviewPreview(next){reviewPreview=next;lastBoardKey='';
 function renderReviewExtra(s){
  const box=reviewExtraBox,review=s?.game_review;
  if(reviewTry&&(!review||(s.review_game||s.game)!==reviewTry.game||(s.ply!==reviewTry.ply-1&&s.ply!==reviewTry.ply)))reviewTry=null;
- const ply=reviewTry?reviewTry.ply:s?.ply,row=review?(review.rows||[]).find(r=>r.ply===ply):null;
+ if(reviewTryOn&&(!review||(s.review_game||s.game)!==reviewTryOn.game||(s.ply!==reviewTryOn.ply-1&&s.ply!==reviewTryOn.ply)))reviewTryOn=null; // moved on to another move: trying ends
+ const ply=reviewTry?reviewTry.ply:reviewTryOn?reviewTryOn.ply:s?.ply,row=review?(review.rows||[]).find(r=>r.ply===ply):null;
  const usable=!!row&&review.status!=='running'&&row.label!=='Book move'&&!editorDraft&&review.source!=='in_game';
  box.hidden=!usable;if(!usable){box.dataset.key='';document.body.classList.remove('review-grading');return}
  const extras=review.extras||[],line=extras.find(e=>e.kind==='line'&&e.ply===ply),found=extras.find(e=>e.kind==='try'&&e.ply===ply),tried=found&&!reviewTryDismissed.has(found.ply+'|'+found.move)?found:null,game=s.review_game||s.game;
  // A move just tried stays on the board (pulsing while it is graded) until the chip is clicked or another move is chosen.
  if(reviewTryShow===ply&&tried&&tried.pieces&&s.ply===ply){reviewTryShow=null;const shown={game,ply,pieces:tried.pieces,last_move:tried.last_move,key:'try'+ply};setTimeout(()=>setReviewPreview(shown),0)}
  document.body.classList.toggle('review-grading',!!tried&&tried.status==='running'&&!!reviewPreview&&reviewPreview.key==='try'+ply);
- const key=JSON.stringify([ply,line&&[line.status,line.moves,line.error],tried&&[tried.status,tried.move,tried.score,tried.depth,tried.error],reviewPreview&&reviewPreview.key,!!reviewTry,tried&&!!tried.pieces,row.best_score,row.side]);
+ const key=JSON.stringify([ply,line&&[line.status,line.moves,line.error],tried&&[tried.status,tried.move,tried.score,tried.depth,tried.error],reviewPreview&&reviewPreview.key,!!reviewTry,!!reviewTryOn,tried&&!!tried.pieces,row.best_score,row.side]);
  if(box.dataset.key===key)return;box.dataset.key=key;box.replaceChildren();
  const text=m=>{try{return shownMove(m)}catch(e){return m}};
  const button=(label,title,click,pressed)=>{const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;if(title)b.title=title;b.onclick=click;if(pressed)b.setAttribute('aria-pressed','true');return b};
  const controls=document.createElement('div');controls.className='review-extra-row';
  if(!line||line.status==='error')controls.append(button('Engine line','Show the moves the engine expected after its preferred move',()=>action({action:'review_side',kind:'line',ply})));
- controls.append(reviewTry?button('Cancel try','Stop trying a move',()=>{const back=reviewTry.ply;reviewTry=null;action({action:'navigate',ply:back})},true)
-  :button('Try a move','Play a different move for this turn on the board and have it graded',async()=>{if(reviewPreview)setReviewPreview(null);reviewTry={game,ply};await action({action:'navigate',ply:ply-1})}));
+ controls.append(reviewTry||reviewTryOn?button('Stop trying','Leave Try a move',()=>{const back=(reviewTry||reviewTryOn).ply;reviewTry=null;reviewTryOn=null;if(found)reviewTryDismissed.add(found.ply+'|'+found.move);if(reviewPreview)setReviewPreview(null);action({action:'navigate',ply:back})},true)
+  :button('Try a move','Play different moves for this turn on the board and have each one graded',async()=>{if(reviewPreview)setReviewPreview(null);reviewTry={game,ply};reviewTryOn={game,ply};await action({action:'navigate',ply:ply-1})}));
  box.append(controls);
  const note=t=>{const p=document.createElement('p');p.className='review-fact muted';p.textContent=t;box.append(p)};
  if(reviewTry)note(`Move a ${row.side===0?'White':'Black'} bug on the board to grade it.`);
+ else if(reviewTryOn&&tried&&tried.status==='ready'&&reviewPreview&&reviewPreview.key==='try'+ply)note('Click the piece to try another move.');
  if(line&&line.status==='running')note('Finding the engine line…');
  if(line&&line.status==='error')note(line.error||'The engine line is not available.');
  if(line&&line.status==='ready'&&!reviewTry){
