@@ -255,7 +255,13 @@ window.reviewPreviewActive=()=>!!reviewPreview;
   const known=(reviewTriedKept.get(game+'|'+ply)||[]).find(e=>e.move===move&&e.status==='ready'&&e.pieces);
   if(known){reviewTry=null;reviewTryDismissed.delete(ply+'|'+move);(async()=>{await action({action:'navigate',ply});setReviewPreview({game,ply,pieces:known.pieces,last_move:known.last_move,key:'try'+ply+'|'+move})})();return}
   reviewTry=null;reviewTryShow=ply;reviewTryDismissed.delete(ply+'|'+move); // once the server has the position, keep the tried move on the board
-  (async()=>{await action({action:'review_side',kind:'try',ply,move});for(let i=0;i<20&&busy;i++)await new Promise(r=>setTimeout(r,50));await action({action:'navigate',ply})})();
+  (async()=>{
+   // Wait for any move still being reviewed on its own, then grade; if grading could not start, stay ready to try again.
+   for(let i=0;i<240&&(state?.game_review?.single_working||(state?.game_review?.single_queue||[]).length);i++)await new Promise(r=>setTimeout(r,500));
+   for(let i=0;i<40&&busy;i++)await new Promise(r=>setTimeout(r,50));
+   const ok=await action({action:'review_side',kind:'try',ply,move});
+   if(!ok){reviewTry={game,ply};reviewTryShow=null;lastBoardKey='';render(serverState||state);return}
+   for(let i=0;i<20&&busy;i++)await new Promise(r=>setTimeout(r,50));await action({action:'navigate',ply})})();
  };
 }
 // The tried move currently shown on the board (if the preview is of a tried move), and its grade.
@@ -402,7 +408,9 @@ function renderHistoryLine(s,list){
 }
 // Clicking a move the review has not reached yet reviews just that move (when the review is not running).
 const reviewSingleAsked=new Set();
+let reviewUserAt=0;for(const ev of ['pointerdown','keydown'])document.addEventListener(ev,()=>{reviewUserAt=Date.now()},true);
 function reviewSingleOnSelect(s){
+ if(Date.now()-reviewUserAt>3000||!document.hasFocus())return; // only the window being used (another open window must not start reviews)
  const review=s?.game_review;if(!review||s.mode!=='analysis'||review.source==='in_game'||review.status==='running'||editorDraft||reviewTry||reviewTryOn)return;
  const ply=s.ply,game=s.review_game||s.game,total=game.split(';').length-3;if(!(ply>=1&&ply<=total))return;
  if((review.rows||[]).some(r=>r.ply===ply)||review.single_working===ply||(review.single_queue||[]).includes(ply))return; // more clicks queue up, in order
