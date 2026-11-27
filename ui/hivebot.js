@@ -766,6 +766,14 @@
     const done=await action(confirmed?{...payload,confirm_review_clear:true}:payload); // unconfirmed: the viewer asks by itself if Analysis holds a game
     if(done||document.getElementById('resignDialog').open)break;
    }
+   // Straight to Game review once the game is on the board (also after the replace question is answered).
+   const want=movesOf(g.game);let closedAt=0;
+   for(let i=0;i<300;i++){
+    const on=typeof state!=='undefined'&&state&&state.mode==='analysis'&&movesOf(state.review_game||state.game)===want;
+    if(on&&!(typeof busy!=='undefined'&&busy)){if(!state.game_review)await action({action:'review_enter'});break}
+    if(!document.getElementById('resignDialog').open){closedAt=closedAt||Date.now();if(Date.now()-closedAt>3000)break}else closedAt=0;
+    await new Promise(r=>setTimeout(r,200));
+   }
   };
   // Live may be holding the board with the Analysis game set aside: that set-aside game is what would be replaced.
   if(L().boardIsLive()){
