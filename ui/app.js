@@ -257,7 +257,7 @@ function regradeReview(s){const r=s?.game_review;if(!r)return;for(const row of r
  if(row.score==null||row.best_score==null)continue;
  if(row.label==='Uncertain'&&((row.depth||0)<3||(row.best_depth||0)<3))continue; // too shallow to grade
  const sign=row.side===0?1:-1,[label,symbol]=gradeReviewMove(row.best_score*sign,row.score*sign,row.best_depth,row.depth);row.label=label;row.symbol=symbol}}
-// The board's highlighter button: fades every piece but the last move (always marked in pink) and shows the engine's choice for it.
+// The board's highlighter button: fades every piece but the last move (always marked in pink) and the engine's choice for it (always shown).
 // Each section (Local, Online, Position, Game review) keeps its own setting, for every board state, until switched off.
 function highlightSection(s=state){return document.body.classList.contains('hb-live')?'online':s?.mode==='play'?'local':s?.game_review?'review':'position'}
 function highlightsOn(s=state){try{return localStorage.getItem('foulbrood_highlight_'+highlightSection(s))!=='0'}catch(e){return true}}

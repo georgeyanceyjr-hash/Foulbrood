@@ -38,8 +38,8 @@ function renderReviewMarks(s){
   const text=node('text',{x,y:y+5,'text-anchor':'middle'});text.textContent=label;badge.append(text);board.append(badge);
   return;
  }
- // The engine's choice for the move that led here (Local, Online, Position, Game review), switched with the board's Best button.
- if(!engineChoiceOn(s)||!(s.ply>=1)||editorDraft)return;
+ // The engine's choice for the move that led here (Local, Online, Position, Game review).
+ if(!(s.ply>=1)||editorDraft)return; // shown whether or not the highlighter is on (the highlighter only fades the other pieces)
  const rowsKey=(s.game_review?.rows||[]).map(r=>r.ply+(r.alternative||'')).join(',')+'|'+(s.saved_review_rows||[]).length+'|'+(s.move_ratings||[]).map(r=>r[0]+':'+r[2]).join(',')+'|'+JSON.stringify(s.recorded_analysis||null).length;
  const key=s.game+'|'+s.ply+'|'+rowsKey;
  if(!reviewMarksCache.has(key)){
