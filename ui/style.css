@@ -1191,3 +1191,6 @@ aside #reviewExtra select.review-line-length{width:auto;min-height:0;height:28px
 
 /* Game review status bar: the move number a little bigger. */
 .player .review-thought-heading>small{font-size:12px;line-height:1.4}
+
+/* A move being reviewed on its own: its tag in the move list pulses. */
+#moves .history-move .move-rating.reviewing{color:var(--hazard);font-style:italic;font-size:10px;letter-spacing:0;animation:fbTryWait 1s ease-in-out infinite}

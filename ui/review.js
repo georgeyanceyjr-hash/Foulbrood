@@ -42,13 +42,6 @@ function renderReviewMarks(s){
   const text=node('text',{x,y:y+5,'text-anchor':'middle'});text.textContent=label;badge.append(text);board.append(badge);
   return;
  }
- // A move being reviewed on its own: a pulsing "Reviewing" tag over the piece that moved.
- {const review=s.game_review,to=s.last_move?.to;
-  if(review&&to&&review.single_working===s.ply&&!review.rows.some(r=>r.ply===s.ply)){
-   const [x,baseY]=xy(...to),height=Math.max(0,s.pieces.filter(p=>p.q===to[0]&&p.r===to[1]).length-1),y=baseY-height*10,label='Reviewing',width=label.length*8.5+14;
-   const tag=node('g',{class:'review-marks review-try-badge waiting','pointer-events':'none'});
-   tag.append(node('rect',{x:x-width/2,y:y-12,width,height:24,rx:3}));
-   const text=node('text',{x,y:y+5,'text-anchor':'middle'});text.textContent=label;tag.append(text);board.append(tag);return}}
  if(globalThis.insightSuggestionsVisible?.(s)===false)return;
  const row=s.game_review?.rows.find(r=>r.ply===s.ply);
  if(!row?.alternative||row.alternative===row.move||row.label==='Book')return; // every graded move shows the engine's preferred move
@@ -441,6 +434,9 @@ window.decorateHistory=s=>{
   const number=item.querySelector('.move-number'),ply=number?parseInt(number.textContent,10):0,row=review&&ply?rows.get(ply):played&&ply?played.get(ply):null;
   const verdict=row?historyVerdicts[row.label]||'':'';
   let tag=item.querySelector('.move-rating');
+  // The move being reviewed on its own says so in the list, where it was clicked.
+  if(review&&review.single_working===ply&&!(review.rows||[]).some(r=>r.ply===ply)){item.classList.remove('ingame');if(!tag){tag=document.createElement('span');tag.className='move-rating';item.append(tag)}tag.textContent='Reviewing';tag.classList.add('reviewing');continue}
+  if(tag)tag.classList.remove('reviewing');
   if(!row){item.classList.remove('turning','ingame');if(tag)tag.remove();delete item.dataset.verdict;if(item.dataset.reviewTitle){item.title='';delete item.dataset.reviewTitle}continue}
   if(row.played){const text=row.book?'Book':((r=>(r>0?'+':'')+r)(reviewPoint(row.score)));item.classList.remove('turning','ingame');delete item.dataset.verdict;
    if(!tag){tag=document.createElement('span');tag.className='move-rating';item.append(tag)}if(tag.textContent!==text)tag.textContent=text;
