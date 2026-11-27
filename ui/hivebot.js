@@ -949,9 +949,9 @@ window.foulbroodSfx=(()=>{
  };
  // Try-out buttons in the sound settings.
  const tryBox=document.getElementById('sfxTry');
- if(tryBox)for(const [label,name] of [['White chirp','whiteChirp'],['Black chirp','blackChirp'],['Win','win'],['Loss','loss'],['Draw','draw'],['Game start','start'],['Low time','thump'],['Game found','stinger'],['Piece lands','tap'],['Climbs','tapClimb'],['Challenge','knock'],['Your turn (long wait)','longWait']]){
+ if(tryBox)for(const [label,name] of [['White chirp','whiteChirp'],['Black chirp','blackChirp'],['Win','win'],['Loss','loss'],['Draw','draw'],['Game start','start'],['Low time','thump'],['Game found','stinger'],['Piece lands','tap'],['Climbs','tapClimb'],['Challenge','knock'],['Long wait White','longWaitWhite'],['Long wait Black','longWaitBlack']]){
   const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;
-  b.onclick=()=>{const played=name==='whiteChirp'||name==='blackChirp'?window.foulbroodChirp?.(name==='whiteChirp'?0:1):name==='tapClimb'?sfx.tap(true):name==='longWait'?window.foulbroodLongWait?.():sfx[name]();if(!played&&typeof toast==='function')toast('Turn sound on to hear it.')};tryBox.append(b);
+  b.onclick=()=>{const played=name==='whiteChirp'||name==='blackChirp'?window.foulbroodChirp?.(name==='whiteChirp'?0:1):name==='tapClimb'?sfx.tap(true):name==='longWaitWhite'||name==='longWaitBlack'?window.foulbroodLongWait?.(name==='longWaitWhite'?0:1):sfx[name]();if(!played&&typeof toast==='function')toast('Turn sound on to hear it.')};tryBox.append(b);
  }
  const earlier=window.renderBotThoughts;
  window.renderBotThoughts=s=>{if(earlier)earlier(s);try{watch(s)}catch(e){}};
