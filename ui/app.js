@@ -772,7 +772,7 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
   const result=s.mode==='play'?(s.timeout_side!=null?'timeout':s.resigned_side!=null?'resignation':({Draw:'draw',WhiteWins:'win',BlackWins:'win'}[s.completed_state||s.live_game?.split(';')[1]||s.state]||null)):null;
   const playing=!result&&s.mode==='play'&&s.running&&s.timeout_side==null&&s.resigned_side==null;
   const eligible=playing&&s.players?.[s.live_side??s.side]==='Human';
-  const pitch=s.players?.length===2&&s.players.every(p=>p==='Human')?((s.live_side??s.side)===0?1.25:.8):1;
+  const pitch=(s.live_side??s.side)===0?1.25:.8; // White's chirp is always the higher one, Black's the lower (Local and Online)
   const speechPitch=s.players?.every(p=>p==='Human')&&(s.live_side??s.side)===1?.85:1;
   const next={mode:s.mode,playing,eligible,result,speechPitch,untimed:s.time_control==='untimed'||s.review_total<2,running:s.running,key:(s.live_game||s.game)+'|'+(s.live_side??s.side),seconds:s.clocks?.[s.live_side??s.side],control:s.time_control};
   const scheduledTimeout=result==='timeout'&&timeoutCueKey===next.key;

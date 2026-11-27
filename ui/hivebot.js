@@ -900,7 +900,7 @@ window.foulbroodSfx=(()=>{
  };
  // Triggers that are not game endings: watched from what the viewer shows.
  const around=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
- let danger={key:'',w:0,b:0},wasPlaying=false,lastSecond=null,liveId=null;
+ let wasPlaying=false,lastSecond=null,liveId=null;
  const watch=s=>{
   if(!s)return;
   const L=window.foulbroodLive,card=L&&L.card?L.card():null,liveActive=!!(card&&!card.finished&&s.mode==='analysis');
@@ -909,21 +909,13 @@ window.foulbroodSfx=(()=>{
   if(playing&&!wasPlaying&&!(s.review_total>0))sfx.start();
   wasPlaying=playing;
   if(card&&!card.finished&&card.id!==liveId){if(liveId!==null||(card.turn||0)<=1)sfx.stinger();liveId=card.id}else if(card&&liveId===null)liveId=card.id;
-  // queen in danger: five of the six hexes around a queen are taken
-  if((playing||liveActive)&&Array.isArray(s.pieces)){
-   const key=liveActive?'live:'+card.id:'play:'+String(s.live_game||s.game||'').split(';')[0],taken=new Set(s.pieces.map(p=>p.q+','+p.r));
-   const count=id=>{const q=s.pieces.find(p=>p.id===id);return q?around.filter(([dq,dr])=>taken.has((q.q+dq)+','+(q.r+dr))).length:0};
-   const w=count('wQ'),b=count('bQ');
-   if(danger.key===key&&((w===5&&danger.w<5)||(b===5&&danger.b<5)))sfx.rattle();
-   danger={key,w,b};
-  }
   // low on time: a heartbeat under the last ten seconds of a human's clock
   const side=s.live_side??s.side,seconds=playing&&(s.players||[])[side]==='Human'&&s.time_control!=='untimed'?(s.clocks||[])[side]:null;
   if(typeof seconds==='number'&&seconds>0&&seconds<=10){const whole=Math.ceil(seconds);if(lastSecond!==null&&whole<lastSecond)sfx.thump();lastSecond=whole}else lastSecond=null;
  };
  // Try-out buttons in the sound settings.
  const tryBox=document.getElementById('sfxTry');
- if(tryBox)for(const [label,name] of [['Win','win'],['Loss','loss'],['Queen in danger','rattle'],['Game start','start'],['Low time','thump'],['Game found','stinger']]){
+ if(tryBox)for(const [label,name] of [['Win','win'],['Loss','loss'],['Game start','start'],['Low time','thump'],['Game found','stinger']]){
   const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;
   b.onclick=()=>{if(!sfx[name]()&&typeof toast==='function')toast('Turn sound on to hear it.')};tryBox.append(b);
  }
