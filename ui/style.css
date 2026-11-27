@@ -1179,3 +1179,6 @@ aside #hbDirectRange select{width:84px;min-width:0;margin:0}
 #hbGame.hb-game-moved{display:none!important}
 #hbLinkRow{display:none;margin:2px 0 10px;font-size:13px}
 body.hb-live #hbLinkRow:not([hidden]){display:block}
+
+/* Open a challenge: no rating range (open challenges are open to every rating). */
+#hbBand{display:none!important}
