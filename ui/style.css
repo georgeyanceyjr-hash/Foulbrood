@@ -1199,3 +1199,7 @@ aside #reviewExtra select.review-line-length{width:auto;min-height:0;height:28px
 
 #anLinkRow{margin:2px 0 10px;font-size:13px}
 #anLinkRow[hidden]{display:none}
+/* Position page: History fills the sidebar down to the bottom of the board. */
+body:not(.review-mode):not(.moves-max) aside:has(>#analysisModes:not([hidden]))>#historyPanel:not([hidden]):not(.hb-folded){flex:1 1 0;min-height:240px;display:flex;flex-direction:column}
+body:not(.review-mode):not(.moves-max) aside:has(>#analysisModes:not([hidden]))>#historyPanel:not([hidden]):not(.hb-folded)>*{flex:none}
+body:not(.review-mode):not(.moves-max) aside:has(>#analysisModes:not([hidden]))>#historyPanel:not([hidden]):not(.hb-folded) #moves{flex:1 1 0;min-height:0;max-height:none;overflow:auto;align-content:start}
