@@ -208,13 +208,14 @@ function renderReviewFacts(s){
   const mean=own.length?own.reduce((t,r)=>t+Math.min(50,reviewRowLoss(r)),0)/own.length:null;
   return {side,accuracy:mean==null?null:Math.max(0,Math.round(100-2*mean)),slips:count(['Inaccuracy']),mistakes:count(['Mistake']),blunders:count(['Blunder','Missed win'])}});
  const lastBook=rows.filter(r=>r.label==='Book move').reduce((m,r)=>Math.max(m,r.ply),0),opening=reviewOpening(s.review_game||s.game);
- const key=JSON.stringify([sides,lastBook,opening,turn&&turn.ply,names,s.ply===(turn&&turn.ply),rows.length,ingame.length&&ingame[0].by]);
+ const turnBusy=!!turn&&!!review&&!(review.rows||[]).some(r=>r.ply===turn.ply)&&(review.single_working===turn.ply||(review.single_queue||[]).includes(turn.ply));
+ const key=JSON.stringify([sides,lastBook,opening,turn&&turn.ply,names,s.ply===(turn&&turn.ply),rows.length,ingame.length&&ingame[0].by,turnBusy]);
  if(box.dataset.key!==key){box.dataset.key=key;box.replaceChildren();
   for(const side of rows.length?sides:[]){const line=document.createElement('p');line.className='review-fact';const who=document.createElement('b');who.textContent=side.side===0?'White':'Black';
    const bits=[side.accuracy==null?'—':side.accuracy+'%'];if(side.slips)bits.push(side.slips+' inaccurac'+(side.slips===1?'y':'ies'));if(side.mistakes)bits.push(side.mistakes+' mistake'+(side.mistakes===1?'':'s'));if(side.blunders)bits.push(side.blunders+' blunder'+(side.blunders===1?'':'s'));
    line.append(who,' '+bits.join(' · '));line.title='Accuracy: 100% means every move matched the engine\'s choice or cost nothing.';box.append(line)}
   if(opening||lastBook){const line=document.createElement('p');line.className='review-fact muted';line.textContent=[opening?'Opening '+opening:'',lastBook?'book to move '+lastBook:''].filter(Boolean).join(' · ');line.title='The first three bugs each side placed (White vs Black)';box.append(line)}
-  if(turn){const go=document.createElement('button');go.type='button';go.id='reviewTurn';go.className='small';go.textContent='Turning point · move '+turn.ply;go.title='Where the position swung the most and never came back';go.onclick=()=>action({action:'navigate',ply:turn.ply});if(s.ply===turn.ply)go.setAttribute('aria-pressed','true');box.append(go)}
+  if(turn){const go=document.createElement('button');go.type='button';go.id='reviewTurn';go.className='small';go.textContent=turnBusy?'Reviewing move '+turn.ply+'…':'Turning point · move '+turn.ply;if(turnBusy)go.classList.add('reviewing');go.title='Where the position swung the most and never came back';go.onclick=()=>action({action:'navigate',ply:turn.ply});if(s.ply===turn.ply)go.setAttribute('aria-pressed','true');box.append(go)}
  }
  return turn;
 }
