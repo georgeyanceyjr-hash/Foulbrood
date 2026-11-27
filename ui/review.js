@@ -443,3 +443,23 @@ window.renderGameReview=s=>{$('hintsLabel').hidden=false;$('bookEnabled').closes
 if(state)window.renderGameReview(state);
 
 
+// The ⏮ ◀ ▶ ⏭ buttons step through an engine line that is showing under the current move: from the played move,
+// ▶ goes into the line one move at a time; past its end it carries on with the game; ◀ from the line's first move
+// goes back to the played move, and on from there as usual. ⏮ / ⏭ leave the line.
+function visibleLine(s){
+ const review=s?.game_review;if(!review||s.mode!=='analysis'||reviewTry||editorDraft||reviewLineHidden.has(s.ply))return null;
+ return (review.extras||[]).find(e=>e.kind==='line'&&e.ply===s.ply&&e.status==='ready'&&(e.steps||[]).length)||null;
+}
+for(const [id,dir]of [['historyFirst','first'],['historyPrevious','previous'],['historyNext','next'],['historyLast','last']]){
+ const b=$(id);if(!b)continue;
+ b.addEventListener('click',e=>{
+  const s=state,line=visibleLine(s);if(!line)return;
+  const n=line.ply,game=s.review_game||s.game,m=reviewPreview&&String(reviewPreview.key||'').match(/^line(\d+)-(\d+)$/),at=m&&+m[1]===n?+m[2]:-1;
+  const show=i=>{const step=line.steps[i];if(!step?.pieces)return false;setReviewPreview({game,ply:n,pieces:step.pieces,last_move:step.last_move,key:'line'+n+'-'+i});return true};
+  let handled=false;
+  if(dir==='next'){if(at<0)handled=show(0);else if(at+1<line.steps.length)handled=show(at+1);else{setReviewPreview(null)}} // past the end: on with the game
+  else if(dir==='previous'&&at>=0){if(at>0)handled=show(at-1);else{setReviewPreview(null);handled=true}} // before the line: the played move
+  else if(at>=0)setReviewPreview(null); // ⏮ ⏭ leave the line
+  if(handled){e.stopImmediatePropagation();e.preventDefault()}
+ },true);
+}

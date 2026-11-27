@@ -1212,3 +1212,5 @@ body:not(.review-mode):not(.moves-max) aside:has(>#analysisModes:not([hidden]))>
 .arena.highlighting .tile .stack-piece:not(.pending-move):not(.last-moved-piece)>.piece-art,.arena.highlighting .reserve svg>.piece-art{filter:grayscale(.8);opacity:.56}
 .arena.highlighting .tile .stack-piece.last-moved-piece>.piece-art,.arena.reviewing.highlighting .tile .stack-piece.last-moved-piece>.piece-art{filter:none;opacity:1}
 .arena.highlighting .review-marks.suggestion-trail g[opacity]{opacity:1}
+/* Stepping through an engine line: only the line move on the board is marked as current. */
+#moves:has(.line-move.current)>button.history-move.current:not(.line-move){border-color:transparent;background:transparent;box-shadow:none}
