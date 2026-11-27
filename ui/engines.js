@@ -279,6 +279,8 @@ function syncThinkingTimeSelector(s,available,reviewUnsupported){
  const noMatchTiming=s.mode!=='play'||!!s.game_review,noClock=s.mode==='play'&&(s.time_control==='untimed'||$('time')?.value==='untimed'); // no clock: no time strategy, so no Match timing
  if(matchTiming.disabled!==(noMatchTiming||noClock))matchTiming.disabled=noMatchTiming||noClock;
  if(matchTiming.hidden!==noClock)matchTiming.hidden=noClock;
+ const untilStop=select.querySelector('option[value="86400000"]'),noUntil=!!s.game_review; // a review needs a time per move
+ if(untilStop&&untilStop.hidden!==noUntil){untilStop.hidden=noUntil;untilStop.disabled=noUntil}
  const value=String(s.analysis_ms??2000);
  // Native menus must keep the user's pending choice between server polls.
  if(document.activeElement!==select&&select.value!==value)select.value=value;

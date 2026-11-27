@@ -289,7 +289,7 @@ class BoardTests(unittest.TestCase):
         self.assertEqual(self.app.analysis_ms,60000)
         with self.assertRaisesRegex(ValueError,'only on Play'):
             self.app.command(dict(action='insight_time',milliseconds=-1))
-        for ms in [600000,3600000,86400000]:
+        for ms in [300000,900000,3600000,86400000]:
             self.app.command(dict(action='insight_time',milliseconds=ms))
             with patch.object(self.app,'launch_search') as launch:
                 self.app.command(dict(action='analyze',milliseconds=ms))
@@ -301,7 +301,9 @@ class BoardTests(unittest.TestCase):
         self.app.command(dict(action='review_enter'))
         with self.assertRaisesRegex(ValueError,'only on Play'):
             self.app.command(dict(action='insight_time',milliseconds=-1))
-        self.assertEqual(self.app.analysis_ms,86400000)
+        self.assertEqual(self.app.analysis_ms,60000)  # "Until it stops" is not a review time
+        with self.assertRaisesRegex(ValueError,'time per move'):
+            self.app.command(dict(action='insight_time',milliseconds=86400000))
 
     def test_matching_resolves_before_external_search(self):
         self.app.engines.entries.append(dict(id='external',name='External',connected=True,path='/test',capabilities=[]))

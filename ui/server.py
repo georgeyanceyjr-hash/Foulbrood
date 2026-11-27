@@ -188,7 +188,7 @@ class App:
     def analysis_budget_ms(self):
         if self.analysis_ms != -1:return self.analysis_ms
         s=self.play
-        if s.clock.untimed:return 10000  # no clock, no time strategy: the same 10 s a computer turn gets
+        if s.clock.untimed:return 15000  # no clock, no time strategy: the same 10 s a computer turn gets
         # Use the same clock allocation as a player, with UHP's one-second floor.
         return match_budget_ms(s.clock.values()[s.data['side']],s.clock.increment,s.data['ply'])
 
@@ -476,7 +476,11 @@ class App:
                 with self.lock:
                     if revision!=self.revision:return
                     self.process=engine.proc
-                engine.reply();adapter=configure_reporting(engine,entry,True,preserve_opening=kind=='computer');engine.command('newgame '+game)
+                engine.reply();adapter=configure_reporting(engine,entry,True,preserve_opening=kind=='computer')
+                if kind=='hint' and adapter=='foulbrood':
+                    try:engine.command('options set AnalysisMode True')  # analysis uses its whole time (engines without it: ignored)
+                    except ValueError:pass
+                engine.command('newgame '+game)
                 def progress(line,diagnostic=False):
                     candidate=None
                     if adapter=='mzinga' and not diagnostic and len(line.split(';'))>=3:candidate=line.split(';')[0]
@@ -558,7 +562,8 @@ class App:
                 self.launch_search('hint',self.analysis_ms)
 
     def view(self):
-        if self.analysis_ms==-1 and self.play.clock.untimed:self.analysis_ms=10000  # Match timing is not offered without a clock
+        if self.analysis_ms==-1 and self.play.clock.untimed:self.analysis_ms=15000  # Match timing is not offered without a clock
+        if self.analysis_ms in (10000,600000):self.analysis_ms={10000:15000,600000:900000}[self.analysis_ms]  # times no longer offered
         with self.lock:
             self.last_seen=time.monotonic()
             self.note_insight()
@@ -688,7 +693,7 @@ class App:
                 if self.mode!='analysis':raise ValueError('Open Analysis to review a game.')
                 if self.review is None:
                     self.pause()
-                    if self.analysis_ms==0:self.analysis_ms=60000
+                    if self.analysis_ms in (0,86400000):self.analysis_ms=60000  # a review needs a time per move
                     self.continuous_hints=False
                     selected=self.engines.get(self.engines.analysis_engine) or {}
                     key=(s.review_game,selected.get('id'),selected.get('path'))
@@ -848,8 +853,9 @@ class App:
                 if (self.review or self.engines.analysis_engine!='Computer') and milliseconds==0:milliseconds=60000
                 if milliseconds==500:milliseconds=2000
                 if milliseconds==-1 and (self.mode!='play' or self.review):raise ValueError('Match timing is available only on Play.')
+                if milliseconds==86400000 and self.review:raise ValueError('Game review needs a time per move.')
                 if milliseconds==-1 and self.play.clock.untimed:raise ValueError('Match timing needs a clock: choose a timed game.')
-                if milliseconds not in (-1,0,2000,5000,10000,30000,60000,600000,3600000,86400000):raise ValueError('Invalid analysis duration.')
+                if milliseconds not in (-1,0,2000,5000,10000,15000,30000,60000,300000,600000,900000,3600000,86400000):raise ValueError('Invalid analysis duration.')
                 if self.review and action=='insight_time':self.review.stop();self.review.status='ready'
                 if action=='analyze' and self.job=='computer' and not self.parallel_insight_allowed():raise ValueError('The selected engine is choosing its move.')
                 self.stop_insight_worker()

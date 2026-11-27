@@ -13,7 +13,7 @@ from live_analysis import validate_history
 
 MAX_REVIEW_BYTES=8_000_000
 MARKER='FoulBroodReview'
-TIMES=(500,2000,5000,10000,30000,60000,600000,3600000,86400000)
+TIMES=(500,2000,5000,10000,15000,30000,60000,300000,600000,900000,3600000,86400000)
 MOVE=re.compile(r'(?:pass|[wb][QABGSLMP][123]?(?:\s+[-/\\]?[wb][QABGSLMP][123]?[-/\\]?)?)\Z')
 
 def engine_identity(engine):

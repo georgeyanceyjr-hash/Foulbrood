@@ -189,7 +189,10 @@ class Review:
             flags=set(';'.join(info).split(';'))
             if 'FoulBroodReviewSearch' in flags:engine.command('options set ReviewSearch True')
             # A review needs a searched score for every position: the book only names moves (they are marked separately).
-            if adapter=='foulbrood':engine.command('options set UseBook False')
+            if adapter=='foulbrood':
+                engine.command('options set UseBook False')
+                try:engine.command('options set AnalysisMode True')  # whole time per position (engines without it: ignored)
+                except ValueError:pass
             engine.command('newgame '+data['game'])
             seconds=max(1,int((ms or self.milliseconds)/1000))
             limit=f'{seconds//3600:02}:{seconds//60%60:02}:{seconds%60:02}'
