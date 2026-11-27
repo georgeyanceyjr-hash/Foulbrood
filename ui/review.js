@@ -312,7 +312,7 @@ function renderReviewExtra(s){
  const controls=document.createElement('div');controls.className='review-extra-row';
  // Either button pauses a running review first (the engine can only do one thing at a time).
  const pause=async()=>{if(state?.game_review?.status==='running'){await action({action:'review_stop'});for(let i=0;i<40&&busy;i++)await new Promise(r=>setTimeout(r,50))}
-  for(let i=0;i<240&&state?.game_review?.single_working;i++)await new Promise(r=>setTimeout(r,500))}; // a move being reviewed on its own finishes first
+  for(let i=0;i<240&&(state?.game_review?.single_working||(state?.game_review?.single_queue||[]).length);i++)await new Promise(r=>setTimeout(r,500))}; // a move being reviewed on its own finishes first
  // Engine line: one button that stays put and shows or hides the line in the move list.
  {const shown=!!line&&line.status!=='error';
   controls.append(button('Engine line',shown?'Hide the engine line':'Show the moves the engine expected after its preferred move',()=>{
@@ -404,7 +404,7 @@ const reviewSingleAsked=new Set();
 function reviewSingleOnSelect(s){
  const review=s?.game_review;if(!review||s.mode!=='analysis'||review.source==='in_game'||review.status==='running'||editorDraft||reviewTry||reviewTryOn)return;
  const ply=s.ply,game=s.review_game||s.game,total=game.split(';').length-3;if(!(ply>=1&&ply<=total))return;
- if((review.rows||[]).some(r=>r.ply===ply)||review.single_working)return;
+ if((review.rows||[]).some(r=>r.ply===ply)||review.single_working===ply||(review.single_queue||[]).includes(ply))return; // more clicks queue up, in order
  const key=game+'|'+ply;if(reviewSingleAsked.has(key)||busy)return;reviewSingleAsked.add(key);
  setTimeout(()=>action({action:'review_one',ply}),0);
 }
@@ -435,7 +435,8 @@ window.decorateHistory=s=>{
   const verdict=row?historyVerdicts[row.label]||'':'';
   let tag=item.querySelector('.move-rating');
   // The move being reviewed on its own says so in the list, where it was clicked.
-  if(review&&review.single_working===ply&&!(review.rows||[]).some(r=>r.ply===ply)){item.classList.remove('ingame');if(!tag){tag=document.createElement('span');tag.className='move-rating';item.append(tag)}tag.textContent='Reviewing';tag.classList.add('reviewing');continue}
+  if(review&&(review.single_working===ply||(review.single_queue||[]).includes(ply))&&!(review.rows||[]).some(r=>r.ply===ply)){const now=review.single_working===ply;item.classList.remove('ingame');if(!tag){tag=document.createElement('span');tag.className='move-rating';item.append(tag)}tag.textContent=now?'Reviewing':'Queued';tag.classList.add('reviewing');tag.classList.toggle('queued',!now);continue}
+  if(tag)tag.classList.remove('queued');
   if(tag)tag.classList.remove('reviewing');
   if(!row){item.classList.remove('turning','ingame');if(tag)tag.remove();delete item.dataset.verdict;if(item.dataset.reviewTitle){item.title='';delete item.dataset.reviewTitle}continue}
   if(row.played){const text=row.book?'Book':((r=>(r>0?'+':'')+r)(reviewPoint(row.score)));item.classList.remove('turning','ingame');delete item.dataset.verdict;

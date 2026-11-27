@@ -65,7 +65,7 @@ class Review:
         selected=self.app.engines.get(self.app.engines.analysis_engine) or {}
         missing=bool(self.portable_engine and not (selected.get('connected') and self.matches_engine(selected)))
         recorded=self.source=='in_game'
-        return dict(source=self.source,recorded_count=len(self.in_game_history),restored=bool(self.portable_engine),resume_engine_missing=missing and not recorded,can_resume=self.can_resume(),engine=self.engine.get('name',''),external=not self.portable_engine['builtin'] if self.portable_engine else self.engine.get('id')!='Computer',remaining_seconds=remaining,working_ply=self.working_ply,active=True,status='recorded' if recorded else self.status,error=self.error,total=self.total,single_working=getattr(self,'single_working',None),rows=[] if recorded else self.rows.copy()+[r for p,r in sorted(getattr(self,'single',{}).items()) if p>len(self.rows)],points=history_points(self.in_game_history) if recorded else self.points.copy(),milliseconds=self.milliseconds,stage=self.stage,extras=list(getattr(self,'extras',{}).values()))
+        return dict(source=self.source,recorded_count=len(self.in_game_history),restored=bool(self.portable_engine),resume_engine_missing=missing and not recorded,can_resume=self.can_resume(),engine=self.engine.get('name',''),external=not self.portable_engine['builtin'] if self.portable_engine else self.engine.get('id')!='Computer',remaining_seconds=remaining,working_ply=self.working_ply,active=True,status='recorded' if recorded else self.status,error=self.error,total=self.total,single_working=getattr(self,'single_working',None),single_queue=list(getattr(self,'single_queue',[]) or []),rows=[] if recorded else self.rows.copy()+[r for p,r in sorted(getattr(self,'single',{}).items()) if p>len(self.rows)],points=history_points(self.in_game_history) if recorded else self.points.copy(),milliseconds=self.milliseconds,stage=self.stage,extras=list(getattr(self,'extras',{}).values()))
 
     def side(self,kind,ply,move=None,length=4):
         """One extra search beside the finished review: the engine's line after its preferred move
@@ -214,19 +214,38 @@ class Review:
                 if engine and self.process is engine.proc:self.process=None;self.phase_started=None
 
     def review_single(self,ply):
-        """Review one move the main review has not reached yet, in the background."""
-        if self.status=='running' or getattr(self,'side_busy',False):return
+        """Review moves the main review has not reached yet, one at a time, in the order they were clicked."""
+        if self.status=='running':return
         if not (1<=ply<=self.total) or ply<=len(self.rows) or ply in getattr(self,'single',{}):return
-        self.side_busy=True;self.single_working=ply;generation=self.generation;units=self.remaining_units
+        queue=getattr(self,'single_queue',None)
+        if queue is None:queue=self.single_queue=[]
+        if ply in queue or ply==getattr(self,'single_working',None):return
+        queue.append(ply)
+        if getattr(self,'single_worker',False):return
+        self.single_worker=True;generation=self.generation;units=self.remaining_units
         def work():
             try:
-                data=self.snapshot('snapshot',self.game)
-                while data['ply']>ply-1:data=self.snapshot('undo',data['game'])
-                self.review_one(data,ply,generation)
-            except Exception:pass
+                while True:
+                    with self.app.lock:
+                        if generation!=self.generation or not self.single_queue:break
+                        busy=getattr(self,'side_busy',False) # an engine line or a tried move goes first
+                        if not busy:ply=self.single_queue.pop(0)
+                    if busy:time.sleep(.3);continue
+                    with self.app.lock:
+                        if ply in getattr(self,'single',{}) or ply<=len(self.rows):continue
+                        self.side_busy=True;self.single_working=ply;self.app.revision+=1
+                    try:
+                        data=self.snapshot('snapshot',self.game)
+                        while data['ply']>ply-1:data=self.snapshot('undo',data['game'])
+                        self.review_one(data,ply,generation)
+                    except InterruptedError:break
+                    except Exception:pass
+                    finally:
+                        with self.app.lock:self.side_busy=False;self.single_working=None
             finally:
                 with self.app.lock:
-                    self.side_busy=False;self.single_working=None;self.remaining_units=units;self.phase_started=None
+                    self.single_worker=False;self.single_working=None;self.side_busy=False;self.remaining_units=units;self.phase_started=None
+                    if generation!=self.generation:self.single_queue=[]
                     try:self.app.revision+=1
                     except Exception:pass
         threading.Thread(target=work,daemon=True).start()
