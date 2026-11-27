@@ -770,6 +770,7 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
  window.foulbroodAudio=()=>enabled&&context&&context.state==='running'&&channels.game.value>0?{context,out:gameGain}:null;
  let turnStartedAt=0;
  function longChirp(pitch=1){chime(null,pitch);setTimeout(()=>chime(null,pitch*1.12),190)}
+ window.foulbroodChirp=side=>{if(!(enabled&&context&&context.state==='running'&&volume>0))return false;chime(null,side===0?1.25:.8);return true}; // the turn chirps: White higher, Black lower
  window.foulbroodLongWait=()=>{if(!(enabled&&context&&context.state==='running'&&volume>0))return false;longChirp(1.25);return true};
  window.observeHumanTurn=s=>{
   const result=s.mode==='play'?(s.timeout_side!=null?'timeout':s.resigned_side!=null?'resignation':({Draw:'draw',WhiteWins:'win',BlackWins:'win'}[s.completed_state||s.live_game?.split(';')[1]||s.state]||null)):null;
