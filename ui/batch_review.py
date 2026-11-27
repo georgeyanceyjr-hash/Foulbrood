@@ -119,7 +119,7 @@ def start(ids, seconds=5):
     ids = [i for i in ids if isinstance(i, str)][:500]
     if not ids:
         raise ValueError('There are no games to review.')
-    seconds = seconds if seconds in (2, 5, 10, 30) else 5
+    seconds = seconds if seconds in (2, 5, 15, 30, 60, 300, 900, 3600) else 5  # the same times as Game review
     STATE.update(running=True, total=len(ids), done=0, current='', ply=0, moves=0, error='', stop=False, paused=False, seconds=seconds)
     _THREAD = threading.Thread(target=_run, args=(ids, seconds * 1000), daemon=True)
     _THREAD.start()
