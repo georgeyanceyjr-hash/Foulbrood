@@ -203,7 +203,7 @@ header .brand .tagline{display:block;color:#c2b694;font-size:12px;margin:5px 0 0
 
 /* Reviewing history never changes the live clock or board. */
 /* Fade only ordinary piece artwork in history; keep move markers and previews vivid. */
-.arena.reviewing .tile .stack-piece:not(.pending-move)>.piece-art,.arena.reviewing .reserve svg>.piece-art{filter:grayscale(.8);opacity:.56}
+/* (stepping back no longer fades the board by itself: the board's highlighter button decides, on every page) */
 .history-move{width:100%;text-align:left;font:inherit;color:inherit;background:transparent;border:1px solid transparent;border-radius:6px;cursor:pointer}
 .history-move.current{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
 .history-move:hover,.history-move:focus-visible{border-color:var(--accent)}
@@ -1210,7 +1210,7 @@ body:not(.review-mode):not(.moves-max) aside:has(>#analysisModes:not([hidden]))>
 /* Highlighter on: every other piece fades (as when stepping back through a game); the last move (pink) and the
    engine's choice stay in full colour. */
 .arena.highlighting .tile .stack-piece:not(.pending-move):not(.last-moved-piece)>.piece-art,.arena.highlighting .reserve svg>.piece-art{filter:grayscale(.8);opacity:.56}
-.arena.highlighting .tile .stack-piece.last-moved-piece>.piece-art,.arena.reviewing.highlighting .tile .stack-piece.last-moved-piece>.piece-art{filter:none;opacity:1}
+.arena.highlighting .tile .stack-piece.last-moved-piece>.piece-art{filter:none;opacity:1}
 .arena.highlighting .review-marks.suggestion-trail g[opacity]{opacity:1}
 /* Stepping through an engine line: only the line move on the board is marked as current. */
 #moves:has(.line-move.current)>button.history-move.current:not(.line-move){border-color:transparent;background:transparent;box-shadow:none}
