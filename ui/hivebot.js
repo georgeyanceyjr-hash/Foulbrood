@@ -292,7 +292,7 @@
   el('hbEngineRow').title=enginePending?'The new engine takes over after this game.':'';
   el('hbForm').hidden=running;el('hbChallenges').hidden=!connected;el('hbChallenges').classList.toggle('hb-ingame',!!bot.current);el('hbChallenges').classList.toggle('hb-mine',(bot.lobby||[]).some(c=>c.mine)); /* during a game only the automatic switch (and our own open challenge) stays, so it can be turned off */fixTabs();el('hbBusyNote').hidden=true;
   if(bot.saved_login&&!el('hbLogin').value)el('hbLogin').value=bot.saved_login;
-  el('hbPassword').placeholder=(bot.saved_login&&bot.saved_login===el('hbLogin').value.trim())?'Saved in Keychain — leave blank to use it':'';
+  el('hbPassword').placeholder=(bot.saved_login&&bot.saved_login===el('hbLogin').value.trim())?'Saved — leave blank to use it':'';
   el('hbForget').hidden=!bot.saved_login;
   const g=bot.current,last=[...(bot.games||[])].reverse().find(realGame);
   let summary={stopped:'Not running',building:'Building…',starting:'Connecting…',connected:'Connected',error:'Needs attention'}[bot.state]||bot.state;

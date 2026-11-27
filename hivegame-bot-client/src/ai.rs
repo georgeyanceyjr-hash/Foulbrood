@@ -68,6 +68,15 @@ impl std::error::Error for ParseError {}
 pub fn spawn_process(command: &str, name: &str) -> std::io::Result<Child> {
     info!("Starting AI '{}' for '{}'...", command, name);
 
+    // The viewer passes the engine's own file path (spaces allowed): run it from its folder, like the viewer does.
+    let whole = std::path::Path::new(command.trim());
+    if whole.is_file() {
+        let mut cmd = Command::new(whole);
+        if let Some(dir) = whole.parent().filter(|d| !d.as_os_str().is_empty()) {
+            cmd.current_dir(dir);
+        }
+        return cmd.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn();
+    }
     let command_parts: Vec<&str> = command.split_whitespace().collect();
 
     if command_parts.is_empty() {
@@ -180,6 +189,24 @@ pub async fn run_commands(
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn engine_path_with_spaces_runs_from_its_folder() {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        let dir = tempfile::tempdir().unwrap();
+        let folder = dir.path().join("my engines");
+        std::fs::create_dir(&folder).unwrap();
+        let engine = folder.join("my engine");
+        std::fs::write(&engine, "#!/bin/sh\npwd\n").unwrap();
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&engine, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let mut child = super::spawn_process(engine.to_str().unwrap(), "t").unwrap();
+        child.stdin.take().unwrap().shutdown().await.unwrap();
+        let mut out = String::new();
+        child.stdout.take().unwrap().read_to_string(&mut out).await.unwrap();
+        assert_eq!(std::path::Path::new(out.trim()).canonicalize().unwrap(), folder.canonicalize().unwrap());
+    }
+
     use super::*;
 
     #[test]

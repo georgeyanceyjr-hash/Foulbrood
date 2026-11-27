@@ -3,14 +3,13 @@
 Runs the Hive-hydra bot client (hivegame.com's own UHP bot client, with the HotFrass clock
 and open-challenge patches) as a child process, and turns its status lines into a small state
 the bot panel can show.  The account password is handed to the child through its environment
-and is never written to a file.  If asked to remember it, it goes into the macOS Keychain.
+and is never written to a file.  If asked to remember it, it goes into the macOS Keychain or the Windows Credential Manager.
 """
 import atexit
 import collections
 import json
 import os
 import re
-import shlex
 import subprocess
 import threading
 import time
@@ -25,7 +24,31 @@ except Exception:  # pragma: no cover - history must never stop the bot
 
 BOT_DIR = Path(os.environ.get('FOULBROOD_BOT_DIR', str(Path.home() / 'Documents/Codex/FoulBroodData/hivegame-bot')))
 CLIENT_DIR = BOT_DIR / 'client'
-BINARY = CLIENT_DIR / 'target' / 'release' / 'hive-hydra'
+EXE = '.exe' if os.name == 'nt' else ''
+BUILT = CLIENT_DIR / 'target' / 'release' / ('hive-hydra' + EXE)
+# The ready-built bot client shipped inside the app (bot/<system>-<cpu>/hive-hydra[.exe]).
+BUNDLED_DIR = Path(__file__).resolve().parent.parent / 'bot'
+
+
+def _platform_tag():
+    import platform
+    system = {'darwin': 'macos', 'windows': 'windows', 'linux': 'linux'}.get(platform.system().lower(), platform.system().lower())
+    cpu = platform.machine().lower()
+    return system + '-' + {'arm64': 'arm64', 'aarch64': 'arm64', 'x86_64': 'x64', 'amd64': 'x64'}.get(cpu, cpu)
+
+
+def _bundled():
+    path = BUNDLED_DIR / _platform_tag() / ('hive-hydra' + EXE)
+    return path if path.is_file() else None
+
+
+def _from_source():
+    """Build the client from FoulBroodData/hivegame-bot/client only where its source and Rust are present (development)."""
+    return (CLIENT_DIR / 'Cargo.toml').exists() and _cargo() is not None
+
+
+def bot_binary():
+    return BUILT if _from_source() or _bundled() is None else _bundled()
 ANSI = re.compile(r'\x1b\[[0-9;]*m')
 NAME = re.compile(r'^[A-Za-z0-9_-]{1,40}$')
 ABORT_AFTER = 90.0  # seconds an opponent gets to make its first move
@@ -38,7 +61,7 @@ SAVED_LOGIN = BOT_DIR / 'saved-login.txt'
 
 
 def saved_login():
-    """The login whose password is kept in the macOS Keychain, if any (the password is not in this file)."""
+    """The login whose password is kept in the Keychain or Credential Manager, if any (the password is not in this file)."""
     try:
         value = SAVED_LOGIN.read_text().strip()
         return value if 0 < len(value) <= 200 else None
@@ -46,7 +69,62 @@ def saved_login():
         return None
 
 
+class _WinCred:
+    """Windows Credential Manager (generic credential "FoulBrood hivegame.com bot"), through advapi32."""
+    def __init__(self):
+        import ctypes
+        from ctypes import wintypes
+        self.ct = ctypes
+
+        class CREDENTIAL(ctypes.Structure):
+            _fields_ = [('Flags', wintypes.DWORD), ('Type', wintypes.DWORD), ('TargetName', wintypes.LPWSTR),
+                        ('Comment', wintypes.LPWSTR), ('LastWritten', wintypes.FILETIME),
+                        ('CredentialBlobSize', wintypes.DWORD), ('CredentialBlob', ctypes.POINTER(ctypes.c_char)),
+                        ('Persist', wintypes.DWORD), ('AttributeCount', wintypes.DWORD), ('Attributes', ctypes.c_void_p),
+                        ('TargetAlias', wintypes.LPWSTR), ('UserName', wintypes.LPWSTR)]
+        self.CREDENTIAL = CREDENTIAL
+        self.api = ctypes.WinDLL('advapi32', use_last_error=True)
+        self.api.CredReadW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.POINTER(ctypes.POINTER(CREDENTIAL))]
+        self.api.CredWriteW.argtypes = [ctypes.POINTER(CREDENTIAL), wintypes.DWORD]
+        self.api.CredDeleteW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD]
+        self.api.CredFree.argtypes = [ctypes.c_void_p]
+
+    def write(self, login, password):
+        ct = self.ct
+        blob = password.encode('utf-16-le')
+        c = self.CREDENTIAL()
+        c.Type = 1  # CRED_TYPE_GENERIC
+        c.TargetName = KEYCHAIN_SERVICE
+        c.UserName = login
+        c.CredentialBlobSize = len(blob)
+        c.CredentialBlob = ct.cast(ct.create_string_buffer(blob, len(blob)), ct.POINTER(ct.c_char))
+        c.Persist = 2  # CRED_PERSIST_LOCAL_MACHINE
+        return bool(self.api.CredWriteW(ct.byref(c), 0))
+
+    def read(self, login):
+        ct = self.ct
+        p = ct.POINTER(self.CREDENTIAL)()
+        if not self.api.CredReadW(KEYCHAIN_SERVICE, 1, 0, ct.byref(p)):
+            return None
+        try:
+            c = p.contents
+            if (c.UserName or '') != login:
+                return None
+            return ct.string_at(c.CredentialBlob, c.CredentialBlobSize).decode('utf-16-le') or None
+        finally:
+            self.api.CredFree(p)
+
+    def delete(self):
+        self.api.CredDeleteW(KEYCHAIN_SERVICE, 1, 0)
+
+
 def keychain_save(login, password):
+    if os.name == 'nt':
+        if not _WinCred().write(login, password):
+            raise ValueError('Windows did not accept the password.')
+        BOT_DIR.mkdir(parents=True, exist_ok=True)
+        SAVED_LOGIN.write_text(login + '\n')
+        return
     if not Path(SECURITY).exists():
         raise ValueError('Saving the password needs the macOS Keychain.')
     done = subprocess.run([SECURITY, 'add-generic-password', '-U', '-a', login, '-s', KEYCHAIN_SERVICE, '-w', password],
@@ -58,6 +136,11 @@ def keychain_save(login, password):
 
 
 def keychain_load(login):
+    if os.name == 'nt':
+        try:
+            return _WinCred().read(login)
+        except Exception:
+            return None
     if not Path(SECURITY).exists():
         return None
     done = subprocess.run([SECURITY, 'find-generic-password', '-a', login, '-s', KEYCHAIN_SERVICE, '-w'],
@@ -67,7 +150,12 @@ def keychain_load(login):
 
 def keychain_forget():
     login = saved_login()
-    if login and Path(SECURITY).exists():
+    if login and os.name == 'nt':
+        try:
+            _WinCred().delete()
+        except Exception:
+            pass
+    elif login and Path(SECURITY).exists():
         subprocess.run([SECURITY, 'delete-generic-password', '-a', login, '-s', KEYCHAIN_SERVICE],
                        capture_output=True, text=True, timeout=20)
     try:
@@ -77,16 +165,18 @@ def keychain_forget():
 
 
 def _cargo():
-    for candidate in (Path.home() / '.cargo/bin/cargo', Path('/opt/homebrew/bin/cargo'), Path('/usr/local/bin/cargo')):
+    for candidate in (Path.home() / '.cargo/bin' / ('cargo' + EXE), Path('/opt/homebrew/bin/cargo'), Path('/usr/local/bin/cargo')):
         if candidate.exists():
             return str(candidate)
     return None
 
 
 def _needs_build():
-    if not BINARY.exists():
+    if not _from_source():
+        return False
+    if not BUILT.exists():
         return True
-    built = BINARY.stat().st_mtime
+    built = BUILT.stat().st_mtime
     sources = list((CLIENT_DIR / 'src').glob('*.rs')) + [CLIENT_DIR / 'Cargo.toml']
     return any(p.exists() and p.stat().st_mtime > built for p in sources)
 
@@ -178,7 +268,7 @@ class HiveBot:
         if not password and saved_login() == login:
             password = keychain_load(login)
             if not password:
-                raise ValueError('The saved password could not be read from the Keychain. Type it again.')
+                raise ValueError('The saved password could not be read. Type it again.')
         if not isinstance(password, str) or not password or len(password) > 500 or '\n' in password:
             raise ValueError('Enter the bot account password.')
         if not engine or not engine.get('path') or not Path(engine['path']).exists():
@@ -186,8 +276,8 @@ class HiveBot:
         accept = [n for n in (accept or []) if isinstance(n, str) and NAME.match(n)][:12]
         max_games = max(0, min(int(max_games or 0), 1000000))
         min_base = max(60, min(int(min_base or 600), 10800))
-        if not (CLIENT_DIR / 'Cargo.toml').exists():
-            raise ValueError('The bot client is missing from FoulBroodData/hivegame-bot/client.')
+        if not _from_source() and _bundled() is None:
+            raise ValueError('The bot client is missing from this copy of FoulBrood.')
         with self.lock:
             if self.proc is not None or self.state in ('building', 'starting'):
                 raise ValueError('The bot is already running.')
@@ -207,13 +297,10 @@ class HiveBot:
             except Exception as exc:
                 with self.lock:
                     self.log.append(str(exc)[:200])
-        launcher = BOT_DIR / 'bot-engine.sh'
-        # The engine runs with its own defaults (TR_CLIMB=1 lost 86.5/200 on 27 Nov, so it is no longer set).
-        launcher.write_text('#!/bin/bash\n# Written by the viewer: the engine the hivegame.com bot plays with.\n'
-                            'exec %s\n' % shlex.quote(engine['path']))
-        launcher.chmod(0o755)
+        # The client runs the engine file itself, from the engine's folder, with the engine's own defaults
+        # (any UHP engine; paths with spaces are fine; same on Mac and Windows).
         lines = ['max_concurrent_processes: 1', 'base_url: "https://hivegame.com"', 'bots:', '  - name: hotfrass',
-                 '    ai_command: %s' % launcher, '    bestmove_command_args: time 00:02:00',
+                 '    ai_command: %s' % json.dumps(str(Path(engine['path']).resolve())), '    bestmove_command_args: time 00:02:00',
                  '    email: set-at-start', '    password: set-at-start',
                  '    accept_open_from: []', '    min_base_secs: %d' % min_base, '    max_auto_games: 0']
         (BOT_DIR / 'hive-hydra.yaml').write_text('\n'.join(lines) + '\n')
@@ -468,14 +555,14 @@ class HiveBot:
                         return
                     self.state, self.message = 'building', 'Building the bot client (first run only, a few minutes)…'
                 build = subprocess.run([cargo, 'build', '--release'], cwd=str(CLIENT_DIR), capture_output=True, text=True,
-                                       env=dict(os.environ, PATH=str(Path(cargo).parent) + ':' + os.environ.get('PATH', '')))
+                                       env=dict(os.environ, PATH=str(Path(cargo).parent) + os.pathsep + os.environ.get('PATH', '')))
                 if build.returncode != 0:
                     raise RuntimeError('Could not build the bot client: ' + build.stderr.strip()[-300:])
             with self.lock:
                 if generation != self.generation:
                     return
                 self.state, self.message = 'starting', 'Connecting to hivegame.com…'
-                proc = subprocess.Popen([str(BINARY), '-c', str(BOT_DIR / 'hive-hydra.yaml')], cwd=str(BOT_DIR), env=env,
+                proc = subprocess.Popen([str(bot_binary()), '-c', str(BOT_DIR / 'hive-hydra.yaml')], cwd=str(BOT_DIR), env=env,
                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                         text=True, bufsize=1)
                 self.proc = proc
@@ -806,7 +893,7 @@ class HiveBot:
             return dict(state=self.state, message=self.message, user=self.user, engine=self.engine_name,
                         running=self.proc is not None or self.state in ('building', 'starting'),
                         current=current, games=games, accepted=self.accepted, log=list(self.log)[-6:],
-                        client_ready=(CLIENT_DIR / 'Cargo.toml').exists(), needs_build=_needs_build(),
+                        client_ready=_from_source() or _bundled() is not None, needs_build=_needs_build(),
                         saved_login=saved_login(), accept=list(self.accept), max_games=self.max_games,
                         anyone=self.anyone, humans=bool(getattr(self, 'humans', False)), direct=bool(getattr(self, 'direct', False)), clock=list(self.clock) if self.clock else None,
                         direct_min=list(_direct_range('direct_min')), direct_max=list(_direct_range('direct_max')),
