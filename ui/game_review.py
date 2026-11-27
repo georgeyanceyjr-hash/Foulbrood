@@ -131,6 +131,7 @@ class Review:
 
     def stop(self):
         self.generation+=1
+        self.single_queue=[]  # moves queued for review by clicking them stop too
         if self.process and self.process.poll() is None:self.process.terminate()
         self.process=None
         if self.status=='running':self.status='stopped'
