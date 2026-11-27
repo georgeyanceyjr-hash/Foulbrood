@@ -955,7 +955,14 @@ window.foulbroodSfx=(()=>{
  if(tryBox)for(const [label,name] of [['White chirp','whiteChirp'],['Black chirp','blackChirp'],['Win','win'],['Loss','loss'],['Draw','draw'],['Game start','start'],['Low time','thump'],['Piece lands','tap'],['Climbs','tapClimb'],['Challenge','knock'],['Long wait White','longWaitWhite'],['Long wait Black','longWaitBlack']]){
   const b=document.createElement('button');b.type='button';b.className='small sfx-toggle';b.textContent=label;
   const key='foulbrood_sfx_'+name,isOn=()=>{try{return localStorage.getItem(key)!=='0'}catch(e){return true}},paint=()=>b.setAttribute('aria-pressed',String(isOn()));paint();
-  b.title='Yellow: this sound plays. Click to switch it off, or on (it plays when switched on).';
+  const about={whiteChirp:"White's turn begins: a short high chirp.",blackChirp:"Black's turn begins: a short low chirp.",
+   win:'You win (or the bot wins Online): a royal fanfare.',loss:'You lose: a slow, falling trumpet call.',draw:'A draw: two heralds give the same plain call.',
+   start:'A game starts, Local or Online: a trumpet call.',thump:'Low time: a heartbeat each second in the last 10 seconds of your clock.',
+   tap:'A piece is placed or moved on the board: a soft tap.',tapClimb:'A piece climbs onto the hive: a heavier double tap.',
+   knock:'Online: someone challenges the bot by name: two knocks.',
+   longWaitWhite:"White's turn after Black took a long time: a double chirp. Long means 10 s at 1+2, 15 s at 3+3, 20 s at 5+4, 30 s at 10+10, 45 s at 20+20, 60 s untimed.",
+   longWaitBlack:"Black's turn after White took a long time: a double chirp. Long means 10 s at 1+2, 15 s at 3+3, 20 s at 5+4, 30 s at 10+10, 45 s at 20+20, 60 s untimed."}[name]||'';
+  b.title=about+'\nYellow = on. Click to switch it off, or on (it plays when switched on).';
   b.onclick=()=>{const turnOn=!isOn();try{localStorage.setItem(key,turnOn?'1':'0')}catch(e){}paint();if(!turnOn)return;const played=name==='whiteChirp'||name==='blackChirp'?window.foulbroodChirp?.(name==='whiteChirp'?0:1):name==='tapClimb'?sfx.tap(true):name==='longWaitWhite'||name==='longWaitBlack'?window.foulbroodLongWait?.(name==='longWaitWhite'?0:1):sfx[name]();if(!played&&typeof toast==='function')toast('Turn sound on to hear it.')};tryBox.append(b);
  }
  const earlier=window.renderBotThoughts;
