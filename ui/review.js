@@ -1,3 +1,7 @@
+// Seconds left for an engine line or a tried move being graded (counted from when it was first seen running).
+const reviewCountdownStart=new Map();
+function reviewCountdown(e){const k=e.kind+'|'+e.ply+'|'+(e.move||'')+'|'+(e.expected||0);if(!reviewCountdownStart.has(k))reviewCountdownStart.set(k,Date.now());
+ const left=Math.ceil((e.expected||0)-(Date.now()-reviewCountdownStart.get(k))/1000);return left>0?left+'s':'almost done'}
 function reviewLineLength(){let n=4;try{n=parseInt(localStorage.getItem('foulbrood_line_length'),10)||4}catch(e){}return [4,6,8,12].includes(n)?n:4}
 function reviewDone(review){return (review?.rows||[]).filter(r=>!r.single).length} // moves reviewed in order (single-move reviews ahead of the review do not count)
 // Analysis workspaces share one board and history cursor.
@@ -301,7 +305,7 @@ function renderReviewExtra(s){
  // A move just tried stays on the board (pulsing while it is graded) until the chip is clicked or another move is chosen.
  if(reviewTryShow===ply&&tried&&tried.pieces&&s.ply===ply){reviewTryShow=null;const shown={game,ply,pieces:tried.pieces,last_move:tried.last_move,key:tryKey};setTimeout(()=>setReviewPreview(shown),0)}
  document.body.classList.toggle('review-grading',!!tried&&tried.status==='running'&&!!reviewPreview&&reviewPreview.key===tryKey);
- const key=JSON.stringify([ply,line&&[line.status,line.moves,line.error],tried&&[tried.status,tried.move,tried.score,tried.depth,tried.error],reviewPreview&&reviewPreview.key,!!reviewTry,!!reviewTryOn,reviewLineHidden.has(ply),tried&&!!tried.pieces,kept.map(e=>e.move+e.score),row.best_score,row.side]);
+ const key=JSON.stringify([line&&line.status==='running'?reviewCountdown(line):0,tried&&tried.status==='running'?reviewCountdown(tried):0,ply,line&&[line.status,line.moves,line.error],tried&&[tried.status,tried.move,tried.score,tried.depth,tried.error],reviewPreview&&reviewPreview.key,!!reviewTry,!!reviewTryOn,reviewLineHidden.has(ply),tried&&!!tried.pieces,kept.map(e=>e.move+e.score),row.best_score,row.side]);
  if(box.dataset.key===key)return;box.dataset.key=key;box.replaceChildren();
  const text=m=>{try{return shownMove(m)}catch(e){return m}};
  const button=(label,title,click,pressed)=>{const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;if(title)b.title=title;b.onclick=click;if(pressed)b.setAttribute('aria-pressed','true');return b};
@@ -331,9 +335,9 @@ function renderReviewExtra(s){
  box.append(controls);
  const note=t=>{const p=document.createElement('p');p.className='review-fact muted';p.textContent=t;box.append(p)};
  if(reviewTry)note(`Move a ${row.side===0?'White':'Black'} bug on the board to grade it.`);
- if(line&&line.status==='running')note('Finding the engine line…');
+ if(line&&line.status==='running')note('Finding engine line · '+reviewCountdown(line));
  if(line&&line.status==='error')note(line.error||'The engine line is not available.');
- if(tried&&tried.status==='running'&&!reviewTry)note(`Grading ${text(tried.move)}…`);
+ if(tried&&tried.status==='running'&&!reviewTry)note(`Grading ${text(tried.move)} · `+reviewCountdown(tried));
  if(tried&&tried.status==='error'&&!reviewTry)note(tried.error||'That move could not be graded.');
  if(kept.length){
   const title=document.createElement('span');title.className='review-line-label review-line-title';title.textContent='Tried';box.append(title);

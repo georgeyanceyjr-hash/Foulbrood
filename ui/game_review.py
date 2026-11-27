@@ -76,7 +76,12 @@ class Review:
         if not row and not (isinstance(ply,int) and 1<=ply<=self.total):raise ValueError('Review this move first.')
         if not hasattr(self,'extras'):self.extras={}
         key=(kind,ply)
-        self.extras[key]=dict(kind=kind,ply=ply,status='running',move=move)
+        # A rough time for the countdown: a short search for each move of the line (2 s at most), or one full
+        # search for a tried move, plus the move's own review first when the review has not reached it.
+        ms=self.milliseconds or 5000;count=max(2,min(int(length or 4),16))
+        expected=(count-(1 if row and row.get('reply') else 0))*(min(ms,2000)/1000+.4) if kind=='line' else ms/1000+.4
+        if not row:expected+=3*(ms/1000+.4)
+        self.extras[key]=dict(kind=kind,ply=ply,status='running',move=move,expected=round(expected))
         self.side_busy=True;generation=self.generation;units=self.remaining_units
         def work():
             try:
