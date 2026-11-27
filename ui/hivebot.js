@@ -913,9 +913,6 @@ window.foulbroodSfx=(()=>{
   // Low on time: a heartbeat.
   thump(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.01;
    for(const [at,v] of [[0,0.5],[0.16,0.35]]){const o=c.createOscillator();o.type='sine';o.frequency.setValueAtTime(70,t+at);o.frequency.exponentialRampToValueAtTime(42,t+at+0.12);o.connect(env(c,a.out,t+at,[[0.008,v],[0.14,0]]));o.start(t+at);o.stop(t+at+0.18)}return true},
-  // Game found: one sharp stinger note.
-  stinger(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.01,o=c.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(1175,t);o.frequency.exponentialRampToValueAtTime(880,t+0.18);
-   const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=500;o.connect(hp);hp.connect(env(c,a.out,t,[[0.004,0.2],[0.22,0]]));o.start(t);o.stop(t+0.25);return true},
   // Called by the viewer when a game ends on the board. true = handled here; false = play the usual chime.
   ending(result,s){
    if(result==='draw')return sfx.draw();
@@ -936,7 +933,7 @@ window.foulbroodSfx=(()=>{
   // game start / game found
   if(playing&&!wasPlaying&&!(s.review_total>0))sfx.start();
   wasPlaying=playing;
-  if(card&&!card.finished&&card.id!==liveId){if(liveId!==null||(card.turn||0)<=1)sfx.stinger();liveId=card.id}else if(card&&liveId===null)liveId=card.id;
+  if(card&&!card.finished&&card.id!==liveId){if(liveId!==null||(card.turn||0)<=1)sfx.start();liveId=card.id}else if(card&&liveId===null)liveId=card.id;
   // a piece lands on the board being played (Local or Online): a tap, heavier when it climbs onto the hive
   if((playing||liveActive)&&!s.reviewing&&s.last_move&&Array.isArray(s.pieces)){
    const moves=String(s.live_game||s.game||'').split(';').length,key=(liveActive?'live:'+card.id:'play')+'|'+String(s.live_game||s.game||'').split(';')[0];
@@ -949,7 +946,7 @@ window.foulbroodSfx=(()=>{
  };
  // Try-out buttons in the sound settings.
  const tryBox=document.getElementById('sfxTry');
- if(tryBox)for(const [label,name] of [['White chirp','whiteChirp'],['Black chirp','blackChirp'],['Win','win'],['Loss','loss'],['Draw','draw'],['Game start','start'],['Low time','thump'],['Game found','stinger'],['Piece lands','tap'],['Climbs','tapClimb'],['Challenge','knock'],['Long wait White','longWaitWhite'],['Long wait Black','longWaitBlack']]){
+ if(tryBox)for(const [label,name] of [['White chirp','whiteChirp'],['Black chirp','blackChirp'],['Win','win'],['Loss','loss'],['Draw','draw'],['Game start','start'],['Low time','thump'],['Piece lands','tap'],['Climbs','tapClimb'],['Challenge','knock'],['Long wait White','longWaitWhite'],['Long wait Black','longWaitBlack']]){
   const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;
   b.onclick=()=>{const played=name==='whiteChirp'||name==='blackChirp'?window.foulbroodChirp?.(name==='whiteChirp'?0:1):name==='tapClimb'?sfx.tap(true):name==='longWaitWhite'||name==='longWaitBlack'?window.foulbroodLongWait?.(name==='longWaitWhite'?0:1):sfx[name]();if(!played&&typeof toast==='function')toast('Turn sound on to hear it.')};tryBox.append(b);
  }
