@@ -18,10 +18,11 @@ $('modeReview').onclick=()=>{if(editorDraft)$('cancelSetup').click();analysisWor
 function reviewPoint(score){return score==null?null:Math.abs(score)>99000?Math.sign(score)*100:Math.max(-99,Math.min(99,Math.round(100*Math.tanh(score/300))))}
 
 const reviewMarksCache=new Map(),reviewMarksPending=new Set();
-function engineChoiceOn(){return highlightsOn()}
+function engineChoiceOn(s){return highlightsOn(s||state)}
 {const b=$('engineChoice');if(b){const sync=()=>b.setAttribute('aria-pressed',String(engineChoiceOn()));sync();
- b.onclick=()=>{try{localStorage.setItem('foulbrood_engine_choice',engineChoiceOn()?'0':'1')}catch(e){}sync();if(typeof lastBoardKey!=='undefined')lastBoardKey='';if(state)render(state)}}}
+ b.onclick=()=>{setHighlights(!engineChoiceOn());sync();if(typeof lastBoardKey!=='undefined')lastBoardKey='';if(state)render(state)}}}
 function renderReviewMarks(s){
+ {const hb=$('engineChoice');if(hb){const v=String(engineChoiceOn(s));if(hb.getAttribute('aria-pressed')!==v)hb.setAttribute('aria-pressed',v)}} // this section's setting
  const board=$('board');board.querySelectorAll('.review-marks').forEach(e=>e.remove());
  if(window.reviewPreviewActive?.()){ // a tried move on the board carries its grade (or a waiting mark) on the piece itself
   const tried=window.reviewTriedShown?.(s),to=tried?.last_move?.to;if(!tried||!to)return;
@@ -38,7 +39,7 @@ function renderReviewMarks(s){
   return;
  }
  // The engine's choice for the move that led here (Local, Online, Position, Game review), switched with the board's Best button.
- if(!engineChoiceOn()||!(s.ply>=1)||editorDraft)return;
+ if(!engineChoiceOn(s)||!(s.ply>=1)||editorDraft)return;
  const rowsKey=(s.game_review?.rows||[]).map(r=>r.ply+(r.alternative||'')).join(',')+'|'+(s.saved_review_rows||[]).length+'|'+(s.move_ratings||[]).map(r=>r[0]+':'+r[2]).join(',')+'|'+JSON.stringify(s.recorded_analysis||null).length;
  const key=s.game+'|'+s.ply+'|'+rowsKey;
  if(!reviewMarksCache.has(key)){
