@@ -769,6 +769,9 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
  // The extra sound effects (hivebot.js) play through the same output and volume as the game sounds.
  window.foulbroodAudio=()=>enabled&&context&&context.state==='running'&&channels.game.value>0?{context,out:gameGain}:null;
  let turnStartedAt=0;
+ // "Long wait": a turn that took clearly longer than usual for the time control (about 1.5x an even share of the clock).
+ function longWaitMs(control){const fixed={'1+2':10,'3+3':15,'5+4':20,'10+10':30,'20+20':45,untimed:60}[control];if(fixed)return fixed*1000;
+  const m=/^(\d+)\+(\d+)$/.exec(control||'');if(!m)return 30000;return Math.max(10,Math.min(60,(+m[1]*60+40*+m[2])/40*1.5))*1000}
  // Each effect can be switched on or off in the sound settings (all on at first).
  window.foulbroodSoundOn=name=>{try{return localStorage.getItem('foulbrood_sfx_'+name)!=='0'}catch(e){return true}};
  function longChirp(pitch=1){chime(null,pitch);setTimeout(()=>chime(null,pitch*1.12),190)}
@@ -792,7 +795,7 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
    // A human's turn after the other side took over 30 seconds: a stronger double chirp, in case you wandered off.
    const waited=Date.now()-(turnStartedAt||Date.now());
    const turnSide=(s.live_side??s.side)===0?'White':'Black',on=n=>window.foulbroodSoundOn?window.foulbroodSoundOn(n):true;
-   if(eligible&&previous.key!==next.key&&waited>30000){if(on('longWait'+turnSide))longChirp(pitch)}else if(on(turnSide.toLowerCase()+'Chirp'))chime(null,pitch);
+   if(eligible&&previous.key!==next.key&&waited>longWaitMs(next.control)){if(on('longWait'+turnSide))longChirp(pitch)}else if(on(turnSide.toLowerCase()+'Chirp'))chime(null,pitch);
   }
   if(!previous||previous.key!==next.key)turnStartedAt=Date.now();
   // The game clock only runs once both sides have made their first move; no ticking before that.
