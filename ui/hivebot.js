@@ -292,8 +292,9 @@
   let status=bot.message||'';
   if(connected){
    if(g){summary='Playing';status='';}
-   else if(last){status=`Connected as ${bot.user}.\nLast game: ${names(last)} — ${last.result||'finished'}.\nWaiting for the next game.`;}
+   else if(last){status=`Last game: ${names(last)} — ${last.result||'finished'}.\nWaiting for the next game.`;}
   }
+  {const t=el('hivebotDetails').querySelector('summary strong'),name=connected&&bot.user?bot.user:'hivegame.com bot';if(t.textContent!==name)t.textContent=name} // the account that is logged in
   el('hbSummary').textContent=summary;el('hbLight').className='hb-light '+(connected?'on':bot.state==='starting'||bot.state==='building'?'wait':'off');site(bot.site);el('hbStatus').textContent=status;el('hbStatus').hidden=!status;
   const card=g||last;el('hbGame').hidden=!card||(!g&&cleared===card.id); // a cleared game takes its hivegame.com link with it
   if(card){
@@ -357,6 +358,12 @@
  };
  const nativeCard=s=>{const card=boardCard(s);return card&&card.info?card:null};
  // The bot's rating of each of its moves in the game on the Online board, for the move list.
+ // The bot's messages are shown as banners on the board (while Online is open), not as text in its box.
+ {const last={};const banner=id=>{const text=(el(id).textContent||'').trim();if(!text||text===last[id])return;
+   if(!document.body.classList.contains('hb-live'))return; // shown when Online is open
+   last[id]=text;if(typeof toast==='function')toast(text.replace(/\s*\n\s*/g,' · '))};
+  for(const id of ['hbStatus','hbLog'])new MutationObserver(()=>banner(id)).observe(el(id),{childList:true,characterData:true,subtree:true});
+  new MutationObserver(()=>{if(document.body.classList.contains('hb-live')){banner('hbLog');banner('hbStatus')}}).observe(document.body,{attributes:true,attributeFilter:['class']})}
  window.foulbroodLiveEvals=s=>{try{const card=boardCard(s);if(!card||!card.evals)return null;return {side:card.white===bot.user?0:1,evals:card.evals}}catch(e){return null}};
  const drawNativePreview=s=>{
   const board=el('board');board.querySelectorAll('.hb-native-preview').forEach(n=>n.remove());

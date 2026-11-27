@@ -1171,3 +1171,6 @@ body .player.bot-duel:not(.analysis-insight):not(.review-insight) .clock{padding
 .hb-range label{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .hb-range select{min-height:30px;padding:4px 6px;width:auto}
 .hb-range.off{opacity:.45}
+
+/* The bot's messages appear as banners on the board, not in its box. */
+#hbStatus,#hbLog{display:none!important}
