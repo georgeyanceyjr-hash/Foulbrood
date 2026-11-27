@@ -302,7 +302,13 @@ function renderReviewExtra(s){
  const text=m=>{try{return shownMove(m)}catch(e){return m}};
  const button=(label,title,click,pressed)=>{const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;if(title)b.title=title;b.onclick=click;if(pressed)b.setAttribute('aria-pressed','true');return b};
  const controls=document.createElement('div');controls.className='review-extra-row';
- if(!line||line.status==='error')controls.append(button('Engine line','Show the moves the engine expected after its preferred move',()=>{if(reviewLineHidden.delete(ply)&&lineFound&&lineFound.status==='ready'){box.dataset.key='';renderReviewExtra(state);return}action({action:'review_side',kind:'line',ply})}));
+ // Engine line: one button that stays put and shows or hides the line in the move list.
+ {const shown=!!line&&line.status!=='error';
+  controls.append(button('Engine line',shown?'Hide the engine line':'Show the moves the engine expected after its preferred move',()=>{
+   if(shown){reviewLineHidden.add(ply);if(reviewPreview&&/^line/.test(reviewPreview.key))setReviewPreview(null)}
+   else if(lineFound&&lineFound.status==='ready')reviewLineHidden.delete(ply);
+   else{reviewLineHidden.delete(ply);action({action:'review_side',kind:'line',ply});return}
+   box.dataset.key='';renderReviewExtra(state);renderHistoryLine(state,$('moves'))},shown))}
  controls.append(reviewTry||reviewTryOn?button('Stop trying','Leave Try a move',async()=>{const back=(reviewTry||reviewTryOn).ply,grading=found&&found.status==='running';reviewTry=null;reviewTryOn=null;reviewTryShow=null;
    if(grading)reviewTryDismissed.add(found.ply+'|'+found.move); // stopped in the middle of thinking: no result for that move
    if(reviewPreview)setReviewPreview(null);
@@ -362,8 +368,7 @@ function renderHistoryLine(s,list){
  box.dataset.key=key;box.replaceChildren();
  const head=document.createElement('div');head.className='history-line-head';
  const title=document.createElement('span');title.textContent='Engine line';head.append(title);
- const x=document.createElement('button');x.type='button';x.className='review-line-clear';x.textContent='×';x.title='Clear the engine line';x.setAttribute('aria-label','Clear the engine line');
- x.onclick=e=>{e.stopPropagation();reviewLineHidden.add(n);if(reviewPreview&&/^line/.test(reviewPreview.key))setReviewPreview(null);reviewExtraBox.dataset.key='';box.remove();renderReviewExtra(state)};head.append(x);box.append(head);
+ box.append(head);
  const grid=document.createElement('div');grid.className='history-line-moves';
  if(n%2===0){const gap=document.createElement('span');gap.className='history-line-gap';grid.append(gap)} // a Black move starts in the right-hand column
  const text=m=>{try{return shownMove(m)}catch(e){return m}};
