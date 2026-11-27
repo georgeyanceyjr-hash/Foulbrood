@@ -897,9 +897,11 @@ window.foulbroodSfx=(()=>{
   knock(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.01;
    for(const at of [0,0.16]){const n=noise(c,0.09),bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=420;bp.Q.value=3;n.connect(bp);bp.connect(env(c,a.out,t+at,[[0.003,0.7],[0.08,0]]));n.start(t+at);n.stop(t+at+0.09);
     const o=c.createOscillator();o.type='sine';o.frequency.setValueAtTime(160,t+at);o.frequency.exponentialRampToValueAtTime(90,t+at+0.07);o.connect(env(c,a.out,t+at,[[0.003,0.4],[0.08,0]]));o.start(t+at);o.stop(t+at+0.1)}return true},
-  // A draw: two even, neutral notes.
+  // A draw: two bees hold each other off at the same low pitch and neither wins: a level buzz, then two soft, even low notes.
   draw(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02;
-   for(const [at,f] of [[0,440],[0.28,440]]){const o=c.createOscillator();o.type='triangle';o.frequency.value=f;o.connect(env(c,a.out,t+at,[[0.01,0.22],[0.22,0.12],[0.34,0]]));o.start(t+at);o.stop(t+at+0.36)}return true},
+   bee(c,a.out,t,0.55,165,165,0.08,24);bee(c,a.out,t+0.03,0.55,168,168,0.08,26);
+   for(const at of [0.62,0.9]){const o=c.createOscillator(),lp=c.createBiquadFilter();o.type='triangle';o.frequency.value=196;lp.type='lowpass';lp.frequency.value=600;o.connect(lp);lp.connect(env(c,a.out,t+at,[[0.02,0.2],[0.18,0.1],[0.26,0]]));o.start(t+at);o.stop(t+at+0.3)}
+   return true},
   // Game start: the hive notices you.
   start(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02,g=env(c,a.out,t,[[0.45,1],[0.9,0]]);swarm(c,g,t,0.9,0.12,1.15);return true},
   // Low on time: a heartbeat.
