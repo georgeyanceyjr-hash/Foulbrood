@@ -10,10 +10,4 @@ assert(ctx.gameSettingsLocked({...base,running:false,ply:0,game:'Base+MLP;NotSta
 for(const s of [{...base,play_finished:true},{...base,resigned_side:0},{...base,timeout_side:1},{...base,mode:'analysis'},{...base,running:false,review_total:0,game:'Base+MLP;NotStarted;White[1]'}]){ctx.syncGameSettings(s);assert(!controls.time.disabled)}
 console.log('PASS: live/paused/review settings locked; finished/reset/analysis unlocked; current game settings synchronized');
 
-controls.countdownHelp={};
-const countdown=source.match(/\$\('countdownHelp'\)\.hidden=[^;]+;/)[0];
-for(const players of [['engine-a','engine-b'],['Human','engine-b'],['engine-a','Human'],['Human','Human']]){
- ctx.s={mode:'play'};ctx.shownPlayers=players;vm.runInContext(countdown,ctx);
- assert.equal(controls.countdownHelp.hidden,players.every(p=>p!=='Human'));
-}
-console.log('PASS: spoken countdown help is hidden for two engines and restored with either human player.');
+assert(!source.includes('countdownHelp'));console.log('PASS: no spoken countdown help (the countdown is not spoken).');

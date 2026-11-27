@@ -268,7 +268,7 @@ function render(s){{const k=highlightSection(s)+(highlightsOn(s)?'1':'0');if(k!=
  window.syncEnginePlayers?.(s);
  syncGameSettings(s);
  const shownPlayers=seatPreviewPlayers||s.players;
- $('countdownHelp').hidden=s.mode==='play'&&($('time').value==='untimed'||shownPlayers.every(p=>p!=='Human'));
+ 
  for(const [id,side]of [['resignWhite',0],['resignBlack',1]]){$(id).hidden=s.mode!=='play'||shownPlayers[side]!=='Human'||finished;$(id).disabled=shownPlayers[side]!==s.players[side]||(!s.running&&s.ply===0)}
  $('perspectiveOption').hidden=s.mode!=='analysis'||notationMode!=='traditional';
  const importNotice=s.import_info==='Set-up position. Earlier repetitions are unknown.'?'':(s.import_info||'').replace('; board status is determined from the moves.','.');$('importStatus').hidden=!importNotice;$('importStatus').textContent=importNotice;
@@ -304,7 +304,7 @@ function render(s){{const k=highlightSection(s)+(highlightsOn(s)?'1':'0');if(k!=
 for(const id of ['whitePlayer','blackPlayer'])$(id).addEventListener('change',()=>{seatPreviewPlayers=[$('whitePlayer').value,$('blackPlayer').value];if(state)render(state)});
 $('bookEnabled').onchange=()=>action({action:'book_enabled',enabled:$('bookEnabled').checked});$('calculateInstead').onclick=()=>action({action:'calculate_instead'});
 $('new').onclick=()=>{const payload={action:'new',players:[$('whitePlayer').value,$('blackPlayer').value],time:$('time').value,variant:$('variant').value};if(state&&gameSettingsLocked(state))confirmViewerAction('Start a new game?','This will replace the game in progress.','Start new game',payload);else action(payload)};
-let timeChanging=false;$('time').onchange=()=>{if(serverState&&!timeChanging){timeChanging=true;try{render(serverState)}finally{timeChanging=false}}if($('time').value==='untimed'){if($('analysisTime').value==='-1'&&serverState?.mode==='play')action({action:'insight_time',milliseconds:15000});$('timeHelp').textContent='No game clocks. Computer turns use up to 10 seconds of thinking time.';$('countdownHelp').hidden=true;return;} $('countdownHelp').hidden=false;const [a,b]=$('time').value.split('+');$('timeHelp').textContent=`${a} minute${a==='1'?'':'s'} each, plus ${b} seconds per move.`;$('countdownHelp').textContent=`Spoken countdown: ${a==='1'?'10, 3, 2, 1':'30, 20, 10, 3, 2, 1'} seconds.`};
+let timeChanging=false;$('time').onchange=()=>{if(serverState&&!timeChanging){timeChanging=true;try{render(serverState)}finally{timeChanging=false}}if($('time').value==='untimed'){if($('analysisTime').value==='-1'&&serverState?.mode==='play')action({action:'insight_time',milliseconds:15000});$('timeHelp').textContent='No game clocks. Computer turns use up to 10 seconds of thinking time.';return;} const [a,b]=$('time').value.split('+');$('timeHelp').textContent=`${a} minute${a==='1'?'':'s'} each, plus ${b} seconds per move.`};
 let takebackConfirmation=true;
 try{takebackConfirmation=!document.cookie.split('; ').includes('foulbrood_takeback_confirm=off')}catch(e){}
 function syncTakebackLock(){const b=$('takebackLock');b.textContent=takebackConfirmation?'Confirm: on':'Confirm: off';b.setAttribute('aria-pressed',String(takebackConfirmation));b.setAttribute('aria-label',`Takeback confirmation ${takebackConfirmation?'on':'off'}`);b.title=takebackConfirmation?'Takeback confirmation on — click to skip warnings':'Takeback confirmation off — click to restore warnings';}
@@ -705,7 +705,7 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
   const now=context.currentTime;
   // A suspended/background page must not replay missed ticks in a burst.
   while(nextTickAt<now-.05){nextTickAt+=1;tickRemaining--;}
-  if(nextTickAt<=now+.1){if(tickRemaining>0){if(tickRemaining<=3&&tickWarnings.includes(tickRemaining))speakNumber(tickRemaining,tickSpeechPitch,nextTickAt);else if(!tickWarnings.includes(tickRemaining))clockTick(nextTickAt);}else if(tickRemaining===0&&timeoutCueKey!==tickKey){timeoutSound(nextTickAt);timeoutCueKey=tickKey;}nextTickAt+=1;tickRemaining--;}
+  if(nextTickAt<=now+.1){if(tickRemaining>0)clockTick(nextTickAt);else if(tickRemaining===0&&timeoutCueKey!==tickKey){timeoutSound(nextTickAt);timeoutCueKey=tickKey;}nextTickAt+=1;tickRemaining--;}
   tickTimer=setTimeout(pumpClockTicks,40);
  }
  function syncClockTicks(s){
@@ -783,13 +783,6 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
   }
   // Opening/reloading the page and browsing Analysis must not announce old turns.
   if(previous&&previous.mode==='play'&&playing&&(!previous.playing||previous.key!==next.key))chime(null,pitch);
-  if(!next.untimed&&previous?.eligible&&eligible&&previous.key===next.key&&previous.control===next.control&&next.seconds>0){
-   const thresholds=next.control==='1+2'?[10,3,2,1]:[30,20,10,3,2,1];
-   const crossed=thresholds.filter(t=>t>3&&previous.seconds>t&&next.seconds<=t);
-   if(crossed.length&&next.seconds>3){
-    speakNumber(crossed[crossed.length-1],speechPitch);
-   }
-  }
   // The game clock only runs once both sides have made their first move; no ticking before that.
   syncClockTicks(((s?.review_total??s?.ply??0)>=2)?next:{...next,running:false});
   previous=next;
