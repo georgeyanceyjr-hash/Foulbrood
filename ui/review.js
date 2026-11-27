@@ -4,10 +4,17 @@ function reviewCountdown(e){const k=e.kind+'|'+e.ply+'|'+(e.move||'')+'|'+(e.exp
  const left=Math.ceil((e.expected||0)-(Date.now()-reviewCountdownStart.get(k))/1000);return left>0?left+'s':'almost done'}
 function reviewLineLength(){let n=4;try{n=parseInt(localStorage.getItem('foulbrood_line_length'),10)||4}catch(e){}return [4,6,8,12].includes(n)?n:4}
 // Analysis workspaces share one board and history cursor.
-$('modeAnalyze').onclick=()=>{if(editorDraft)$('cancelSetup').click();if(state?.game_review)action({action:'review_exit'})};
-$('modeSetup').onclick=async()=>{if(state?.game_review)await action({action:'review_exit'});if(!editorDraft)openPositionSetup(false)};
+// Analysis reopens where it was last left (Game review the first time).
+function analysisWorkspace(w){try{if(w)localStorage.setItem('foulbrood_analysis_workspace',w);return localStorage.getItem('foulbrood_analysis_workspace')||'review'}catch(e){return w||'review'}}
+$('modeAnalyze').onclick=()=>{analysisWorkspace('position');if(editorDraft)$('cancelSetup').click();if(state?.game_review)action({action:'review_exit'})};
+$('modeSetup').onclick=async()=>{analysisWorkspace('arrange');if(state?.game_review)await action({action:'review_exit'});if(!editorDraft)openPositionSetup(false)};
+$('analysisTab').onclick=async()=>{await action({action:'mode',mode:'analysis'});const want=analysisWorkspace();
+ if(want==='review'&&state?.mode==='analysis'&&!state.game_review)await action({action:'review_enter'});
+ else if(want!=='review'&&state?.game_review)await action({action:'review_exit'});
+ if(want==='arrange'&&!editorDraft&&state?.mode==='analysis')openPositionSetup(false)};
 $('inGameAnalysis').onchange=()=>action({action:'review_source',source:$('inGameAnalysis').checked?'in_game':'review'});
-$('modeReview').onclick=()=>{if(editorDraft)$('cancelSetup').click();action({action:'review_enter'})};
+for(const [id,w] of [['cancelSetup','position'],['applySetup','position'],['startSetup','arrange'],['rearrangeSetup','arrange']])$(id)?.addEventListener('click',e=>{if(e.isTrusted)analysisWorkspace(w)}); // only the person's own clicks (leaving the page also closes Arrange)
+$('modeReview').onclick=()=>{if(editorDraft)$('cancelSetup').click();analysisWorkspace('review');action({action:'review_enter'})};
 function reviewPoint(score){return score==null?null:Math.abs(score)>99000?Math.sign(score)*100:Math.max(-99,Math.min(99,Math.round(100*Math.tanh(score/300))))}
 
 const reviewMarksCache=new Map(),reviewMarksPending=new Set();

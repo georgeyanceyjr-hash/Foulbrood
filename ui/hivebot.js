@@ -48,7 +48,7 @@
  const resumeReview=async()=>{let want=null;try{want=localStorage.getItem('foulbrood_review_resume')}catch(e){}if(!want)return;
   for(let i=0;i<30;i++){await new Promise(r=>setTimeout(r,200));if(typeof state!=='undefined'&&state&&state.mode==='analysis'&&!botBoard()&&(state.review_game||state.game)===want&&!(typeof busy!=='undefined'&&busy))break;if(i===29)return}
   try{localStorage.removeItem('foulbrood_review_resume')}catch(e){}
-  if(!state.game_review)await action({action:'review_enter'});
+  if(typeof analysisWorkspace==='function')analysisWorkspace('review');if(!state.game_review)await action({action:'review_enter'});
  };
  // A position still being arranged is put aside while Online is open, and comes back with the Analysis tab.
  let parkedDraft=null;
