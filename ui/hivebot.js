@@ -873,8 +873,13 @@ window.foulbroodSfx=(()=>{
   const o=ctx.createOscillator();o.type='sine';o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(38,t+0.2);o.connect(env(ctx,out,t,[[0.005,0.6],[0.24,0]]));o.start(t);o.stop(t+0.3);
  };
  const sfx={
-  // Win: the swarm closes in, rising, then the queen goes splat.
-  win(){const a=A();if(!a)return false;const t=a.context.currentTime+0.02;swarm(a.context,a.out,t,0.95,0.16,1.7);splat(a.context,a.out,t+0.97);return true},
+  // Win: the swarm rises happily, the queen goes splat, then a bright major fanfare with a sparkle on top.
+  win(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02;swarm(c,a.out,t,0.6,0.13,1.9);splat(c,a.out,t+0.6);
+   const note=(at,f,dur,level,type='triangle')=>{const o=c.createOscillator();o.type=type;o.frequency.setValueAtTime(f,t+at);o.connect(env(c,a.out,t+at,[[0.012,level],[dur*0.6,level*0.7],[dur,0]]));o.start(t+at);o.stop(t+at+dur+0.05)};
+   for(const [at,f] of [[0.78,523.25],[0.9,659.25],[1.02,783.99]])note(at,f,0.16,0.22);
+   note(1.14,1046.5,0.55,0.26);note(1.14,1318.5,0.55,0.12);note(1.14,1567.98,0.55,0.1); // the last chord rings out
+   for(const [at,f] of [[1.3,2093],[1.38,2637],[1.46,3136]])note(at,f,0.12,0.05,'sine'); // sparkle
+   return true},
   // Loss: one bee sputters, drops in pitch and dies.
   loss(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02,g=c.createGain();g.connect(a.out);
    for(const [at,v] of [[0,1],[0.45,1],[0.5,0.15],[0.62,1],[0.9,1],[0.95,0.1],[1.02,0.9],[1.2,0.1],[1.27,0.7],[1.6,0]])g.gain.linearRampToValueAtTime(v,t+at);
