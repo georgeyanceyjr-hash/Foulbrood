@@ -44,7 +44,7 @@
  };
  const setLive=v=>{live=v;try{localStorage.setItem('foulbrood_live_tab',v?'1':'0')}catch(e){}};
  // Leaving Analysis while a game is in review: remember it, so coming back goes straight to that review again.
- const noteReview=()=>{try{if(typeof state!=='undefined'&&state&&state.mode==='analysis'&&state.game_review&&!botBoard())localStorage.setItem('foulbrood_review_resume',state.review_game||state.game)}catch(e){}};
+ const noteReview=()=>{try{if(typeof state!=='undefined'&&state&&state.mode==='analysis'&&state.game_review){localStorage.setItem('foulbrood_review_resume',state.review_game||state.game);if(botBoard()){botBoard(false);stash(null)}}}catch(e){}};
  const resumeReview=async()=>{let want=null;try{want=localStorage.getItem('foulbrood_review_resume')}catch(e){}if(!want)return;
   for(let i=0;i<30;i++){await new Promise(r=>setTimeout(r,200));if(typeof state!=='undefined'&&state&&state.mode==='analysis'&&!botBoard()&&(state.review_game||state.game)===want&&!(typeof busy!=='undefined'&&busy))break;if(i===29)return}
   try{localStorage.removeItem('foulbrood_review_resume')}catch(e){}
@@ -100,7 +100,8 @@
  };
  // Entering Live: set the Analysis game aside and start from an empty board (the bot's game is loaded next, if any).
  const takeBoard=async()=>{
-  if(botBoard()||typeof state==='undefined'||!state||state.mode!=='analysis')return;
+  if(typeof state==='undefined'||!state||state.mode!=='analysis')return;
+  if(botBoard()&&!state.game_review)return; // a game under review is never the bot's game, whatever the flag says
   const some=hasGame(state.review_game||state.game)||(state.pieces||[]).length>0; // a game, or an arranged position with no moves yet
   if(some)stash(state.review_game||state.game); // the whole game, so its review is found again on coming back
   botBoard(true);shown={id:null,turn:-1};
@@ -347,6 +348,8 @@
   return card;
  };
  const nativeCard=s=>{const card=boardCard(s);return card&&card.info?card:null};
+ // The bot's rating of each of its moves in the game on the Online board, for the move list.
+ window.foulbroodLiveEvals=s=>{try{const card=boardCard(s);if(!card||!card.evals)return null;return {side:card.white===bot.user?0:1,evals:card.evals}}catch(e){return null}};
  const drawNativePreview=s=>{
   const board=el('board');board.querySelectorAll('.hb-native-preview').forEach(n=>n.remove());
   const card=nativeCard(s);if(!card||!card.thinking||s.ply!==card.info.turn)return;
@@ -558,6 +561,11 @@
  });
  el('hbLogin').addEventListener('input',render);
  // What the History tab needs from Live.
+ // A game opened into Analysis from anywhere but Online (Local, a file, a link, the Archive) is the user's own:
+ // the board is no longer the bot's, and nothing set aside earlier should come back over it.
+ if(typeof action==='function'&&!action.liveWrapped){const real=action;action=async function(payload){
+  if(payload&&['open_analysis','load','review_load','setup_position'].includes(payload.action)&&!live&&botBoard()){stash(null);botBoard(false);shown={id:null,turn:-1}}
+  return real.apply(this,arguments)};action.liveWrapped=true}
  window.foulbroodLive={botName:()=>{try{return (bot&&(bot.user||bot.saved_login))||''}catch(e){return ''}},stepped:s=>{try{const c=boardCard(s);return !!c&&!c.finished&&document.body.classList.contains('hb-live')&&typeof s.ply==='number'&&s.ply<(s.review_total??s.ply)}catch(e){return false}},ask,card:()=>soundCard(),setLive:v=>{setLive(v);fixTabs()},boardIsLive:()=>botBoard(),hasStash:()=>hasGame(stash()),dropStash:()=>{stash(null);botBoard(false);shown={id:null,turn:-1}}};
  setTimeout(()=>{if(typeof state==='undefined'||!state||state.mode!=='analysis')return;(live?takeBoard():releaseBoard()).catch(()=>{})},1500);
  el('hbFollow').addEventListener('change',()=>{if(el('hbFollow').checked)shown={id:null,turn:-1};render()});
@@ -640,6 +648,7 @@
   section('Where the losses turned',r.turning,(t,b)=>{b.append(make('span','',`Move ${t.move} · ${where(t)}`),make('strong','',`${signed(t.before)} → ${signed(t.after)}`));b.title='Open this game at that move';b.onclick=()=>openGame(t.id,t.move).catch(e=>toast(e.message))});
   section('Rated itself winning, then lost',r.ahead,(t,b)=>{b.append(make('span','',`Move ${t.move} · ${where(t)}`),make('strong','',signed(t.peak)));b.title='Open this game at that move';b.onclick=()=>openGame(t.id,t.move).catch(e=>toast(e.message))});
  };
+ el('histReset').onclick=()=>{el('histSearch').value='';meChosen=false;for(const id of ['histOpp','histColour','histResult','histOpening'])el(id).value='';el('histMe').value='';refresh().catch(()=>draw(null))};
  el('histReportGo').onclick=async()=>{const me=el('histMe').value;if(!me){toast('Choose a player first.');return}
   try{showReport(await call('report',{me,ids:shownGames.map(g=>g.id)}))}catch(e){toast(window.plainMessage?window.plainMessage(e.message):e.message)}};
  const draw=data=>{

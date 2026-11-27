@@ -1074,7 +1074,7 @@ aside #reviewFacts #reviewTurn[aria-pressed="true"]{background:var(--hazard);bor
 #moves .history-move.turning{outline:2px solid var(--hazard);outline-offset:1px}
 #moves .history-move.turning .move-number::after{content:'★';margin-left:2px;font-size:9px;color:var(--hazard)}
 /* History page: filters across games */
-.hist-filters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:8px;margin:10px 0 4px;align-items:end}
+.hist-filters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto auto;gap:8px;margin:10px 0 4px;align-items:end}
 .hist-filters label{display:block;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .hist-filters select{display:block;width:100%;margin-top:4px;min-height:34px;padding:6px 8px;background:var(--bg);border:1px solid var(--line);border-radius:2px;color:var(--ink);font:500 13px/1.2 inherit;letter-spacing:0;text-transform:none}
 @media (max-width:820px){.hist-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -1145,3 +1145,23 @@ aside #reviewExtra .review-line-clear:hover{color:var(--ink);background:none}
 #reviewExtra .review-tried{flex-wrap:nowrap}
 #reviewExtra .review-tried .review-try-verdict{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 aside #reviewExtra .review-tried .review-line-clear{margin-left:auto;font-size:14px}
+
+/* Archive: Reset puts every filter back to its usual choice. */
+.hist-filters #histReset{min-height:34px;padding:6px 12px;border:1px solid var(--line);border-radius:2px;background:transparent;color:var(--ink);font:700 11px/1.2 inherit;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.hist-filters #histReset:hover{border-color:var(--hazard)}
+/* Report: the thinking time sits on the same line as its Review button. */
+.hist-report-batch{flex-wrap:nowrap}
+.hist-report-batch button,.hist-report-batch select{width:auto!important;flex:none}
+.hist-report-batch>span{flex:1 1 auto;min-width:0}
+/* Local and Online status bars: one clock style, time only (no words in the clock box). */
+.player .clock::before,.player.bot-duel .clock::before,body .player.bot-duel:not(.analysis-insight):not(.review-insight) .clock::before{content:none!important;display:none!important}
+body .player.analysis-insight.hb-live-clock .clock{color:var(--ink)}
+body .player.bot-duel:not(.analysis-insight):not(.review-insight) .clock{padding-bottom:0}
+/* Engine line inside the move list: under the move it belongs to, numbered and rated like the game's moves. */
+#moves>.history-line{grid-column:1/-1;margin:2px 0 4px;padding:6px 8px 8px;border:1px dashed var(--line);border-left:3px solid var(--hazard);border-radius:2px;background:color-mix(in srgb,var(--hazard) 5%,transparent)}
+#moves>.history-line .history-line-head{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+#moves>.history-line .history-line-moves{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
+#moves>.history-line .history-move.line-move{font-style:italic}
+#moves>.history-line .history-move.line-move .move-rating{font-style:normal}
+#moves>.history-line .history-move.line-move{border-color:var(--line)!important;background:transparent!important}
+#moves>.history-line .history-move.line-move.current{border-color:var(--hazard)!important}

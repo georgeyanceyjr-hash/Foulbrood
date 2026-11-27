@@ -38,25 +38,27 @@ function renderReviewMarks(s){
  }
  if(globalThis.insightSuggestionsVisible?.(s)===false)return;
  const row=s.game_review?.rows.find(r=>r.ply===s.ply);
- if(!row?.symbol||!row.alternative||row.alternative===row.move)return;
+ if(!row?.alternative||row.alternative===row.move||row.label==='Book')return; // every graded move shows the engine's preferred move
  const key=s.game+'|'+row.alternative;
  if(!reviewMarksCache.has(key)){
   if(reviewMarksPending.has(key))return;reviewMarksPending.add(key);
   fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Board-Token':window.BOARD_TOKEN},body:JSON.stringify({action:'review_marks',ply:s.ply})}).then(async r=>{const data=await r.json();if(r.ok){reviewMarksCache.set(key,data.mark);if(reviewMarksCache.size>200)reviewMarksCache.delete(reviewMarksCache.keys().next().value);if(state?.game===s.game)renderReviewMarks(state)}}).catch(()=>{}).finally(()=>reviewMarksPending.delete(key));return;
  }
  const mark=reviewMarksCache.get(key);if(!mark)return;
- const layer=node('g',{class:'review-marks opponent-insight-preview','pointer-events':'none','aria-label':'Preferred move preview',style:`--preview-blue:${hintColor(row.side??1-s.side)}`}),[x,baseY]=xy(...mark.to);
- const height=s.pieces.filter(p=>p.q===mark.to[0]&&p.r===mark.to[1]&&p.id!==mark.piece).length,y=baseY-height*10;
+ // Drawn like an Analysis suggestion: gold for White's moves, blue for Black's.
+ const color=hintColor(row.side??1-s.side);
+ const layer=node('g',{class:'review-marks suggestion-trail','pointer-events':'none','aria-label':'Preferred move'}),[x,baseY]=xy(...mark.to);
+ const height=mark.level??s.pieces.filter(p=>p.q===mark.to[0]&&p.r===mark.to[1]&&p.id!==mark.piece).length,y=baseY-height*10;
  if(mark.origin){
-  const [sx,sy]=xy(...mark.origin),dx=x-sx,dy=y-sy,length=Math.hypot(dx,dy);
-  layer.append(node('polygon',{points:hex(sx,sy,39),class:'opponent-insight-outline','stroke-dasharray':'6 4'}));
-  if(length>42){const ux=dx/length,uy=dy/length,ex=x-ux*43,ey=y-uy*43;
-   layer.append(node('line',{x1:sx,y1:sy,x2:ex,y2:ey,class:'opponent-insight-arrow'}));
-   layer.append(node('polygon',{points:`${ex},${ey} ${ex-ux*11-uy*5},${ey-uy*11+ux*5} ${ex-ux*11+uy*5},${ey-uy*11-ux*5}`,class:'opponent-insight-arrowhead'}));
+  const [sx,baseSY]=xy(...mark.origin),sy=baseSY-(mark.origin_level||0)*10,dx=x-sx,dy=y-sy,length=Math.hypot(dx,dy);
+  layer.append(node('polygon',{points:hex(sx,sy,39),fill:color+'18',stroke:color,'stroke-width':3,'stroke-dasharray':'6 4'}));
+  if(length>43){const ux=dx/length,uy=dy/length,ex=x-ux*42,ey=y-uy*42;
+   layer.append(node('line',{x1:sx,y1:sy,x2:ex,y2:ey,stroke:color,'stroke-width':3,'stroke-linecap':'round'}));
+   layer.append(node('polygon',{points:`${ex},${ey} ${ex-ux*10-uy*5},${ey-uy*10+ux*5} ${ex-ux*10+uy*5},${ey-uy*10-ux*5}`,fill:color}));
   }
  }
- const ghost=node('g',{opacity:.55});ghost.append(artwork(mark.piece,x,y));layer.append(ghost);
- layer.append(node('polygon',{points:hex(x,y,40),class:'opponent-insight-outline'}));board.append(layer);
+ const ghost=node('g',{opacity:.6});ghost.append(artwork(mark.piece,x,y));layer.append(ghost);
+ layer.append(node('polygon',{points:hex(x,y,40),fill:'none',stroke:color,'stroke-width':4}));board.append(layer);
 }
 function reviewIssue(direction){const rows=state?.game_review?.rows||[];const candidates=rows.filter(r=>r.symbol&&(direction>0?r.ply>state.ply:r.ply<state.ply));const row=direction>0?candidates[0]:candidates.at(-1);if(row)action({action:'navigate',ply:row.ply})}
 $('previousIssue').onclick=()=>reviewIssue(-1);$('nextIssue').onclick=()=>reviewIssue(1);
@@ -241,7 +243,11 @@ window.reviewPreviewActive=()=>!!reviewPreview;
  canMove=function(){return trying()||realCanMove()};
  play=function(move){
   if(!trying())return realPlay(move);
-  const ply=reviewTry.ply;reviewTry=null;reviewTryShow=ply;reviewTryDismissed.delete(ply+'|'+move); // once the server has the position, keep the tried move on the board
+  const ply=reviewTry.ply,game=reviewTry.game;
+  // Already graded: show it again straight away instead of grading it a second time.
+  const known=(reviewTriedKept.get(game+'|'+ply)||[]).find(e=>e.move===move&&e.status==='ready'&&e.pieces);
+  if(known){reviewTry=null;reviewTryDismissed.delete(ply+'|'+move);(async()=>{await action({action:'navigate',ply});setReviewPreview({game,ply,pieces:known.pieces,last_move:known.last_move,key:'try'+ply+'|'+move})})();return}
+  reviewTry=null;reviewTryShow=ply;reviewTryDismissed.delete(ply+'|'+move); // once the server has the position, keep the tried move on the board
   (async()=>{await action({action:'review_side',kind:'try',ply,move});for(let i=0;i<20&&busy;i++)await new Promise(r=>setTimeout(r,50));await action({action:'navigate',ply})})();
  };
 }
@@ -261,8 +267,17 @@ document.addEventListener('pointerdown',e=>{
  if(!reviewPreview||!/^try/.test(reviewPreview.key)||!e.target.closest||!e.target.closest('#board,.reserve'))return;
  e.stopPropagation();e.preventDefault();
  const shown=window.reviewTriedShown(state);if(shown&&shown.status==='running')return;
- const ply=reviewPreview.ply;setReviewPreview(null);
- if(reviewTryOn&&reviewTryOn.ply===ply){reviewTry={game:reviewTryOn.game,ply};setTimeout(()=>action({action:'navigate',ply:ply-1}),0)}
+ const ply=reviewPreview.ply,piece=shown?.last_move?.piece;
+ // Pressing on the tried piece itself picks it up again: its grade goes and it can be dropped somewhere else.
+ const onTried=!!piece&&e.button===0&&(!!e.target.closest('.review-try-badge')||e.target.closest('.tile')?.dataset.piece===piece);
+ setReviewPreview(null);
+ if(reviewTryOn&&reviewTryOn.ply===ply){reviewTry={game:reviewTryOn.game,ply};
+  let held=null;
+  if(onTried){held={id:piece,pointer:e.pointerId,x:e.clientX,y:e.clientY,moved:false,game:null,wasSelected:true};
+   document.addEventListener('pointerup',u=>{if(u.pointerId===held.pointer)held.released=true},{capture:true,once:true})}
+  setTimeout(async()=>{await action({action:'navigate',ply:ply-1});
+   // The board has gone back to the position to try from: the piece is still in hand while the button is held.
+   if(held&&!held.released&&canMove()){held.game=state.game;pieceDrag=held;selected=piece;lastBoardKey='';renderBoard()}},0)}
 },true);
 function setReviewPreview(next){reviewPreview=next;lastBoardKey='';
  // Make sure the previewed move is in view: refit the board when it falls outside the current frame (and when the preview is cleared after that).
@@ -299,18 +314,9 @@ function renderReviewExtra(s){
  if(reviewTry)note(`Move a ${row.side===0?'White':'Black'} bug on the board to grade it.`);
  if(line&&line.status==='running')note('Finding the engine line…');
  if(line&&line.status==='error')note(line.error||'The engine line is not available.');
- if(line&&line.status==='ready'&&!reviewTry){
-  const title=document.createElement('span');title.className='review-line-label review-line-title';title.textContent='Engine line';
-  {const x=document.createElement('button');x.type='button';x.className='review-line-clear';x.textContent='×';x.title='Clear the engine line';x.setAttribute('aria-label','Clear the engine line');x.onclick=()=>{reviewLineHidden.add(ply);if(reviewPreview&&/^line/.test(reviewPreview.key))setReviewPreview(null);box.dataset.key='';renderReviewExtra(state)};title.append(x)}
-  box.append(title);
-  const chips=document.createElement('div');chips.className='review-line review-line-moves';
-  line.moves.forEach((m,i)=>{const k='line'+ply+'-'+i,on=reviewPreview&&reviewPreview.key===k;const step=line.steps[i];
-   chips.append(button(text(m),'Show the board after this move of the line',()=>setReviewPreview(on?null:{game,ply,pieces:step.pieces,last_move:step.last_move,key:k}),on))});
-  box.append(chips);
- }
  if(tried&&tried.status==='running'&&!reviewTry)note(`Grading ${text(tried.move)}…`);
  if(tried&&tried.status==='error'&&!reviewTry)note(tried.error||'That move could not be graded.');
- if(kept.length&&!reviewTry){
+ if(kept.length){
   const title=document.createElement('span');title.className='review-line-label review-line-title';title.textContent='Tried';box.append(title);
   for(const e of kept){
    const g=reviewTryGrade(s,e)||{name:'Unclear',rating:null,verdict:''},k='try'+ply+'|'+e.move,on=reviewPreview&&reviewPreview.key===k;
@@ -335,6 +341,42 @@ function reviewSettings(on){
   for(const [node,parent,next]of reviewMoved.splice(0).reverse())parent.insertBefore(node,next&&next.parentNode===parent?next:null);
  }
 }
+function playedRatings(s){
+ const out=new Map();if(!s||s.game_review)return out;
+ const live=window.foulbroodLiveEvals?.(s);
+ if(live){const sign=live.side===0?1:-1;for(const [turn,v]of Object.entries(live.evals)){if(!Array.isArray(v))continue;out.set(+turn+1,{played:true,score:v[1]*sign,depth:v[0]})}return out}
+ for(const [ply,score,depth]of s.move_ratings||[])out.set(ply,{played:true,score,depth,book:depth===1&&score===0});
+ return out;
+}
+// The engine line sits in the move list itself, under the move it belongs to, numbered and rated like the game's moves.
+function renderHistoryLine(s,list){
+ const review=s?.game_review;let box=list.querySelector(':scope > .history-line');
+ const found=review&&s.mode==='analysis'?(review.extras||[]).find(e=>e.kind==='line'&&e.ply===s.ply&&e.status==='ready'):null;
+ const line=found&&!reviewLineHidden.has(s.ply)&&!reviewTry&&!editorDraft?found:null;
+ if(!line){if(box)box.remove();return}
+ const game=s.review_game||s.game,key=JSON.stringify([game,line.ply,line.moves,line.scores,reviewPreview&&reviewPreview.key]);
+ const total=(s.review_game||s.game).split(';').length-3,n=line.ply,anchorPly=n%2&&n<total?n+1:n;
+ const anchor=[...list.querySelectorAll(':scope > button.history-move')].find(b=>parseInt(b.querySelector('.move-number')?.textContent,10)===anchorPly);
+ if(box&&box.dataset.key===key&&anchor&&box.previousElementSibling===anchor)return;
+ if(!box){box=document.createElement('div');box.className='history-line'}
+ box.dataset.key=key;box.replaceChildren();
+ const head=document.createElement('div');head.className='history-line-head';
+ const title=document.createElement('span');title.textContent='Engine line';head.append(title);
+ const x=document.createElement('button');x.type='button';x.className='review-line-clear';x.textContent='×';x.title='Clear the engine line';x.setAttribute('aria-label','Clear the engine line');
+ x.onclick=e=>{e.stopPropagation();reviewLineHidden.add(n);if(reviewPreview&&/^line/.test(reviewPreview.key))setReviewPreview(null);reviewExtraBox.dataset.key='';box.remove();renderReviewExtra(state)};head.append(x);box.append(head);
+ const grid=document.createElement('div');grid.className='history-line-moves';
+ if(n%2===0){const gap=document.createElement('span');gap.className='history-line-gap';grid.append(gap)} // a Black move starts in the right-hand column
+ const text=m=>{try{return shownMove(m)}catch(e){return m}};
+ line.moves.forEach((m,i)=>{const k='line'+n+'-'+i,on=!!reviewPreview&&reviewPreview.key===k,step=line.steps[i],score=(line.scores||[])[i];
+  const b=document.createElement('button');b.type='button';b.className='history-move line-move'+(on?' current':'');b.title='Show the board after this move of the engine line';
+  const num=document.createElement('span');num.className='move-number';num.textContent=`${n+i}.`;
+  const mv=document.createElement('span');mv.textContent=text(m);b.append(num,mv);
+  const rating=reviewPoint(score??null);if(rating!=null){const t=document.createElement('span');t.className='move-rating';t.textContent=(rating>0?'+':'')+rating;b.append(t)}
+  b.onclick=e=>{e.stopPropagation();setReviewPreview(on?null:{game,ply:n,pieces:step.pieces,last_move:step.last_move,key:k})};
+  grid.append(b)});
+ box.append(grid);
+ if(anchor)anchor.after(box);else list.append(box);
+}
 window.decorateHistory=s=>{
  const review=s?.game_review,list=$('moves');if(!list)return;
  reviewInfo.hidden=!review||!!editorDraft;
@@ -345,6 +387,7 @@ window.decorateHistory=s=>{
  reviewWasRunning=running;
  const turning=renderReviewFacts(s);
  renderReviewExtra(s);
+ renderHistoryLine(s,list);
  const rows=new Map([...reviewInGameRows(s),...(review?.rows||[])].map(r=>[r.ply,r]));
  // Seconds each move took (hivegame.com games saved from now on), shown small beside the move.
  {const times=window.foulbroodOpenedTimes?window.foulbroodOpenedTimes(s):null;
@@ -353,11 +396,16 @@ window.decorateHistory=s=>{
    const text=t<60?(t<10?t.toFixed(1):Math.round(t))+'s':Math.floor(t/60)+':'+String(Math.round(t%60)).padStart(2,'0');
    if(!tag){tag=document.createElement('span');tag.className='move-time';tag.title='Time spent on this move';const rating=item.querySelector('.move-rating');if(rating)rating.before(tag);else item.append(tag)}
    if(tag.textContent!==text)tag.textContent=text}}
+ // Local and Online (no review): the engine's own rating of each move it made, as in Game review.
+ const played=review?null:playedRatings(s);
  for(const item of list.querySelectorAll('button.history-move')){
-  const number=item.querySelector('.move-number'),ply=number?parseInt(number.textContent,10):0,row=review&&ply?rows.get(ply):null;
+  const number=item.querySelector('.move-number'),ply=number?parseInt(number.textContent,10):0,row=review&&ply?rows.get(ply):played&&ply?played.get(ply):null;
   const verdict=row?historyVerdicts[row.label]||'':'';
   let tag=item.querySelector('.move-rating');
   if(!row){item.classList.remove('turning','ingame');if(tag)tag.remove();delete item.dataset.verdict;if(item.dataset.reviewTitle){item.title='';delete item.dataset.reviewTitle}continue}
+  if(row.played){const text=row.book?'Book':((r=>(r>0?'+':'')+r)(reviewPoint(row.score)));item.classList.remove('turning','ingame');delete item.dataset.verdict;
+   if(!tag){tag=document.createElement('span');tag.className='move-rating';item.append(tag)}if(tag.textContent!==text)tag.textContent=text;
+   item.title=row.book?'Book move':'Engine rating while playing'+(row.depth?` (depth ${row.depth})`:'')+' · position '+text;item.dataset.reviewTitle='1';continue}
   if(verdict)item.dataset.verdict=verdict;else delete item.dataset.verdict;
   item.classList.toggle('turning',!!turning&&turning.ply===ply);
   item.classList.toggle('ingame',!!row.ingame);

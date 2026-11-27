@@ -9,7 +9,7 @@ import hivebot
 import importlib
 from export_game import export_game
 from review_file import save_review, read_review, engine_matches, engine_identity, MAX_REVIEW_BYTES
-from live_analysis import capture, visible_history
+from live_analysis import capture, visible_history, history_points
 import argparse
 import json
 import os
@@ -73,6 +73,16 @@ def budget_ms(remaining, increment):
     margin = min(.25, max(.02, remaining*.05))
     available = max(0, remaining-margin)
     return max(0, int(1000*min(available, remaining/25 + .8*increment)))
+
+
+def match_budget_ms(remaining, increment, ply):
+    """The time the HotFrass bot gives its engine in a real hivegame.com match (hive-hydra's
+    bestmove_time_args): the increment plus a tenth of the clock, less 0.4 s, never more than a quarter
+    of the clock or 2 minutes, never less than 1 s; each side's first move within 8 s."""
+    if remaining is None:return 10000
+    cap=8 if ply<=1 else 120
+    budget=min((increment or 0)+remaining/10-.4,remaining/4)
+    return int(min(max(1,int(budget)),cap))*1000
 
 
 def finish_budget_ms(remaining, increment):
@@ -171,6 +181,7 @@ class App:
         self.error = ''
         self.last_seen = time.monotonic()
         self.insight_worker = None
+        self.play_worker = None
 
     @property
     def session(self): return self.play if self.mode=='play' else self.analysis
@@ -185,7 +196,7 @@ class App:
         if self.analysis_ms != -1:return self.analysis_ms
         s=self.play
         # Use the same clock allocation as a player, with UHP's one-second floor.
-        return max(1000,budget_ms(s.clock.values()[s.data['side']],s.clock.increment))
+        return match_budget_ms(s.clock.values()[s.data['side']],s.clock.increment,s.data['ply'])
 
     def leave_review(self,stop=False):
         # Leaving the review page does not stop a running review: it carries on in the background
@@ -270,6 +281,7 @@ class App:
             capture(s,engine_identity(selected),worker.hint,getattr(worker,'search_milliseconds',self.analysis_budget_ms()))
 
     def invalidate(self, capture_analysis=True):
+        if self.mode=='play' and self.play_worker and self.play_worker is not self:self.play_worker.invalidate(False)
         if capture_analysis:self.capture_live_insights()
         self.stop_insight_worker()
         for thought in self.session.thoughts:
@@ -281,6 +293,32 @@ class App:
         self.job = None
         if self.process and self.process.poll() is None: self.process.terminate()
         self.process = None
+
+    def move_ratings(self,s):
+        # The engine's rating of each move made in this game (White's view), for the move list.
+        try:
+            total=len(s.review_game.split(';')[3:])
+            return [[p['ply']+1,p['score'],p.get('depth')] for p in history_points(s.analysis_history) if p['score'] is not None and p['ply']<total]
+        except Exception:return []
+
+    def step_aside(self):
+        # Leaving Local for another page: a game in progress carries on (its clocks and engines keep going).
+        if self.mode=='play':self.invalidate()
+        else:self.pause()
+
+    def background_play(self):
+        # While another page is open, a Local game that is running keeps playing: a second App
+        # sharing the same Session (and lock) makes the engine moves and watches the clocks.
+        s=self.play
+        if self.mode=='play' or not s.running or s.finished or s.data['state'] in TERMINAL:return
+        w=self.play_worker
+        if w is None or w.play is not s:
+            w=App(engines=self.engines,position=s.data);w.play=s;w.mode='play';w.lock=self.lock
+            w.book=self.book;w.book_enabled=self.book_enabled;w.hints=False;self.play_worker=w
+        w.last_seen=time.monotonic()
+        if w.expired() or not s.running:return
+        if w.job is None and s.players[s.data['side']]!='Human':
+            w.launch_search('computer',match_budget_ms(s.clock.values()[s.data['side']],s.clock.increment,s.data['ply']))
 
     def pause(self):
         self.session.clock.pause()
@@ -469,14 +507,16 @@ class App:
     def tick(self):
         with self.lock:
             s = self.session
+            self.background_play()
             if self.review is not None:return
-            if time.monotonic()-self.last_seen>15:
+            if self.mode=='play' and self.play_worker and self.play_worker.job:return # its search finishes the move
+            if time.monotonic()-self.last_seen>1800:
                 if s.running:self.pause()
                 elif self.job and not (self.job=='hint' and self.analysis_ms==0):self.invalidate()
                 return
             if self.expired() or (self.mode=='play' and s.finished) or s.data['state'] in TERMINAL or s.timeout_side is not None or s.resigned_side is not None: return
             if self.mode=='play' and s.running and s.players[s.data['side']]!='Human':
-                self.launch_search('computer',budget_ms(s.clock.values()[s.data['side']],s.clock.increment))
+                self.launch_search('computer',match_budget_ms(s.clock.values()[s.data['side']],s.clock.increment,s.data['ply']))
                 if self.job=='computer' and self.hints and not self.hint_paused and not self.error:
                     self.launch_parallel_insight(self.analysis_ms)
             elif self.hints and not self.hint_paused and self.hint is None and not self.error:
@@ -496,7 +536,7 @@ class App:
             insight=self.insight_worker or self
             recorded=reviewing or self.mode=='play' and s.finished or self.review and self.review.source=='in_game'
             finished=shown['ply']==len(s.review_game.split(';')[3:]) and (s.finished or s.reported_result in (*TERMINAL,'1-0','0-1','1/2-1/2'))
-            return dict(**shown,recorded_analysis=visible_history(s.analysis_history,shown['ply'],finished=finished) if recorded else None,use_recorded_analysis=bool(recorded),review_work_available=bool(self.reviews_with_work()),analysis_review_available=self.analysis_review_available(),parallel_insight_allowed=self.parallel_insight_allowed(),insight_job=insight.job if insight.job=='hint' else None,engine_thoughts=[dict(t,elapsed=max(0,time.monotonic()-t['started']) if t['status']=='thinking' else (t.get('evaluation') or {}).get('seconds',0)) if t else None for t in s.thoughts],engines=self.engines.entries,builtin_connected=self.engines.builtin_connected,builtin_present=self.engines.builtin_present,analysis_engine=self.engines.analysis_engine,game_review=self.review.view() if self.review else None,setup_placed=s.setup_placed,reviewing=reviewing,review_game=s.review_game,live_game=s.data['game'],live_side=s.data['side'],mode=self.mode,players=s.players,time_control=s.time_control,
+            return dict(**shown,move_ratings=self.move_ratings(s),recorded_analysis=visible_history(s.analysis_history,shown['ply'],finished=finished) if recorded else None,use_recorded_analysis=bool(recorded),review_work_available=bool(self.reviews_with_work()),analysis_review_available=self.analysis_review_available(),parallel_insight_allowed=self.parallel_insight_allowed(),insight_job=insight.job if insight.job=='hint' else None,engine_thoughts=[dict(t,elapsed=max(0,time.monotonic()-t['started']) if t['status']=='thinking' else (t.get('evaluation') or {}).get('seconds',0)) if t else None for t in s.thoughts],engines=self.engines.entries,builtin_connected=self.engines.builtin_connected,builtin_present=self.engines.builtin_present,analysis_engine=self.engines.analysis_engine,game_review=self.review.view() if self.review else None,setup_placed=s.setup_placed,reviewing=reviewing,review_game=s.review_game,live_game=s.data['game'],live_side=s.data['side'],mode=self.mode,players=s.players,time_control=s.time_control,
                         clocks=s.clock.values(),running=s.running,timeout_side=s.timeout_side,resigned_side=s.resigned_side,
                         import_info=s.import_info,player_names=s.player_names,reported_result=s.reported_result,play_finished=self.mode=='play' and s.finished,
                         completed_state=s.review_game.split(';')[1],review_total=len(s.review_game.split(';')[3:]),
@@ -589,7 +629,8 @@ class App:
                 move=next((m for m in before['legal'] if m['move']==row['alternative']),None)
                 if not move or not move.get('to'):return dict(mark=None)
                 piece=next((p for p in before['pieces'] if p['id']==move['piece']),None)
-                return dict(mark=dict(piece=move['piece'],to=move['to'],origin=[piece['q'],piece['r']] if piece else None))
+                level=sum(1 for p in before['pieces'] if p['q']==move['to'][0] and p['r']==move['to'][1] and p['id']!=move['piece'])
+                return dict(mark=dict(piece=move['piece'],to=move['to'],level=level,origin=[piece['q'],piece['r']] if piece else None,origin_level=piece.get('level',0) if piece else 0))
             elif action=='setup_source':
                 source=payload.get('source')
                 if source not in ('analysis','play'):raise ValueError('Choose Analysis or Play.')
@@ -669,7 +710,7 @@ class App:
                 mode=payload['mode']
                 if mode not in ('play','analysis'): raise ValueError('Unknown mode.')
                 self.leave_review()
-                self.pause()
+                self.step_aside()
                 if mode=='analysis' and self.analysis is None:
                     self.analysis=Session(snapshot('snapshot',self.play.data['game']),players=['Human','Human'])
                 self.mode=mode
@@ -697,7 +738,7 @@ class App:
                 if type(target) is not int or not 0<=target<=len(s.review_game.split(';')[3:]):raise ValueError('Invalid history move.')
                 import copy
                 self.discard_analysis_reviews()
-                self.pause()
+                self.step_aside()
                 analysis=Session(copy.deepcopy(s.data),players=['Human','Human'])
                 analysis.review_game=s.review_game
                 analysis.review_cache=copy.deepcopy(s.review_cache)
@@ -790,7 +831,7 @@ class App:
                 placed=payload.get('last',{}).get('piece') if isinstance(payload.get('last'),dict) and payload['last'].get('kind')=='placed' else None
                 validate_setup_placed(data,placed)
                 self.discard_analysis_reviews()
-                self.pause();self.analysis=Session(data,players=['Human','Human']);self.analysis.setup_placed=placed
+                self.step_aside();self.analysis=Session(data,players=['Human','Human']);self.analysis.setup_placed=placed
                 self.analysis.import_info='Set-up position. Earlier repetitions are unknown.'
                 self.hint_paused=True
             elif action in ('load','review_load'):
@@ -834,7 +875,7 @@ class App:
                         if move and move not in {m['move'] for m in after['legal']}:raise ValueError('Saved review contains an unavailable reply.')
                 stay_in_review=self.review is not None
                 self.discard_analysis_reviews(keep=data['game']!=(self.analysis.review_game if self.analysis else None))
-                self.pause();self.mode='analysis';self.analysis=Session(data,players=['Human','Human']);self.analysis.import_info=info;self.analysis.reported_result=reported_result(text);self.analysis.player_names=player_names(text);self.analysis.setup_placed=placed
+                self.step_aside();self.mode='analysis';self.analysis=Session(data,players=['Human','Human']);self.analysis.import_info=info;self.analysis.reported_result=reported_result(text);self.analysis.player_names=player_names(text);self.analysis.setup_placed=placed
                 if saved:
                     self.analysis.analysis_history=saved['in_game_history']
                     engine=next((e for e in self.engines.entries if e.get('connected') and e.get('review_supported') and engine_matches(saved['engine'],e)),None)
@@ -842,7 +883,15 @@ class App:
                     self.analysis_ms=saved['milliseconds'];self.continuous_hints=False;self.hint_paused=True
                     self.analysis.player_names=saved['players'];self.analysis.reported_result=saved['result']
                     self.analysis.data=cursor;self.analysis.review_cache[cursor['ply']]=cursor
-                    self.review=Review(self,snapshot,ROOT);self.review.restore(saved,engine);self.hints=False
+                    # The same game may still be under review in the background (left for another page): keep that
+                    # review, with its progress, rather than the shorter copy that was saved earlier.
+                    prior=max((r for r in self.saved_reviews.values() if r.game==self.analysis.review_game and len(r.rows)>len(saved['rows'])),key=lambda r:len(r.rows),default=None)
+                    if prior:
+                        self.saved_reviews={k:r for k,r in self.saved_reviews.items() if r is not prior}
+                        if prior.engine.get('id') and self.engines.get(prior.engine['id']):self.engines.analysis_engine=prior.engine['id']
+                        self.analysis_ms=prior.milliseconds;self.review=prior;self.hints=False
+                    else:
+                        self.review=Review(self,snapshot,ROOT);self.review.restore(saved,engine);self.hints=False
                 elif stay_in_review:self.command(dict(action='review_enter'))
             else: raise ValueError('Unknown action.')
             return self.view()

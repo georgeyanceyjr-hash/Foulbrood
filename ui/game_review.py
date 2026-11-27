@@ -83,18 +83,21 @@ class Review:
                 data=self.snapshot('snapshot',self.game)
                 while data['ply']>ply-1:data=self.snapshot('undo',data['game'])
                 if kind=='line':
-                    moves=[];steps=[];position=data
+                    moves=[];steps=[];position=data;scores=[]
                     following=row['alternative'] if row.get('alternative') else row['move']
                     for k in range(4):
                         position=self.snapshot('play',position['game'],following)
                         moves.append(following);steps.append(dict(pieces=position['pieces'],last_move=position.get('last_move')))
-                        if position['state'] in TERMINAL or k==3:break
-                        if k==0 and row.get('reply'):following=row['reply']
-                        else:
-                            found=self.evaluate(position,generation,min(self.milliseconds,2000))
-                            if not found.get('move'):break
-                            following=found['move']
-                    result=dict(moves=moves,steps=steps)
+                        # The rating after each move of the line (White's view), as in the move list.
+                        if position['state'] in TERMINAL:
+                            scores.append(0 if position['state']=='Draw' else 100000 if position['state']=='WhiteWins' else -100000);break
+                        if k==0 and row.get('reply'):
+                            scores.append(row.get('best_score',row.get('score')));following=row['reply'];continue
+                        found=self.evaluate(position,generation,min(self.milliseconds,2000))
+                        scores.append(white_score(found) if found.get('move') else (scores[-1] if scores else None))
+                        if k==3 or not found.get('move'):break
+                        following=found['move']
+                    result=dict(moves=moves,steps=steps,scores=scores)
                 else:
                     if move not in {m['move'] for m in data['legal']}:raise ValueError('That move is not available here.')
                     position=self.snapshot('play',data['game'],move)
