@@ -164,10 +164,10 @@ function reviewRowLoss(row){ // how much the played move gave up, mover's side, 
  if(!row||row.score==null||row.best_score==null||row.label==='Book move'||row.label==='Best move')return 0;
  const sign=row.side===0?1:-1;return Math.max(0,reviewScale(row.best_score*sign)-reviewScale(row.score*sign));
 }
-function reviewOpening(game){ // the first three bugs each side put down, e.g. "P·A·Q vs G·B·Q"
+function reviewOpening(game){ // the first three bugs each side put down, e.g. "PAQ vs GBQ"
  const moves=String(game||'').split(';').slice(3),root=String(game||'').split(';')[0];if(root.includes('~')||moves.length<2)return '';
  const bugs=[[],[]];moves.slice(0,6).forEach((m,i)=>{const piece=m.trim().split(' ')[0]||'';bugs[i%2].push(piece.replace(/^[wb]/,'').replace(/\d/,'')||'–')});
- return bugs[0].join('·')+' vs '+bugs[1].join('·');
+ return bugs[0].join('')+' vs '+bugs[1].join('');
 }
 // Until a review is run, a bot game shows what the bot itself rated each of its moves while playing ("In-game").
 function reviewInGameRows(s){

@@ -127,7 +127,7 @@ def set_review(game, text, reviewed, total, engine):
 
 
 def _opening(game):
-    """The first three bugs each side put down, e.g. 'P·A·Q vs G·B·Q' (blank for set-up positions)."""
+    """The first three bugs each side put down, e.g. 'PAQ vs GBQ' (blank for set-up positions)."""
     parts = str(game or '').split(';')
     if len(parts) < 5 or '~' in parts[0]:
         return ''
@@ -135,7 +135,7 @@ def _opening(game):
     for i, move in enumerate(parts[3:9]):
         piece = (move.strip().split(' ') or [''])[0]
         bugs[i % 2].append(''.join(c for c in piece[1:] if not c.isdigit()) or '–')
-    return '·'.join(bugs[0]) + ' vs ' + '·'.join(bugs[1])
+    return ''.join(bugs[0]) + ' vs ' + ''.join(bugs[1])
 
 
 def listing(query=''):
