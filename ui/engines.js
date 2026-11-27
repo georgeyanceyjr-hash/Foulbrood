@@ -241,18 +241,18 @@ function reviewThoughtFields(strip){
 }
 function pendingReviewSide(s){
  const review=s.game_review,ply=review?.working_ply;
- if(review?.status!=='running'||ply<=review.rows.length||ply>review.total||![ply-1,ply].includes(s.ply))return null;
+ if(review?.status!=='running'||ply<=reviewDone(review)||ply>review.total||![ply-1,ply].includes(s.ply))return null;
  const root=(s.review_game||s.game).split(';')[0],first=root.includes('~')?Number(root.split('~')[1]):0;
  return (first+ply-1)%2;
 }
 function renderReviewThought(strip,s,side,engine){
  const fields=reviewThoughtFields(strip),review=s.game_review;
  const pending=pendingReviewSide(s)===side;
- const available=!!(review.rows.length||review.points.length)||!!engine?.connected&&engine.review_supported;
+ const available=!!(reviewDone(review)||review.points.length)||!!engine?.connected&&engine.review_supported;
  const row=(available?review.rows.find(r=>r.side===side&&r.ply===s.ply):null)||(window.reviewInGameRow?window.reviewInGameRow(s,side):null)||null; // only the move being looked at, in its own player's bar (the bot's in-game rating until it is reviewed)
  const otherTurn=(()=>{if(!s.ply)return false;const root=(s.review_game||s.game).split(';')[0],first=root.includes('~')?Number(root.split('~')[1]):0;return (first+s.ply-1)%2!==side})();
  const point=available&&s.ply===0?review.points.find(p=>p.ply===0):null;
- fields.heading.textContent=pending?`Move ${review.working_ply}\nReviewing…`:!available?'Game review unavailable':row?`Move ${row.ply}\n${row.label}`:s.ply===0?'Starting position':otherTurn?'':'Not reviewed yet';
+ fields.heading.textContent=pending?`Move ${review.working_ply}\nReviewing…`:!available?'Game review unavailable':row?`Move ${row.ply}\n${row.label}`:s.ply===0?'Starting position':otherTurn?'':review.single_working===s.ply?'Reviewing…':'Not reviewed yet';
  fields.heading.classList.toggle('has-reviewed-move',!!row&&!pending);
  {const verdict=row&&!pending?({'Best move':'good','Book move':'good','No clear error':'good','Inaccuracy':'mid','Uncertain':'mid','Mistake':'poor','Blunder':'bad','Missed win':'bad'})[row.label]||'':'';fields.heading.dataset.verdict=verdict;fields.played.box.dataset.verdict=verdict;}
  {const short={'No clear error':'Fine','Not reviewed yet':'No review','Game review unavailable':'No review','Starting position':'Start','Reviewing…':'Reviewing','Book move':'Book','Missed win':'Missed win','Uncertain':'Unclear'};const parts=fields.heading.textContent.split('\n').map(t=>short[t]||t);if(parts.length===1)fields.heading.textContent=parts[0];if(parts.length===2){const top=document.createElement('small'),main=document.createElement('span');top.textContent=parts[0];main.textContent=parts[1];fields.heading.replaceChildren(top,main)}}

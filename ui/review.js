@@ -1,3 +1,4 @@
+function reviewDone(review){return (review?.rows||[]).filter(r=>!r.single).length} // moves reviewed in order (single-move reviews ahead of the review do not count)
 // Analysis workspaces share one board and history cursor.
 $('modeAnalyze').onclick=()=>{if(editorDraft)$('cancelSetup').click();if(state?.game_review)action({action:'review_exit'})};
 $('modeSetup').onclick=async()=>{if(state?.game_review)await action({action:'review_exit'});if(!editorDraft)openPositionSetup(false)};
@@ -75,20 +76,20 @@ window.renderGameReview=s=>{
  $('saveReviewedGame').disabled=s.mode!=='analysis'||!(review?.total??s.review_total);
  $('reviewIssueNav').hidden=!active;
  $('analysisImportHeader').querySelector('h2').textContent=active?'Explore a game':'Explore a position';
- $('analyze').textContent=active?(review.status==='running'?'Stop review':review.can_resume?'Resume review':review.rows.length?'Review again':'Start review'):(s.showing_player_thought?'Thinking…':s.insight_job==='hint'?'Stop':'Analyze');
+ $('analyze').textContent=active?(review.status==='running'?'Stop review':review.can_resume?'Resume review':reviewDone(review)?'Review again':'Start review'):(s.showing_player_thought?'Thinking…':s.insight_job==='hint'?'Stop':'Analyze');
  $('analyze').onclick=active?()=>action({action:state?.game_review?.status==='running'?'review_stop':'review_start'}):toggleAnalysis;
  $('stopAnalysis').textContent=active?'Stop review':'Stop analysis';$('stopAnalysis').onclick=()=>action({action:active?'review_stop':'stop_analysis'});
  if(!active){reviewGraphKey='';return;}
  $('analysisSetup').hidden=false;$('historyPanel').hidden=false;
  $('analyze').disabled=!review.total;$('stopAnalysis').hidden=true;
  $('hintsLabel').hidden=true;$('bookEnabled').closest('label').hidden=true;$('calculateInstead').hidden=true;
- $('reviewProgress').textContent=review.source==='in_game'?`${review.recorded_count} positions with in-game analysis`:review.resume_engine_missing?`Saved results loaded. Connect ${review.engine} to continue reviewing.`:review.error||(!review.total?'Import a game to get started.':review.status==='running'?(review.working_ply&&review.total?`Move ${Math.min(review.working_ply,review.total)} of ${review.total}`:'Starting review…'):review.status==='complete'?`${review.total} moves reviewed`:review.status==='stopped'?`Stopped · ${review.rows.length} of ${review.total} reviewed`:`${review.total} moves`);
+ $('reviewProgress').textContent=review.source==='in_game'?`${review.recorded_count} positions with in-game analysis`:review.resume_engine_missing?`Saved results loaded. Connect ${review.engine} to continue reviewing.`:review.error||(!review.total?'Import a game to get started.':review.status==='running'?(review.working_ply&&review.total?`Move ${Math.min(review.working_ply,review.total)} of ${review.total}`:'Starting review…'):review.status==='complete'?`${review.total} moves reviewed`:review.status==='stopped'?`Stopped · ${reviewDone(review)} of ${review.total} reviewed`:`${review.total} moves`);
  const remaining=review.status==='ready'||review.status==='complete'?(review.status==='complete'?0:(2*review.total+1)*s.analysis_ms/1000):review.remaining_seconds;
  $('reviewRemaining').hidden=!review.total||review.source==='in_game';$('reviewProgressBar').hidden=review.source==='in_game';
  const minutes=Math.max(1,Math.ceil(remaining/60));
  $('reviewRemaining').textContent=review.status==='complete'?'Review complete':review.status==='stopped'?'':`Up to about ${minutes} ${minutes===1?'minute':'minutes'} remaining`;
  $('reviewProgress').classList.toggle('search-activity',review.status==='running');
- $('reviewProgressBar').max=Math.max(1,review.total);$('reviewProgressBar').value=review.rows.length;
+ $('reviewProgressBar').max=Math.max(1,review.total);$('reviewProgressBar').value=reviewDone(review);
  $('turn').hidden=true;
  const row=review.rows.find(r=>r.ply===s.ply),point=review.points.find(p=>p.ply===s.ply),insight=$('insight');insight.replaceChildren();
  const title=document.createElement('strong');title.className='insight-move';title.textContent=row?`${row.ply}. ${shownMove(row.move)} ${row.symbol}`:s.ply===0?'Starting position':`Move ${s.ply}`;insight.append(title);
@@ -287,8 +288,10 @@ function renderReviewExtra(s){
  const box=reviewExtraBox,review=s?.game_review;
  if(reviewTry&&(!review||(s.review_game||s.game)!==reviewTry.game||(s.ply!==reviewTry.ply-1&&s.ply!==reviewTry.ply)))reviewTry=null;
  if(reviewTryOn&&(!review||(s.review_game||s.game)!==reviewTryOn.game||(s.ply!==reviewTryOn.ply-1&&s.ply!==reviewTryOn.ply)))reviewTryOn=null; // moved on to another move: trying ends
- const ply=reviewTry?reviewTry.ply:reviewTryOn?reviewTryOn.ply:s?.ply,row=review?(review.rows||[]).find(r=>r.ply===ply):null;
- const usable=!!row&&review.status!=='running'&&row.label!=='Book move'&&!editorDraft&&review.source!=='in_game';
+ const ply=reviewTry?reviewTry.ply:reviewTryOn?reviewTryOn.ply:s?.ply,total=(s?.review_game||s?.game||'').split(';').length-3;
+ // A move the review has not reached yet still offers both: the move is reviewed on its own first.
+ const row=review?(review.rows||[]).find(r=>r.ply===ply)||(s.mode==='analysis'&&ply>=1&&ply<=total?{ply,side:s.ply===ply?1-s.side:s.side,label:'',pending:true}:null):null;
+ const usable=!!row&&row.label!=='Book move'&&!editorDraft&&review.source!=='in_game';
  box.hidden=!usable;if(!usable){box.dataset.key='';document.body.classList.remove('review-grading');return}
  const extras=review.extras||[],lineFound=extras.find(e=>e.kind==='line'&&e.ply===ply),line=lineFound&&!reviewLineHidden.has(ply)?lineFound:null,found=extras.find(e=>e.kind==='try'&&e.ply===ply),tried=found&&!reviewTryDismissed.has(found.ply+'|'+found.move)?found:null,game=s.review_game||s.game;
  if(!reviewTriedKept.has(game+'|'+ply))reviewTriedKept.set(game+'|'+ply,[]);const kept=reviewTriedKept.get(game+'|'+ply);
@@ -302,19 +305,22 @@ function renderReviewExtra(s){
  const text=m=>{try{return shownMove(m)}catch(e){return m}};
  const button=(label,title,click,pressed)=>{const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;if(title)b.title=title;b.onclick=click;if(pressed)b.setAttribute('aria-pressed','true');return b};
  const controls=document.createElement('div');controls.className='review-extra-row';
+ // Either button pauses a running review first (the engine can only do one thing at a time).
+ const pause=async()=>{if(state?.game_review?.status==='running'){await action({action:'review_stop'});for(let i=0;i<40&&busy;i++)await new Promise(r=>setTimeout(r,50))}
+  for(let i=0;i<240&&state?.game_review?.single_working;i++)await new Promise(r=>setTimeout(r,500))}; // a move being reviewed on its own finishes first
  // Engine line: one button that stays put and shows or hides the line in the move list.
  {const shown=!!line&&line.status!=='error';
   controls.append(button('Engine line',shown?'Hide the engine line':'Show the moves the engine expected after its preferred move',()=>{
    if(shown){reviewLineHidden.add(ply);if(reviewPreview&&/^line/.test(reviewPreview.key))setReviewPreview(null)}
    else if(lineFound&&lineFound.status==='ready')reviewLineHidden.delete(ply);
-   else{reviewLineHidden.delete(ply);action({action:'review_side',kind:'line',ply});return}
+   else{reviewLineHidden.delete(ply);pause().then(()=>action({action:'review_side',kind:'line',ply}));return}
    box.dataset.key='';renderReviewExtra(state);renderHistoryLine(state,$('moves'))},shown))}
  controls.append(reviewTry||reviewTryOn?button('Stop trying','Leave Try a move',async()=>{const back=(reviewTry||reviewTryOn).ply,grading=found&&found.status==='running';reviewTry=null;reviewTryOn=null;reviewTryShow=null;
    if(grading)reviewTryDismissed.add(found.ply+'|'+found.move); // stopped in the middle of thinking: no result for that move
    if(reviewPreview)setReviewPreview(null);
    if(grading){await action({action:'review_stop'});for(let i=0;i<20&&busy;i++)await new Promise(r=>setTimeout(r,50))}
    action({action:'navigate',ply:back})},true)
-  :button('Try a move','Play different moves for this turn on the board and have each one graded',async()=>{if(reviewPreview)setReviewPreview(null);reviewTry={game,ply};reviewTryOn={game,ply};await action({action:'navigate',ply:ply-1})}));
+  :button('Try a move','Play different moves for this turn on the board and have each one graded',async()=>{await pause();if(reviewPreview)setReviewPreview(null);reviewTry={game,ply};reviewTryOn={game,ply};await action({action:'navigate',ply:ply-1})}));
  box.append(controls);
  const note=t=>{const p=document.createElement('p');p.className='review-fact muted';p.textContent=t;box.append(p)};
  if(reviewTry)note(`Move a ${row.side===0?'White':'Black'} bug on the board to grade it.`);
@@ -382,6 +388,15 @@ function renderHistoryLine(s,list){
  box.append(grid);
  if(anchor)anchor.after(box);else list.append(box);
 }
+// Clicking a move the review has not reached yet reviews just that move (when the review is not running).
+const reviewSingleAsked=new Set();
+function reviewSingleOnSelect(s){
+ const review=s?.game_review;if(!review||s.mode!=='analysis'||review.source==='in_game'||review.status==='running'||editorDraft||reviewTry||reviewTryOn)return;
+ const ply=s.ply,game=s.review_game||s.game,total=game.split(';').length-3;if(!(ply>=1&&ply<=total))return;
+ if((review.rows||[]).some(r=>r.ply===ply)||review.single_working)return;
+ const key=game+'|'+ply;if(reviewSingleAsked.has(key)||busy)return;reviewSingleAsked.add(key);
+ setTimeout(()=>action({action:'review_one',ply}),0);
+}
 window.decorateHistory=s=>{
  const review=s?.game_review,list=$('moves');if(!list)return;
  reviewInfo.hidden=!review||!!editorDraft;
@@ -390,6 +405,7 @@ window.decorateHistory=s=>{
  const running=review?.status==='running';
  if(reviewWasRunning===false&&running)window.setMovesMax?.(true); // a review just started: give the history the whole side panel
  reviewWasRunning=running;
+ reviewSingleOnSelect(s);
  const turning=renderReviewFacts(s);
  renderReviewExtra(s);
  renderHistoryLine(s,list);

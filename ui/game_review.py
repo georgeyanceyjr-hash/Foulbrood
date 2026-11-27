@@ -65,15 +65,15 @@ class Review:
         selected=self.app.engines.get(self.app.engines.analysis_engine) or {}
         missing=bool(self.portable_engine and not (selected.get('connected') and self.matches_engine(selected)))
         recorded=self.source=='in_game'
-        return dict(source=self.source,recorded_count=len(self.in_game_history),restored=bool(self.portable_engine),resume_engine_missing=missing and not recorded,can_resume=self.can_resume(),engine=self.engine.get('name',''),external=not self.portable_engine['builtin'] if self.portable_engine else self.engine.get('id')!='Computer',remaining_seconds=remaining,working_ply=self.working_ply,active=True,status='recorded' if recorded else self.status,error=self.error,total=self.total,rows=[] if recorded else self.rows.copy(),points=history_points(self.in_game_history) if recorded else self.points.copy(),milliseconds=self.milliseconds,stage=self.stage,extras=list(getattr(self,'extras',{}).values()))
+        return dict(source=self.source,recorded_count=len(self.in_game_history),restored=bool(self.portable_engine),resume_engine_missing=missing and not recorded,can_resume=self.can_resume(),engine=self.engine.get('name',''),external=not self.portable_engine['builtin'] if self.portable_engine else self.engine.get('id')!='Computer',remaining_seconds=remaining,working_ply=self.working_ply,active=True,status='recorded' if recorded else self.status,error=self.error,total=self.total,single_working=getattr(self,'single_working',None),rows=[] if recorded else self.rows.copy()+[r for p,r in sorted(getattr(self,'single',{}).items()) if p>len(self.rows)],points=history_points(self.in_game_history) if recorded else self.points.copy(),milliseconds=self.milliseconds,stage=self.stage,extras=list(getattr(self,'extras',{}).values()))
 
     def side(self,kind,ply,move=None):
         """One extra search beside the finished review: the engine's line after its preferred move
         ('line'), or a different move the user wants graded ('try')."""
         if self.status=='running':raise ValueError('Stop the review first.')
         if getattr(self,'side_busy',False):raise ValueError('Still working on the last request.')
-        row=next((r for r in self.rows if r['ply']==ply),None)
-        if not row:raise ValueError('Review this move first.')
+        row=next((r for r in self.rows if r['ply']==ply),None) or getattr(self,'single',{}).get(ply)
+        if not row and not (isinstance(ply,int) and 1<=ply<=self.total):raise ValueError('Review this move first.')
         if not hasattr(self,'extras'):self.extras={}
         key=(kind,ply)
         self.extras[key]=dict(kind=kind,ply=ply,status='running',move=move)
@@ -82,6 +82,8 @@ class Review:
             try:
                 data=self.snapshot('snapshot',self.game)
                 while data['ply']>ply-1:data=self.snapshot('undo',data['game'])
+                nonlocal row
+                if row is None:row=self.review_one(data,ply,generation) # a move the review has not reached yet: review it on its own first
                 if kind=='line':
                     moves=[];steps=[];position=data;scores=[]
                     following=row['alternative'] if row.get('alternative') else row['move']
@@ -204,6 +206,50 @@ class Review:
             if engine:engine.close()
             with self.app.lock:
                 if engine and self.process is engine.proc:self.process=None;self.phase_started=None
+
+    def review_single(self,ply):
+        """Review one move the main review has not reached yet, in the background."""
+        if self.status=='running' or getattr(self,'side_busy',False):return
+        if not (1<=ply<=self.total) or ply<=len(self.rows) or ply in getattr(self,'single',{}):return
+        self.side_busy=True;self.single_working=ply;generation=self.generation;units=self.remaining_units
+        def work():
+            try:
+                data=self.snapshot('snapshot',self.game)
+                while data['ply']>ply-1:data=self.snapshot('undo',data['game'])
+                self.review_one(data,ply,generation)
+            except Exception:pass
+            finally:
+                with self.app.lock:
+                    self.side_busy=False;self.single_working=None;self.remaining_units=units;self.phase_started=None
+                    try:self.app.revision+=1
+                    except Exception:pass
+        threading.Thread(target=work,daemon=True).start()
+
+    def review_one(self,data,ply,generation):
+        """Review one move on its own (the main review has not reached it yet), the same way the review does.
+        Kept apart from the main rows, which stay in order so a stopped review can resume."""
+        move=self.game.split(';')[2+ply]
+        after=self.snapshot('play',data['game'],move)
+        if move in self.book_moves(data,generation):
+            row=dict(ply=ply,move=move,side=data['side'],label='Book move',symbol='',score=None,best_score=None,alternative=None,reply=None,depth=0,best_depth=0)
+        else:
+            before=self.evaluate(data,generation);played=self.evaluate(after,generation)
+            alternative=before['move'];same=alternative==move;best=played
+            if data['ply']<2 and len(data['pieces'])<2 and '~' not in data['game'].split(';')[0] and alternative:
+                legal={m['move']:m for m in data['legal']}
+                a=legal.get(alternative);b=legal.get(move)
+                if a and b and a['piece']==b['piece']:same=True;alternative=move
+            if alternative and not same:best=self.evaluate(self.snapshot('play',data['game'],alternative),generation)
+            mover=data['side'];sign=1 if mover==0 else -1
+            best_score=white_score(best);played_score=white_score(played)
+            reliable=all(r['terminal'] or (type(r['depth']) is int and r['depth']>=3) for r in [before,best,played])
+            label,symbol=classify(None if best_score is None else best_score*sign,None if played_score is None else played_score*sign,same,best['depth'],played['depth']) if reliable else ('Uncertain','')
+            row=dict(ply=ply,move=move,side=mover,label=label,symbol=symbol,score=played_score,best_score=best_score,alternative=alternative,reply=best['move'],depth=played['depth'],best_depth=best['depth'],single=True)
+        with self.app.lock:
+            self.check(generation)
+            if not hasattr(self,'single'):self.single={}
+            self.single[ply]=row;self.app.revision+=1
+        return row
 
     def book_moves(self,data,generation):
         """Ask this profile for repertoire membership, never for a random choice."""

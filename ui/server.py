@@ -619,6 +619,12 @@ class App:
                 kind=payload.get('kind');ply=payload.get('ply');move=payload.get('move')
                 if kind not in ('line','try') or type(ply) is not int or (kind=='try' and not isinstance(move,str)):raise ValueError('Invalid review request.')
                 self.review.side(kind,ply,move);self.revision+=1
+            elif action=='review_one':
+                # A move the review has not reached: review just that one (when the review is not running).
+                if not self.review or self.mode!='analysis':raise ValueError('Open Game review first.')
+                ply=payload.get('ply')
+                if type(ply) is not int:raise ValueError('Invalid review request.')
+                self.review.review_single(ply);self.revision+=1
             elif action=='review_marks':
                 if not self.review or self.mode!='analysis':raise ValueError('Open Game review first.')
                 ply=payload.get('ply')
