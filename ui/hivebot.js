@@ -687,7 +687,8 @@
   section('Where the losses turned',r.turning,(t,b)=>{b.append(make('span','',`Move ${t.move} · ${where(t)}`),make('strong','',`${signed(t.before)} → ${signed(t.after)}`));b.title='Open this game at that move';b.onclick=()=>openGame(t.id,t.move).catch(e=>toast(e.message))});
   section('Rated itself winning, then lost',r.ahead,(t,b)=>{b.append(make('span','',`Move ${t.move} · ${where(t)}`),make('strong','',signed(t.peak)));b.title='Open this game at that move';b.onclick=()=>openGame(t.id,t.move).catch(e=>toast(e.message))});
  };
- el('histReset').onclick=()=>{el('histSearch').value='';meChosen=false;for(const id of ['histOpp','histColour','histResult','histOpening'])el(id).value='';el('histMe').value='';refresh().catch(()=>draw(null))};
+ el('histReset').onclick=()=>{el('histSearch').value='';meChosen=true; // Reset means everything empty: Player too (not the bot's name again)
+ for(const id of ['histOpp','histColour','histResult','histOpening'])el(id).value='';el('histMe').value='';refresh().catch(()=>draw(null))};
  el('histReportGo').onclick=async()=>{const me=el('histMe').value;if(!me){toast('Choose a player first.');return}
   try{showReport(await call('report',{me,ids:shownGames.map(g=>g.id)}))}catch(e){toast(window.plainMessage?window.plainMessage(e.message):e.message)}};
  const draw=data=>{
