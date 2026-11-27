@@ -42,6 +42,13 @@ function renderReviewMarks(s){
   const text=node('text',{x,y:y+5,'text-anchor':'middle'});text.textContent=label;badge.append(text);board.append(badge);
   return;
  }
+ // A move being reviewed on its own: a pulsing "Reviewing" tag over the piece that moved.
+ {const review=s.game_review,to=s.last_move?.to;
+  if(review&&to&&review.single_working===s.ply&&!review.rows.some(r=>r.ply===s.ply)){
+   const [x,baseY]=xy(...to),height=Math.max(0,s.pieces.filter(p=>p.q===to[0]&&p.r===to[1]).length-1),y=baseY-height*10,label='Reviewing',width=label.length*8.5+14;
+   const tag=node('g',{class:'review-marks review-try-badge waiting','pointer-events':'none'});
+   tag.append(node('rect',{x:x-width/2,y:y-12,width,height:24,rx:3}));
+   const text=node('text',{x,y:y+5,'text-anchor':'middle'});text.textContent=label;tag.append(text);board.append(tag);return}}
  if(globalThis.insightSuggestionsVisible?.(s)===false)return;
  const row=s.game_review?.rows.find(r=>r.ply===s.ply);
  if(!row?.alternative||row.alternative===row.move||row.label==='Book')return; // every graded move shows the engine's preferred move
