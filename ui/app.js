@@ -275,7 +275,7 @@ function render(s){{const k=highlightSection(s)+(highlightsOn(s)?'1':'0');if(k!=
  $('analyzePosition').textContent='Open in Analysis';$('analyzePosition').hidden=s.mode!=='play';$('undo').hidden=s.mode==='analysis'||finished;$('historyNav').hidden=false;$('historyFirst').disabled=$('historyPrevious').disabled=s.ply===0;$('historyNext').disabled=$('historyLast').disabled=s.ply===(s.review_total??s.ply);
  $('playTab').classList.toggle('active',s.mode==='play');$('analysisTab').classList.toggle('active',s.mode==='analysis');$('setup').hidden=s.mode!=='play';$('analysisSetup').hidden=s.mode!=='analysis';$('resetPlay').hidden=s.mode!=='play';$('playerActions').hidden=s.mode!=='play'||finished||s.reviewing||shownPlayers.every(p=>p!=='Human');$('pause').hidden=s.mode!=='play';$('pause').textContent=s.running?'Pause':'Resume';$('undo').disabled=!(s.play_finished?s.review_total:s.ply)&&s.resigned_side==null;
  arrangePlayerSeats(s);
- for(const [i,c]of [[0,'white'],[1,'black']]){$(c+'Name').textContent=s.player_names?.[i]||(i===0?'White':'Black');$(c+'Kind').textContent=s.mode==='analysis'?'Analysis':(s.engines?.find(e=>e.id===shownPlayers[i])?.name||shownPlayers[i]);$(c+'Clock').textContent=s.mode==='analysis'?'—':timeText(s.clocks[i]);$(c+'Clock').dataset.status=playerClockStatus(s,i);document.querySelector('.player.'+c).classList.toggle('opening-thinking',s.mode==='play'&&s.running&&s.job==='computer'&&(s.live_side??s.side)===i&&s.review_total<2&&!s.reviewing&&!finished);document.querySelector('.player.'+c).classList.toggle('active',s.running&&(s.live_side??s.side)===i)}
+ for(const [i,c]of [[0,'white'],[1,'black']]){syncPlayerName(s,i,c);$(c+'Kind').textContent=s.mode==='analysis'?'Analysis':(s.engines?.find(e=>e.id===shownPlayers[i])?.name||shownPlayers[i]);$(c+'Clock').textContent=s.mode==='analysis'?'—':timeText(s.clocks[i]);$(c+'Clock').dataset.status=playerClockStatus(s,i);document.querySelector('.player.'+c).classList.toggle('opening-thinking',s.mode==='play'&&s.running&&s.job==='computer'&&(s.live_side??s.side)===i&&s.review_total<2&&!s.reviewing&&!finished);document.querySelector('.player.'+c).classList.toggle('active',s.running&&(s.live_side??s.side)===i)}
  let title=`${s.side===0?'White':'Black'} to move`;if(s.mode==='analysis')title+=' · Analysis';else if(!s.running)title+=' · Paused';if(s.job==='computer')title=`${s.side===0?'White':'Black'} is thinking…`;if(s.mode==='play'&&s.running&&s.review_total<2&&s.time_control!=='untimed')title+=' · Clock starts after Black’s first move';
  if(s.state==='Draw')title='Draw';if(s.state==='WhiteWins')title='White wins';if(s.state==='BlackWins')title='Black wins';if(s.timeout_side!==null)title=`${s.timeout_side===0?'Black':'White'} wins on time`;$('turn').textContent=title;$('ply').textContent=(s.mode==='analysis'||s.play_finished||s.reviewing)?`Move ${s.ply} of ${s.review_total??s.ply}`:`${s.ply} moves`;$('hints').checked=s.hints;
  if(s.resigned_side!=null)$('turn').textContent=`${s.resigned_side===0?'Black':'White'} wins · ${s.resigned_side===0?'White':'Black'} resigned`;
@@ -301,9 +301,50 @@ function render(s){{const k=highlightSection(s)+(highlightsOn(s)?'1':'0');if(k!=
  renderSetupControls();$('hints').disabled=!!editorDraft||!!s.reviewing;if(s.reviewing)insight.textContent='Return to the live game for suggestions.';renderHistory();
  syncAutomaticPreview();renderBoard();window.renderGameReview?.(s);window.renderEngines?.(s);window.renderBotThoughts?.(s);const suggestedTitle=!s.game_review&&insight.querySelector(':scope > .insight-move');$('insightSuggestion').hidden=true;if(suggestedTitle){const text=suggestedTitle.textContent;if($('insightSuggestedMove').textContent!==text)$('insightSuggestedMove').textContent=text;suggestedTitle.remove();}$('insightSuggestedMove').disabled=!(s.hints&&canMove()&&s.legal.some(m=>m.move===s.hint?.move&&m.to));if(s.error&&$('toast').dataset.message!==s.error)toast(s.error)
 }
-for(const id of ['whitePlayer','blackPlayer'])$(id).addEventListener('change',()=>{seatPreviewPlayers=[$('whitePlayer').value,$('blackPlayer').value];if(state)render(state)});
+const seatValue=v=>String(v||'').startsWith('name:')?'Human':v; // a saved name is a human player
+for(const [i,id] of [[0,'whitePlayer'],[1,'blackPlayer']])$(id).addEventListener('change',()=>{
+ const v=$(id).value;
+ if(v==='__names'){$(id).value=serverState?.players?.[i]||'Human';openNameEditor();return}
+ if(serverState?.mode==='play'&&(v==='Human'||v.startsWith('name:'))){const name=v.startsWith('name:')?v.slice(5):'';try{localStorage.setItem('foulbrood_name_'+i,name)}catch(e){}nameSent[i]=name;action({action:'set_player_name',side:i,name}).catch(()=>{})}
+ seatPreviewPlayers=[seatValue($('whitePlayer').value),seatValue($('blackPlayer').value)];if(state)render(state)});
 $('bookEnabled').onchange=()=>action({action:'book_enabled',enabled:$('bookEnabled').checked});$('calculateInstead').onclick=()=>action({action:'calculate_instead'});
-$('new').onclick=()=>{const payload={action:'new',players:[$('whitePlayer').value,$('blackPlayer').value],time:$('time').value,variant:$('variant').value};if(state&&gameSettingsLocked(state))confirmViewerAction('Start a new game?','This will replace the game in progress.','Start new game',payload);else action(payload)};
+$('new').onclick=()=>{const payload={action:'new',players:[seatValue($('whitePlayer').value),seatValue($('blackPlayer').value)],time:$('time').value,variant:$('variant').value};if(state&&gameSettingsLocked(state))confirmViewerAction('Start a new game?','This will replace the game in progress.','Start new game',payload);else action(payload)};
+// Local: a human player's name can be typed on the player bar (click the name) before, during or after a game.
+// It is remembered for that seat (also after closing the viewer) and saved with the game in the Archive.
+function savedPlayerNames(){try{const v=JSON.parse(localStorage.getItem('foulbrood_names')||'[]');return Array.isArray(v)?v.filter(n=>typeof n==='string'&&n).slice(0,40):[]}catch(e){return []}}
+window.savedPlayerNames=savedPlayerNames;
+function rememberPlayerName(name){if(!name)return;const list=savedPlayerNames().filter(n=>n!==name);list.unshift(name);try{localStorage.setItem('foulbrood_names',JSON.stringify(list.slice(0,40)))}catch(e){}}
+function forgetPlayerName(name){try{localStorage.setItem('foulbrood_names',JSON.stringify(savedPlayerNames().filter(n=>n!==name)))}catch(e){}
+ for(const i of [0,1])if(storedName(i)===name){try{localStorage.setItem('foulbrood_name_'+i,'')}catch(e){}}}
+// "Edit names…": the saved names, each with an x to forget it.
+function openNameEditor(){
+ let box=document.getElementById('nameEditor');if(box)box.remove();
+ box=document.createElement('div');box.id='nameEditor';box.className='name-editor';box.setAttribute('role','dialog');box.setAttribute('aria-label','Saved names');
+ const draw=()=>{box.replaceChildren();const h=document.createElement('strong');h.textContent='Saved names';box.append(h);
+  const list=savedPlayerNames();if(!list.length){const p=document.createElement('p');p.className='muted';p.textContent='No saved names.';box.append(p)}
+  for(const n of list){const row=document.createElement('div');row.className='name-row';const t=document.createElement('span');t.textContent=n;const x=document.createElement('button');x.type='button';x.className='small';x.textContent='×';x.title='Forget this name';x.setAttribute('aria-label','Forget '+n);
+   x.onclick=()=>{forgetPlayerName(n);for(const id of ['whitePlayer','blackPlayer'])$(id).dataset.engines='';draw();if(serverState)render(serverState)};row.append(t,x);box.append(row)}
+  const done=document.createElement('button');done.type='button';done.className='small primary';done.textContent='Done';done.onclick=()=>box.remove();box.append(done)};
+ draw();document.body.append(box);
+}
+function storedName(i){try{return localStorage.getItem('foulbrood_name_'+i)||''}catch(e){return ''}}
+const nameSent=[null,null];
+function syncPlayerName(s,i,c){
+ const el=$(c+'Name');if(!el)return;
+ const editable=s.mode==='play'&&s.players?.[i]==='Human'&&!document.body.classList.contains('hb-live');
+ el.classList.toggle('editable-name',editable);el.title=editable?'Click to type this player\'s name':'';
+ if(document.activeElement===el)return; // being typed
+ const name=s.player_names?.[i]||'';
+ if(editable&&!name&&storedName(i)&&nameSent[i]!==storedName(i)){nameSent[i]=storedName(i);action({action:'set_player_name',side:i,name:storedName(i)}).catch(()=>{})}
+ el.textContent=name||(i===0?'White':'Black');
+}
+for(const [i,c]of [[0,'white'],[1,'black']]){const el=$(c+'Name');if(!el)continue;
+ el.addEventListener('click',()=>{if(!el.classList.contains('editable-name')||el.isContentEditable)return;try{el.contentEditable='plaintext-only'}catch(e){}if(!el.isContentEditable)el.contentEditable='true';
+  if(!(serverState?.player_names?.[i]))el.textContent='';el.focus();const r=document.createRange();r.selectNodeContents(el);const sel=getSelection();sel.removeAllRanges();sel.addRange(r)});
+ el.addEventListener('keydown',e=>{if(!el.isContentEditable)return;if(e.key==='Enter'){e.preventDefault();el.blur()}else if(e.key==='Escape'){el.textContent=serverState?.player_names?.[i]||'';el.blur()}e.stopPropagation()});
+ el.addEventListener('blur',()=>{if(!el.isContentEditable)return;el.contentEditable='false';const name=el.textContent.replace(/\s+/g,' ').trim().slice(0,40);
+  try{localStorage.setItem('foulbrood_name_'+i,name)}catch(e){}rememberPlayerName(name);for(const id of ['whitePlayer','blackPlayer'])$(id).dataset.engines='';nameSent[i]=name;action({action:'set_player_name',side:i,name}).catch(()=>{});if(serverState)render(serverState)});
+}
 let timeChanging=false;$('time').onchange=()=>{if(serverState&&!timeChanging){timeChanging=true;try{render(serverState)}finally{timeChanging=false}}if($('time').value==='untimed'){if($('analysisTime').value==='-1'&&serverState?.mode==='play')action({action:'insight_time',milliseconds:15000});$('timeHelp').textContent='No game clocks. Computer turns use up to 10 seconds of thinking time.';return;} const [a,b]=$('time').value.split('+');$('timeHelp').textContent=`${a} minute${a==='1'?'':'s'} each, plus ${b} seconds per move.`};
 let takebackConfirmation=true;
 try{takebackConfirmation=!document.cookie.split('; ').includes('foulbrood_takeback_confirm=off')}catch(e){}

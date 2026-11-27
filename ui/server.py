@@ -782,14 +782,27 @@ class App:
                     if player not in ('Human','Computer'):self.engines.check_variant(player,payload['variant'])
                 data=snapshot('snapshot',payload['variant'])
                 self.leave_review()
+                names=self.play.player_names if self.play else [None,None]
                 self.pause();self.mode='play';self.play=Session(data,control,players)
+                self.play.player_names=[names[i] if players[i]=='Human' else None for i in (0,1)]  # typed names stay with their seats
                 self.play.running=True;self.play.start_turn_clock();self.hint_paused=False
             elif action=='reset_play':
                 if self.mode!='play':raise ValueError('Open Play first.')
                 data=snapshot('snapshot',s.data['game'].split(';')[0])
                 self.leave_review()
-                self.pause();self.play=Session(data,s.time_control,s.players.copy())
+                names=s.player_names.copy()
+                self.pause();self.play=Session(data,s.time_control,s.players.copy());self.play.player_names=names
                 self.hints=False;self.hint_paused=False
+            elif action=='set_player_name':
+                # Local: a human player's name, typed on the player bar (before, during or after the game).
+                side=payload.get('side');name=' '.join(str(payload.get('name') or '').split())[:40]
+                if self.mode!='play' or side not in (0,1):raise ValueError('Open Local first.')
+                if self.play.players[side]!='Human':raise ValueError('Only a human player can be named.')
+                self.play.player_names[side]=name or None
+                try:
+                    import library
+                    library.set_name(self.play.review_game,side,name or 'Human')  # a game already in the Archive is updated too
+                except Exception:pass
             elif action=='mode':
                 mode=payload['mode']
                 if mode not in ('play','analysis'): raise ValueError('Unknown mode.')

@@ -12,10 +12,13 @@ $('hints').onchange=()=>{
  }else action({action:'hints',enabled,milliseconds:Number($('analysisTime').value)});
 };
 window.syncEnginePlayers=s=>{
- const choices=[{id:'Human',name:'Human'},...(s.engines||[]).filter(e=>e.connected)];
+ // Saved human names come right after Human; "Edit names…" at the end manages them.
+ const names=(window.savedPlayerNames?.()||[]).map(n=>({id:'name:'+n,name:n}));
+ const choices=[{id:'Human',name:'Human'},...names,...(s.engines||[]).filter(e=>e.connected),...(names.length?[{id:'__names',name:'Edit names…'}]:[])];
  const key=JSON.stringify(choices.map(e=>[e.id,e.name]));
  for(const id of ['whitePlayer','blackPlayer']){const select=$(id);if(select.dataset.engines===key)continue;const value=select.value;select.replaceChildren();for(const e of choices){const option=document.createElement('option');option.value=e.id;option.textContent=e.name;select.append(option)}select.value=choices.some(e=>e.id===value)?value:'Human';select.dataset.engines=key;}
- if(seatPreviewPlayers)seatPreviewPlayers=seatPreviewPlayers.map(p=>choices.some(e=>e.id===p)?p:'Human');
+ for(const [i,id] of [[0,'whitePlayer'],[1,'blackPlayer']]){const select=$(id),n=s.mode==='play'&&s.players?.[i]==='Human'?s.player_names?.[i]:null;if(select.value==='Human'&&n&&choices.some(e=>e.id==='name:'+n))select.value='name:'+n} // the seat's name shows in its menu
+ if(seatPreviewPlayers)seatPreviewPlayers=seatPreviewPlayers.map(p=>p.startsWith('name:')?'Human':choices.some(e=>e.id===p)?p:'Human');
 };
 window.renderEngines=s=>{
  $('engineInsightContent').hidden=false;$('insightEngineStatus').hidden=false;

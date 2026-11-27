@@ -1217,3 +1217,9 @@ body:not(.review-mode):not(.moves-max) aside:has(>#analysisModes:not([hidden]))>
 /* Sound effects: yellow = on (click to switch off); plain = off (click to switch on and hear it). */
 #sfxTry button.sfx-toggle[aria-pressed="true"]{background:var(--hazard)!important;border-color:var(--hazard)!important;color:var(--pitch,#14150f)!important}
 #sfxTry button.sfx-toggle[aria-pressed="false"]{background:transparent!important;border-color:var(--line)!important;color:var(--muted)!important}
+
+/* Local: a human player's name can be typed on the bar. */
+.editable-name{cursor:text;border-bottom:1px dashed color-mix(in srgb,currentColor 35%,transparent)}
+.editable-name[contenteditable="plaintext-only"],.editable-name[contenteditable="true"]{outline:1px solid var(--hazard);outline-offset:2px;border-bottom-color:transparent;min-width:4ch;display:inline-block}
+.name-editor{position:fixed;z-index:50;top:120px;left:50%;transform:translateX(-50%);min-width:240px;max-width:90vw;padding:14px;border:1px solid var(--line);border-left:3px solid var(--hazard);background:var(--paper);color:var(--ink);box-shadow:0 10px 30px #0008;display:grid;gap:8px}
+.name-editor .name-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.name-editor .name-row button{min-width:0;padding:2px 10px}

@@ -105,6 +105,21 @@ def add(entry):
     return gid
 
 
+def set_name(game, side, name):
+    """A player's name changed after the game was saved (Local): update its Archive entry, if there is one."""
+    if not isinstance(game, str) or side not in (0, 1) or len(_moves(game)) < 1:
+        return False
+    gid = game_id(game)
+    with LOCK:
+        games = _load()
+        old = next((g for g in games if g.get('id') == gid), None)
+        if old is None:
+            return False
+        old['white' if side == 0 else 'black'] = str(name).strip()[:200] or 'Human'
+        _save(games)
+    return True
+
+
 def _review_path(gid):
     return ROOT / 'reviews' / (gid + '.pgn')
 
