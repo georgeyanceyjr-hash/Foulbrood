@@ -317,7 +317,6 @@ function renderReviewExtra(s){
   :button('Try a move','Play different moves for this turn on the board and have each one graded',async()=>{if(reviewPreview)setReviewPreview(null);reviewTry={game,ply};reviewTryOn={game,ply};await action({action:'navigate',ply:ply-1})}));
  box.append(controls);
  const note=t=>{const p=document.createElement('p');p.className='review-fact muted';p.textContent=t;box.append(p)};
- if(reviewTry)note(`Move a ${row.side===0?'White':'Black'} bug on the board to grade it.`);
  if(line&&line.status==='running')note('Finding the engine line…');
  if(line&&line.status==='error')note(line.error||'The engine line is not available.');
  if(tried&&tried.status==='running'&&!reviewTry)note(`Grading ${text(tried.move)}…`);
