@@ -274,9 +274,14 @@ class HiveBot:
         open_all_set(on)
         if on:
             have = {_standing_key(r) for r in standing_get()} | {_standing_key(c) for c in self.lobby if c.get('mine') and not c.get('to')}
-            for base, increment in self.STANDARD:
-                if _standing_key(dict(base=base, increment=increment, rated=bool(rated))) not in have:
-                    self.challenge('', base, increment, rated, color, min_rating, max_rating)
+            todo = [(b, i) for b, i in self.STANDARD if _standing_key(dict(base=b, increment=i, rated=bool(rated))) not in have]
+            with self.lock:
+                self.batch_pending, self.batch_message = len(todo), 'All standard timings open.'
+            if not todo:
+                with self.lock:
+                    self.log.append('All standard timings open.')
+            for base, increment in todo:
+                self.challenge('', base, increment, rated, color, min_rating, max_rating)
             return self.view()
         with self.lock:
             standing_set([])
@@ -572,9 +577,15 @@ class HiveBot:
                 self.log.append(str(event.get('msg') or '')[:200])
             elif kind == 'challenge_sent':
                 who = str(event.get('opponent') or '')[:40]
-                self.log.append('Challenge sent%s: %d+%d, %s.' % (
-                    ' to ' + who if who else ' (open to anyone)', int(event.get('base') or 0) // 60,
-                    int(event.get('increment') or 0), 'rated' if event.get('rated') else 'casual'))
+                # Open challenges posted together (all standard timings) give one message once they are all up.
+                if not who and getattr(self, 'batch_pending', 0) > 0:
+                    self.batch_pending -= 1
+                    if self.batch_pending == 0:
+                        self.log.append(getattr(self, 'batch_message', '') or 'Challenges open.')
+                else:
+                    self.log.append('Challenge sent%s: %d+%d, %s.' % (
+                        ' to ' + who if who else ' (open to anyone)', int(event.get('base') or 0) // 60,
+                        int(event.get('increment') or 0), 'rated' if event.get('rated') else 'casual'))
             elif kind == 'accept':
                 if event.get('open'):
                     self.accepted += 1
@@ -677,10 +688,14 @@ class HiveBot:
             self.stop()
         if creates:
             try:
+                with self.lock:
+                    if open_all_get() and len(creates) > 1:
+                        self.batch_pending, self.batch_message = len(creates), 'All standard timings open again.'
                 for r in creates:
                     self._send(dict(r, cmd='challenge', opponent=None))
                 with self.lock:
-                    self.log.append('Game over: put %d open challenge%s back up.' % (len(creates), '' if len(creates) == 1 else 's'))
+                    if not (open_all_get() and len(creates) > 1):
+                        self.log.append('Game over: put %d open challenge%s back up.' % (len(creates), '' if len(creates) == 1 else 's'))
             except ValueError:
                 pass
         if withdraws or resync:
