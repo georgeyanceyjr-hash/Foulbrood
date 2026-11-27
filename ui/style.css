@@ -1164,7 +1164,7 @@ body .player.bot-duel:not(.analysis-insight):not(.review-insight) .clock{padding
 #moves>.history-line .history-move.line-move{font-style:italic}
 #moves>.history-line .history-move.line-move .move-rating{font-style:normal}
 #moves>.history-line .history-move.line-move{border-color:var(--line)!important;background:transparent!important}
-#moves>.history-line .history-move.line-move.current{border-color:var(--hazard)!important}
+#moves>.history-line .history-move.line-move.current{border-color:var(--hazard)!important;background:color-mix(in srgb,var(--hazard) 30%,transparent)!important;box-shadow:inset 0 0 0 2px var(--hazard)} /* the line move on the board */
 
 /* Direct challenges: the range of time controls accepted automatically — one row, laid out like "Ratings from … to …". */
 aside #hbDirectRange{display:flex;flex-wrap:nowrap;align-items:center;gap:10px;margin:8px 0 12px}
