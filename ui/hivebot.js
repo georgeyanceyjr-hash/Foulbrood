@@ -902,8 +902,14 @@ window.foulbroodSfx=(()=>{
    bee(c,a.out,t,0.55,165,165,0.08,24);bee(c,a.out,t+0.03,0.55,168,168,0.08,26);
    for(const at of [0.62,0.9]){const o=c.createOscillator(),lp=c.createBiquadFilter();o.type='triangle';o.frequency.value=196;lp.type='lowpass';lp.frequency.value=600;o.connect(lp);lp.connect(env(c,a.out,t+at,[[0.02,0.2],[0.18,0.1],[0.26,0]]));o.start(t+at);o.stop(t+at+0.3)}
    return true},
-  // Game start: the hive notices you.
-  start(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02,g=env(c,a.out,t,[[0.45,1],[0.9,0]]);swarm(c,g,t,0.9,0.12,1.15);return true},
+  // Game start: a herald's trumpet call (ta-ta-ta-taaa), brass-like, with a fifth underneath.
+  start(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02;
+   const brass=(at,f,dur,level)=>{const o=c.createOscillator(),o2=c.createOscillator(),lp=c.createBiquadFilter();o.type='sawtooth';o2.type='sawtooth';o.frequency.value=f;o2.frequency.value=f*1.003;
+    lp.type='lowpass';lp.Q.value=2;lp.frequency.setValueAtTime(500,t+at);lp.frequency.linearRampToValueAtTime(2600,t+at+0.05);lp.frequency.linearRampToValueAtTime(1500,t+at+dur);
+    o.connect(lp);o2.connect(lp);lp.connect(env(c,a.out,t+at,[[0.025,level],[dur*0.75,level*0.85],[dur,0]]));o.start(t+at);o2.start(t+at);o.stop(t+at+dur+0.05);o2.stop(t+at+dur+0.05)};
+   for(const at of [0,0.14,0.28]){brass(at,523.25,0.11,0.09);brass(at,349.23,0.11,0.05)} // ta-ta-ta (C over F)
+   brass(0.42,783.99,0.75,0.1);brass(0.42,523.25,0.75,0.06);brass(0.42,392,0.75,0.04); // taaa (G over C)
+   return true},
   // Low on time: a heartbeat.
   thump(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.01;
    for(const [at,v] of [[0,0.5],[0.16,0.35]]){const o=c.createOscillator();o.type='sine';o.frequency.setValueAtTime(70,t+at);o.frequency.exponentialRampToValueAtTime(42,t+at+0.12);o.connect(env(c,a.out,t+at,[[0.008,v],[0.14,0]]));o.start(t+at);o.stop(t+at+0.18)}return true},
