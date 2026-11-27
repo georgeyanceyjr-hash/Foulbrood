@@ -59,6 +59,13 @@ function renderReviewMarks(s){
    layer.append(node('polygon',{points:`${ex},${ey} ${ex-ux*10-uy*5},${ey-uy*10+ux*5} ${ex-ux*10+uy*5},${ey-uy*10-ux*5}`,fill:color}));
   }
  }
+ const to=s.last_move?.to,sameSpot=!!to&&to[0]===mark.to[0]&&to[1]===mark.to[1];
+ if(sameSpot){ // the engine wanted a different bug on the very spot that was played (always so on the first move): a small badge, so the real piece stays clear
+  const bx=x+27,by=y-25,badge=node('g',{});
+  badge.append(node('polygon',{points:hex(bx,by,19),fill:'var(--paper,#fbfaf6)',stroke:color,'stroke-width':3}));
+  const mini=node('g',{transform:`translate(${bx},${by}) scale(.42) translate(${-bx},${-by})`});mini.append(artwork(mark.piece,bx,by));badge.append(mini);
+  layer.append(badge);board.append(layer);return;
+ }
  const ghost=node('g',{opacity:.6});ghost.append(artwork(mark.piece,x,y));layer.append(ghost);
  layer.append(node('polygon',{points:hex(x,y,40),fill:'none',stroke:color,'stroke-width':4}));board.append(layer);
 }
