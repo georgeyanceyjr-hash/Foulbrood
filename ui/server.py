@@ -144,6 +144,9 @@ class Session:
 class App:
     def __init__(self, engines=None, position=None):
         self.engines = engines or EngineLibrary()
+        if engines is None:
+            try:hivebot.install_built_in(self.engines)
+            except Exception:pass
         self.lock = threading.RLock()
         self.play = Session(position if position is not None else snapshot('snapshot','Base+MLP'))
         preferred = self.engines.get(self.engines.analysis_engine)

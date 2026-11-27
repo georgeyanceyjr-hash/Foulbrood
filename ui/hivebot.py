@@ -1084,9 +1084,33 @@ except Exception:
     pass
 
 
-BUILT_IN = [Path.home() / 'Documents/Codex/FoulBroodData/Engines/ThoraxRex/thoraxrex',
-            Path.home() / 'Documents/Codex/FoulBroodData/Engines/ThoraxRex-NoBook/thoraxrex']
+ENGINES_DIR = Path(os.environ.get('FOULBROOD_DATA_DIR', str(Path.home() / 'Documents/Codex/FoulBroodData'))) / 'Engines'
+BUILT_IN = [ENGINES_DIR / 'ThoraxRex' / ('thoraxrex' + EXE), ENGINES_DIR / 'ThoraxRex-NoBook' / ('thoraxrex' + EXE)]
+# The engine shipped inside the app (engines/<system>-<cpu>/ThoraxRex and ThoraxRex-NoBook).
+BUNDLED_ENGINES = Path(__file__).resolve().parent.parent / 'engines'
 _built_in_checked = False
+
+
+def _install_bundled_engines():
+    """First run on a new computer: copy the engine that ships with the app into FoulBroodData/Engines."""
+    import shutil
+    source = BUNDLED_ENGINES / _platform_tag()
+    for path in BUILT_IN:
+        src = source / path.parent.name
+        if path.is_file() or not (src / path.name).is_file():
+            continue
+        try:
+            shutil.copytree(src, path.parent, dirs_exist_ok=True)
+            if os.name != 'nt':
+                path.chmod(0o755)
+        except OSError:
+            pass
+
+
+def install_built_in(engines):
+    """Called when the viewer starts, so the engine is ready in Local, Analysis and Online from the first run."""
+    _install_bundled_engines()
+    _ensure_built_in(engines)
 
 
 def _ensure_built_in(engines):
