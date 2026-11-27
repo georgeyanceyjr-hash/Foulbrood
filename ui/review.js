@@ -321,7 +321,8 @@ function reviewSettings(on){
 function playedRatings(s){
  const out=new Map();if(!s||s.game_review)return out;
  const live=window.foulbroodLiveEvals?.(s);
- if(live){const sign=live.side===0?1:-1;for(const [turn,v]of Object.entries(live.evals)){if(!Array.isArray(v))continue;out.set(+turn+1,{played:true,score:v[1]*sign,depth:v[0]})}return out}
+ if(live){const sign=live.side===0?1:-1;for(const [turn,v]of Object.entries(live.evals)){if(!Array.isArray(v))continue;out.set(+turn+1,{played:true,score:v[1]*sign,depth:v[0]})}
+  for(const turn of live.hand||[])out.set(+turn+1,{played:true,hand:true});return out} // moves played by hand have no engine rating
  for(const [ply,score,depth]of s.move_ratings||[])out.set(ply,{played:true,score,depth,book:depth===1&&score===0});
  return out;
 }
@@ -400,9 +401,9 @@ window.decorateHistory=s=>{
   if(tag)tag.classList.remove('queued');
   if(tag)tag.classList.remove('reviewing');
   if(!row){item.classList.remove('turning','ingame');if(tag)tag.remove();delete item.dataset.verdict;if(item.dataset.reviewTitle){item.title='';delete item.dataset.reviewTitle}continue}
-  if(row.played){const text=row.book?'Book':((r=>(r>0?'+':'')+r)(reviewPoint(row.score)));item.classList.remove('turning','ingame');delete item.dataset.verdict;
+  if(row.played){const text=row.hand?'Hand':row.book?'Book':((r=>(r>0?'+':'')+r)(reviewPoint(row.score)));item.classList.remove('turning','ingame');delete item.dataset.verdict;
    if(!tag){tag=document.createElement('span');tag.className='move-rating';item.append(tag)}if(tag.textContent!==text)tag.textContent=text;
-   item.title=row.book?'Book move':'Engine rating while playing'+(row.depth?` (depth ${row.depth})`:'')+' · position '+text;item.dataset.reviewTitle='1';continue}
+   item.title=row.hand?'Played by hand':row.book?'Book move':'Engine rating while playing'+(row.depth?` (depth ${row.depth})`:'')+' · position '+text;item.dataset.reviewTitle='1';continue}
   if(verdict)item.dataset.verdict=verdict;else delete item.dataset.verdict;
   item.classList.toggle('turning',!!turning&&turning.ply===ply);
   item.classList.toggle('ingame',!!row.ingame);

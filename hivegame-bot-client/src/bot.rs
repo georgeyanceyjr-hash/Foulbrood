@@ -16,11 +16,19 @@ pub struct Turn {
     pub outbox: mpsc::UnboundedSender<Outgoing>,
 }
 
+/// Set while the person at the viewer plays the moves by hand.
+pub static MANUAL: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 pub async fn play_turn(turn: Turn, shared: Arc<Shared>, turn_tracker: TurnTracker) {
     let Some(bestmove) = think(&turn, &shared.engine_slots).await else {
         turn_tracker.processed(turn.position_key).await;
         return;
     };
+    // Switched to playing by hand while the engine was thinking: the person's move counts, not the engine's.
+    if MANUAL.load(std::sync::atomic::Ordering::Relaxed) {
+        turn_tracker.processed(turn.position_key).await;
+        return;
+    }
     info!(bot = %turn.bot.name, game_id = %turn.game.game_id, bestmove = %bestmove, "playing move");
     crate::protocol::hb(serde_json::json!({
         "ev": "move", "id": turn.game.game_id, "turn": turn.game.turn, "move": bestmove,

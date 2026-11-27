@@ -172,8 +172,9 @@ def _bot_evals():
             for line in rows:
                 try:
                     row = json.loads(line)
+                    hand = {int(t) for t in (row.get('hand') or []) if isinstance(t, int)}  # moves played by hand
                     evals = {int(k): (v[0] if isinstance(v[0], int) else 0, v[1]) for k, v in (row.get('evals') or {}).items()
-                             if isinstance(v, list) and len(v) > 1 and isinstance(v[1], (int, float))}
+                             if isinstance(v, list) and len(v) > 1 and isinstance(v[1], (int, float)) and int(k) not in hand}
                     if evals:
                         out[str(row.get('id'))] = (row.get('bot'), evals)
                 except (ValueError, TypeError):

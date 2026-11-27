@@ -334,6 +334,9 @@ class HiveBot:
                 raise ValueError('Choose a move.')
             turn = int(game.get('turn') or 0)
             self.refused = None
+            hand = game.setdefault('hand', [])  # moves played by hand: these have no engine rating
+            if turn not in hand:
+                hand.append(turn)
         self._send(dict(cmd='move', id=str(game_id), turn=turn, move=move))
         return self.view()
 
@@ -762,7 +765,7 @@ class HiveBot:
                        bot=self.user, engine=self.engine_name, base=game.get('base'), increment=game.get('increment'),
                        finished=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), moves=moves,
                        speed=game.get('speed'), rated=game.get('rated'), white_card=game.get('white_card'), black_card=game.get('black_card'),
-                       evals=game.get('evals') or {})
+                       evals=game.get('evals') or {}, hand=sorted(set(game.get('hand') or [])))
             BOT_DIR.mkdir(parents=True, exist_ok=True)
             with (BOT_DIR / 'games.jsonl').open('a') as out:
                 out.write(json.dumps(row) + '\n')
@@ -782,7 +785,8 @@ class HiveBot:
                 white_rating=cards[0].get('rating'), black_rating=cards[1].get('rating'),
                 white_change=cards[0].get('change'), black_change=cards[1].get('change'),
                 white_kind='Bot' if cards[0].get('bot') else 'Human', black_kind='Bot' if cards[1].get('bot') else 'Human',
-                note=('Played by ' + self.engine_name) if self.engine_name else '',
+                note=(('Played by ' + self.engine_name) if self.engine_name else '') + (
+                    ' · %d move%s by hand' % (len(set(game['hand'])), '' if len(set(game['hand'])) == 1 else 's') if game.get('hand') else ''),
                 times=[(round(seen[i] - seen[i - 1], 1) if i in seen and i - 1 in seen else None) for i in range(1, n + 1)]
                       if len(seen) > 2 else None))
         except Exception as exc:  # never let record-keeping disturb play

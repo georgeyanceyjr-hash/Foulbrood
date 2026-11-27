@@ -115,6 +115,7 @@ fn listen_for_commands(outbox: mpsc::UnboundedSender<Outgoing>, auto: Arc<AutoSt
                 // {"cmd":"manual","on":true}: the person at the viewer makes the moves; the engine is not run.
                 let on = command.get("on").and_then(|o| o.as_bool()).unwrap_or(false);
                 auto.manual.store(on, std::sync::atomic::Ordering::Relaxed);
+                crate::bot::MANUAL.store(on, std::sync::atomic::Ordering::Relaxed);
                 protocol::hb(serde_json::json!({"ev": "manual", "on": on}));
                 // Switching back to the engine in the middle of our turn: look at the games again.
                 if outbox.send(Outgoing::Resync).is_err() {

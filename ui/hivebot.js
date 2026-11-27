@@ -364,7 +364,7 @@
    last[id]=text;if(typeof toast==='function')toast(text.replace(/\s*\n\s*/g,' · '))};
   for(const id of ['hbStatus','hbLog'])new MutationObserver(()=>banner(id)).observe(el(id),{childList:true,characterData:true,subtree:true});
   new MutationObserver(()=>{if(document.body.classList.contains('hb-live')){banner('hbLog');banner('hbStatus')}}).observe(document.body,{attributes:true,attributeFilter:['class']})}
- window.foulbroodLiveEvals=s=>{try{const card=boardCard(s);if(!card||!card.evals)return null;return {side:card.white===bot.user?0:1,evals:card.evals}}catch(e){return null}};
+ window.foulbroodLiveEvals=s=>{try{const card=boardCard(s);if(!card||(!card.evals&&!card.hand))return null;return {side:card.white===bot.user?0:1,evals:card.evals||{},hand:card.hand||[]}}catch(e){return null}};
  const drawNativePreview=s=>{
   const board=el('board');board.querySelectorAll('.hb-native-preview').forEach(n=>n.remove());
   const card=nativeCard(s);if(!card||!card.thinking||s.ply!==card.info.turn)return;
