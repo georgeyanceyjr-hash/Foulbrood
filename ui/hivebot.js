@@ -168,6 +168,9 @@
   const box=el('hbLobby'),tcv=el('hbAcceptTime').value,tcOk=c=>tcv==='any'?true:c.mode==='RealTime'&&`${c.base}+${c.increment||0}`===tcv,rows=(bot.lobby||[]).filter(c=>!c.mine&&!c.to&&tcOk(c)&&!(el('hbHumans').checked&&c.bot)).sort((a,b)=>speed(a)-speed(b)||(b.rating||0)-(a.rating||0));
   const mine=(bot.lobby||[]).filter(c=>c.mine);
   const direct=(bot.lobby||[]).filter(c=>!c.mine&&c.to&&String(c.to).toLowerCase()===String(bot.user||'').toLowerCase());
+  // A challenge sent to the bot by name: a knock (once per challenge).
+  {const ids=direct.map(c=>c.id||[c.who,c.base,c.increment,c.color].join('|'));render.knocked=render.knocked||null;
+   if(render.knocked&&ids.some(id=>!render.knocked.has(id)))window.foulbroodSfx?.knock();render.knocked=new Set(ids)}
   const key=JSON.stringify([rows,mine,direct,playing,el('hbAuto').checked]);if(box.dataset.key===key)return;box.dataset.key=key;box.replaceChildren();
   // Our own waiting challenges are listed where they were made: open ones under "Open a challenge", sent ones under "Send a challenge".
   for(const [id,list] of [['hbMineOpen',mine.filter(c=>!c.to)],['hbMineSent',mine.filter(c=>c.to)]]){
@@ -881,6 +884,17 @@ window.foulbroodSfx=(()=>{
    o.type='square';o.frequency.value=58;am.gain.value=0.5;lfo.type='square';lfo.frequency.value=17;d.gain.value=0.5;lfo.connect(d);d.connect(am.gain);
    const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=420;o.connect(lp);lp.connect(am);am.connect(env(c,a.out,t,[[0.02,0.13],[0.5,0.13],[0.62,0]]));
    o.start(t);lfo.start(t);o.stop(t+0.7);lfo.stop(t+0.7);return true},
+  // A piece lands: a soft wooden tap; climbing onto the hive (beetle, mosquito as a beetle): a heavier double tap.
+  tap(climb=false){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.01;
+   const hit=(at,freq,level)=>{const n=noise(c,0.06),bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=freq;bp.Q.value=4;n.connect(bp);bp.connect(env(c,a.out,t+at,[[0.002,level],[0.05,0]]));n.start(t+at);n.stop(t+at+0.06)};
+   if(climb){hit(0,700,0.5);hit(0.07,1100,0.35)}else hit(0,1700,0.32);return true},
+  // Someone challenges the bot by name: two knocks on wood.
+  knock(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.01;
+   for(const at of [0,0.16]){const n=noise(c,0.09),bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=420;bp.Q.value=3;n.connect(bp);bp.connect(env(c,a.out,t+at,[[0.003,0.7],[0.08,0]]));n.start(t+at);n.stop(t+at+0.09);
+    const o=c.createOscillator();o.type='sine';o.frequency.setValueAtTime(160,t+at);o.frequency.exponentialRampToValueAtTime(90,t+at+0.07);o.connect(env(c,a.out,t+at,[[0.003,0.4],[0.08,0]]));o.start(t+at);o.stop(t+at+0.1)}return true},
+  // A draw: two even, neutral notes.
+  draw(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02;
+   for(const [at,f] of [[0,440],[0.28,440]]){const o=c.createOscillator();o.type='triangle';o.frequency.value=f;o.connect(env(c,a.out,t+at,[[0.01,0.22],[0.22,0.12],[0.34,0]]));o.start(t+at);o.stop(t+at+0.36)}return true},
   // Game start: the hive notices you.
   start(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02,g=env(c,a.out,t,[[0.45,1],[0.9,0]]);swarm(c,g,t,0.9,0.12,1.15);return true},
   // Low on time: a heartbeat.
@@ -891,6 +905,7 @@ window.foulbroodSfx=(()=>{
    const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=500;o.connect(hp);hp.connect(env(c,a.out,t,[[0.004,0.2],[0.22,0]]));o.start(t);o.stop(t+0.25);return true},
   // Called by the viewer when a game ends on the board. true = handled here; false = play the usual chime.
   ending(result,s){
+   if(result==='draw')return sfx.draw();
    if(result!=='win')return false;
    let won=true;
    if(s&&s.live_bot)won=s.bot_won!==false;
@@ -900,7 +915,7 @@ window.foulbroodSfx=(()=>{
  };
  // Triggers that are not game endings: watched from what the viewer shows.
  const around=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
- let wasPlaying=false,lastSecond=null,liveId=null;
+ let wasPlaying=false,lastSecond=null,liveId=null,landed={key:'',moves:0};
  const watch=s=>{
   if(!s)return;
   const L=window.foulbroodLive,card=L&&L.card?L.card():null,liveActive=!!(card&&!card.finished&&s.mode==='analysis');
@@ -909,15 +924,21 @@ window.foulbroodSfx=(()=>{
   if(playing&&!wasPlaying&&!(s.review_total>0))sfx.start();
   wasPlaying=playing;
   if(card&&!card.finished&&card.id!==liveId){if(liveId!==null||(card.turn||0)<=1)sfx.stinger();liveId=card.id}else if(card&&liveId===null)liveId=card.id;
+  // a piece lands on the board being played (Local or Online): a tap, heavier when it climbs onto the hive
+  if((playing||liveActive)&&!s.reviewing&&s.last_move&&Array.isArray(s.pieces)){
+   const moves=String(s.live_game||s.game||'').split(';').length,key=(liveActive?'live:'+card.id:'play')+'|'+String(s.live_game||s.game||'').split(';')[0];
+   if(landed.key===key&&moves>landed.moves){const p=s.pieces.find(q=>q.id===s.last_move.piece);sfx.tap(!!(p&&(p.level||0)>0))}
+   landed={key,moves};
+  }
   // low on time: a heartbeat under the last ten seconds of a human's clock
   const side=s.live_side??s.side,seconds=playing&&(s.players||[])[side]==='Human'&&s.time_control!=='untimed'?(s.clocks||[])[side]:null;
   if(typeof seconds==='number'&&seconds>0&&seconds<=10){const whole=Math.ceil(seconds);if(lastSecond!==null&&whole<lastSecond)sfx.thump();lastSecond=whole}else lastSecond=null;
  };
  // Try-out buttons in the sound settings.
  const tryBox=document.getElementById('sfxTry');
- if(tryBox)for(const [label,name] of [['Win','win'],['Loss','loss'],['Game start','start'],['Low time','thump'],['Game found','stinger']]){
+ if(tryBox)for(const [label,name] of [['Win','win'],['Loss','loss'],['Draw','draw'],['Game start','start'],['Low time','thump'],['Game found','stinger'],['Piece lands','tap'],['Climbs','tapClimb'],['Challenge','knock'],['Your turn (long wait)','longWait']]){
   const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;
-  b.onclick=()=>{if(!sfx[name]()&&typeof toast==='function')toast('Turn sound on to hear it.')};tryBox.append(b);
+  b.onclick=()=>{const played=name==='tapClimb'?sfx.tap(true):name==='longWait'?window.foulbroodLongWait?.():sfx[name]();if(!played&&typeof toast==='function')toast('Turn sound on to hear it.')};tryBox.append(b);
  }
  const earlier=window.renderBotThoughts;
  window.renderBotThoughts=s=>{if(earlier)earlier(s);try{watch(s)}catch(e){}};

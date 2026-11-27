@@ -768,6 +768,9 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
  document.addEventListener('pointerdown',unlock,{capture:true});document.addEventListener('keydown',unlock,{capture:true});
  // The extra sound effects (hivebot.js) play through the same output and volume as the game sounds.
  window.foulbroodAudio=()=>enabled&&context&&context.state==='running'&&channels.game.value>0?{context,out:gameGain}:null;
+ let turnStartedAt=0;
+ function longChirp(pitch=1){chime(null,pitch);setTimeout(()=>chime(null,pitch*1.12),190)}
+ window.foulbroodLongWait=()=>{if(!(enabled&&context&&context.state==='running'&&volume>0))return false;longChirp(1.25);return true};
  window.observeHumanTurn=s=>{
   const result=s.mode==='play'?(s.timeout_side!=null?'timeout':s.resigned_side!=null?'resignation':({Draw:'draw',WhiteWins:'win',BlackWins:'win'}[s.completed_state||s.live_game?.split(';')[1]||s.state]||null)):null;
   const playing=!result&&s.mode==='play'&&s.running&&s.timeout_side==null&&s.resigned_side==null;
@@ -782,7 +785,12 @@ $('pasteLink').onclick=()=>pasteInto('gameLink');$('pasteMoves').onclick=()=>pas
    if(result==='timeout'){if(!scheduledTimeout){timeoutSound();timeoutCueKey=next.key;}}else if(!(window.foulbroodSfx&&window.foulbroodSfx.ending(result,s)))chime(endings[result]);
   }
   // Opening/reloading the page and browsing Analysis must not announce old turns.
-  if(previous&&previous.mode==='play'&&playing&&(!previous.playing||previous.key!==next.key))chime(null,pitch);
+  if(previous&&previous.mode==='play'&&playing&&(!previous.playing||previous.key!==next.key)){
+   // A human's turn after the other side took over 30 seconds: a stronger double chirp, in case you wandered off.
+   const waited=Date.now()-(turnStartedAt||Date.now());
+   if(eligible&&previous.key!==next.key&&waited>30000)longChirp(pitch);else chime(null,pitch);
+  }
+  if(!previous||previous.key!==next.key)turnStartedAt=Date.now();
   // The game clock only runs once both sides have made their first move; no ticking before that.
   syncClockTicks(((s?.review_total??s?.ply??0)>=2)?next:{...next,running:false});
   previous=next;
