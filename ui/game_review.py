@@ -67,7 +67,7 @@ class Review:
         recorded=self.source=='in_game'
         return dict(source=self.source,recorded_count=len(self.in_game_history),restored=bool(self.portable_engine),resume_engine_missing=missing and not recorded,can_resume=self.can_resume(),engine=self.engine.get('name',''),external=not self.portable_engine['builtin'] if self.portable_engine else self.engine.get('id')!='Computer',remaining_seconds=remaining,working_ply=self.working_ply,active=True,status='recorded' if recorded else self.status,error=self.error,total=self.total,single_working=getattr(self,'single_working',None),rows=[] if recorded else self.rows.copy()+[r for p,r in sorted(getattr(self,'single',{}).items()) if p>len(self.rows)],points=history_points(self.in_game_history) if recorded else self.points.copy(),milliseconds=self.milliseconds,stage=self.stage,extras=list(getattr(self,'extras',{}).values()))
 
-    def side(self,kind,ply,move=None):
+    def side(self,kind,ply,move=None,length=4):
         """One extra search beside the finished review: the engine's line after its preferred move
         ('line'), or a different move the user wants graded ('try')."""
         if self.status=='running':raise ValueError('Stop the review first.')
@@ -87,7 +87,8 @@ class Review:
                 if kind=='line':
                     moves=[];steps=[];position=data;scores=[]
                     following=row['alternative'] if row.get('alternative') else row['move']
-                    for k in range(4):
+                    count=max(2,min(int(length or 4),16))
+                    for k in range(count):
                         position=self.snapshot('play',position['game'],following)
                         moves.append(following);steps.append(dict(pieces=position['pieces'],last_move=position.get('last_move')))
                         # The rating after each move of the line (White's view), as in the move list.
@@ -97,7 +98,7 @@ class Review:
                             scores.append(row.get('best_score',row.get('score')));following=row['reply'];continue
                         found=self.evaluate(position,generation,min(self.milliseconds,2000))
                         scores.append(white_score(found) if found.get('move') else (scores[-1] if scores else None))
-                        if k==3 or not found.get('move'):break
+                        if k==count-1 or not found.get('move'):break
                         following=found['move']
                     result=dict(moves=moves,steps=steps,scores=scores)
                 else:

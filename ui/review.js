@@ -1,3 +1,4 @@
+function reviewLineLength(){let n=4;try{n=parseInt(localStorage.getItem('foulbrood_line_length'),10)||4}catch(e){}return [4,6,8,12].includes(n)?n:4}
 function reviewDone(review){return (review?.rows||[]).filter(r=>!r.single).length} // moves reviewed in order (single-move reviews ahead of the review do not count)
 // Analysis workspaces share one board and history cursor.
 $('modeAnalyze').onclick=()=>{if(editorDraft)$('cancelSetup').click();if(state?.game_review)action({action:'review_exit'})};
@@ -313,8 +314,14 @@ function renderReviewExtra(s){
   controls.append(button('Engine line',shown?'Hide the engine line':'Show the moves the engine expected after its preferred move',()=>{
    if(shown){reviewLineHidden.add(ply);if(reviewPreview&&/^line/.test(reviewPreview.key))setReviewPreview(null)}
    else if(lineFound&&lineFound.status==='ready')reviewLineHidden.delete(ply);
-   else{reviewLineHidden.delete(ply);pause().then(()=>action({action:'review_side',kind:'line',ply}));return}
+   else{reviewLineHidden.delete(ply);pause().then(()=>action({action:'review_side',kind:'line',ply,length:reviewLineLength()}));return}
    box.dataset.key='';renderReviewExtra(state);renderHistoryLine(state,$('moves'))},shown))}
+ // How many moves the engine line runs; changing it finds the line again at the new length.
+ {const pick=document.createElement('select');pick.className='review-line-length';pick.title='How many moves the engine line shows';pick.setAttribute('aria-label','Engine line length');
+  for(const n of [4,6,8,12]){const o=document.createElement('option');o.value=n;o.textContent=n+' moves';pick.append(o)}pick.value=String(reviewLineLength());
+  pick.onchange=async()=>{try{localStorage.setItem('foulbrood_line_length',pick.value)}catch(e){}
+   if(lineFound&&lineFound.status!=='running'&&!reviewLineHidden.has(ply)){await pause();action({action:'review_side',kind:'line',ply,length:+pick.value})}};
+  controls.append(pick)}
  controls.append(reviewTry||reviewTryOn?button('Stop trying','Leave Try a move',async()=>{const back=(reviewTry||reviewTryOn).ply,grading=found&&found.status==='running';reviewTry=null;reviewTryOn=null;reviewTryShow=null;
    if(grading)reviewTryDismissed.add(found.ply+'|'+found.move); // stopped in the middle of thinking: no result for that move
    if(reviewPreview)setReviewPreview(null);

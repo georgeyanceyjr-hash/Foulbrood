@@ -1185,3 +1185,6 @@ body.hb-live #hbLinkRow:not([hidden]){display:block}
 /* Engine line in the move list: the clear button is a small x like the one beside each tried move. */
 #moves>.history-line .review-line-clear{display:inline-block;width:auto;min-width:0;min-height:0;height:auto;margin:0 0 0 2px;padding:0 3px;border:0;border-radius:0;background:none;color:var(--muted);font-size:12px;font-weight:700;line-height:1;letter-spacing:0;box-shadow:none;cursor:pointer}
 #moves>.history-line .review-line-clear:hover{color:var(--ink);background:none}
+
+/* Engine line length, beside its button. */
+aside #reviewExtra select.review-line-length{width:auto;min-height:0;height:28px;padding:2px 6px;font-size:12px;margin:0}
