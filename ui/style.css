@@ -1174,3 +1174,8 @@ body .player.bot-duel:not(.analysis-insight):not(.review-insight) .clock{padding
 
 /* The bot's messages appear as banners on the board, not in its box. */
 #hbStatus,#hbLog{display:none!important}
+
+/* Online: the game's hivegame.com link under the History title; the bot box no longer shows it. */
+#hbGame.hb-game-moved{display:none!important}
+#hbLinkRow{display:none;margin:2px 0 10px;font-size:13px}
+body.hb-live #hbLinkRow:not([hidden]){display:block}

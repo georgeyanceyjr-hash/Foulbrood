@@ -297,6 +297,7 @@
   {const t=el('hivebotDetails').querySelector('summary strong'),name=connected&&bot.user?bot.user+' bot':'hivegame.com bot';if(t.textContent!==name)t.textContent=name} // the account that is logged in
   el('hbSummary').textContent=summary;el('hbLight').className='hb-light '+(connected?'on':bot.state==='starting'||bot.state==='building'?'wait':'off');site(bot.site);el('hbStatus').textContent=status;el('hbStatus').hidden=!status;
   const card=g||last;el('hbGame').hidden=!card||(!g&&cleared===card.id); // a cleared game takes its hivegame.com link with it
+  {const r=document.getElementById('hbLinkRow');if(r)r.hidden=el('hbGame').hidden}
   if(card){
    el('hbPlayers').textContent=names(card);el('hbPlayers').parentElement.hidden=true; // the pairing and result are in the status lines and the player bars
    const move=(card.turn||0)+1; // the viewer numbers every move on its own: White plays 1, Black plays 2
@@ -358,6 +359,9 @@
  };
  const nativeCard=s=>{const card=boardCard(s);return card&&card.info?card:null};
  // The bot's rating of each of its moves in the game on the Online board, for the move list.
+ // The game's hivegame.com link sits in the History box, right under its title (Online only).
+ {const wrap=document.createElement('div');wrap.id='hbLinkRow';wrap.className='hb-link-row';wrap.append(el('hbLink'));
+  const panel=document.getElementById('historyPanel'),row=panel&&panel.querySelector(':scope > .row');if(row)row.after(wrap);el('hbGame').classList.add('hb-game-moved')}
  // The bot's messages are shown as banners on the board (while Online is open), not as text in its box.
  {const last={};const banner=id=>{const text=(el(id).textContent||'').trim();if(!text||text===last[id])return;
    if(!document.body.classList.contains('hb-live'))return; // shown when Online is open
