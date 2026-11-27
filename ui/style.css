@@ -1214,3 +1214,6 @@ body:not(.review-mode):not(.moves-max) aside:has(>#analysisModes:not([hidden]))>
 .arena.highlighting .review-marks.suggestion-trail g[opacity]{opacity:1}
 /* Stepping through an engine line: only the line move on the board is marked as current. */
 #moves:has(.line-move.current)>button.history-move.current:not(.line-move){border-color:transparent;background:transparent;box-shadow:none}
+/* Sound effects: yellow = on (click to switch off); plain = off (click to switch on and hear it). */
+#sfxTry button.sfx-toggle[aria-pressed="true"]{background:var(--hazard)!important;border-color:var(--hazard)!important;color:var(--pitch,#14150f)!important}
+#sfxTry button.sfx-toggle[aria-pressed="false"]{background:transparent!important;border-color:var(--line)!important;color:var(--muted)!important}

@@ -170,7 +170,7 @@
   const direct=(bot.lobby||[]).filter(c=>!c.mine&&c.to&&String(c.to).toLowerCase()===String(bot.user||'').toLowerCase());
   // A challenge sent to the bot by name: a knock (once per challenge).
   {const ids=direct.map(c=>c.id||[c.who,c.base,c.increment,c.color].join('|'));render.knocked=render.knocked||null;
-   if(render.knocked&&ids.some(id=>!render.knocked.has(id)))window.foulbroodSfx?.knock();render.knocked=new Set(ids)}
+   if(render.knocked&&ids.some(id=>!render.knocked.has(id))&&(window.foulbroodSoundOn?.('knock')??true))window.foulbroodSfx?.knock();render.knocked=new Set(ids)}
   const key=JSON.stringify([rows,mine,direct,playing,el('hbAuto').checked]);if(box.dataset.key===key)return;box.dataset.key=key;box.replaceChildren();
   // Our own waiting challenges are listed where they were made: open ones under "Open a challenge", sent ones under "Send a challenge".
   for(const [id,list] of [['hbMineOpen',mine.filter(c=>!c.to)],['hbMineSent',mine.filter(c=>c.to)]]){
@@ -915,40 +915,44 @@ window.foulbroodSfx=(()=>{
    for(const [at,v] of [[0,0.5],[0.16,0.35]]){const o=c.createOscillator();o.type='sine';o.frequency.setValueAtTime(70,t+at);o.frequency.exponentialRampToValueAtTime(42,t+at+0.12);o.connect(env(c,a.out,t+at,[[0.008,v],[0.14,0]]));o.start(t+at);o.stop(t+at+0.18)}return true},
   // Called by the viewer when a game ends on the board. true = handled here; false = play the usual chime.
   ending(result,s){
-   if(result==='draw')return sfx.draw();
+   const on=n=>window.foulbroodSoundOn?window.foulbroodSoundOn(n):true;
+   if(result==='draw')return on('draw')?sfx.draw():true;
    if(result!=='win')return false;
    let won=true;
    if(s&&s.live_bot)won=s.bot_won!==false;
    else if(s&&Array.isArray(s.players)){const humans=s.players.map((p,i)=>p==='Human'?i:-1).filter(i=>i>=0);if(humans.length===1){const winner=(s.completed_state||'')==='WhiteWins'?0:1;won=winner===humans[0]}}
-   return won?sfx.win():sfx.loss();
+   return won?(on('win')?sfx.win():true):(on('loss')?sfx.loss():true);
   },
  };
  // Triggers that are not game endings: watched from what the viewer shows.
  const around=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
  let wasPlaying=false,lastSecond=null,liveId=null,landed={key:'',moves:0};
+ const on=n=>window.foulbroodSoundOn?window.foulbroodSoundOn(n):true;
  const watch=s=>{
   if(!s)return;
   const L=window.foulbroodLive,card=L&&L.card?L.card():null,liveActive=!!(card&&!card.finished&&s.mode==='analysis');
   const playing=s.mode==='play'&&s.running&&!s.reviewing&&s.timeout_side==null&&s.resigned_side==null&&!/Wins|Draw/.test(s.completed_state||'');
   // game start / game found
-  if(playing&&!wasPlaying&&!(s.review_total>0))sfx.start();
+  if(playing&&!wasPlaying&&!(s.review_total>0)&&on('start'))sfx.start();
   wasPlaying=playing;
-  if(card&&!card.finished&&card.id!==liveId){if(liveId!==null||(card.turn||0)<=1)sfx.start();liveId=card.id}else if(card&&liveId===null)liveId=card.id;
+  if(card&&!card.finished&&card.id!==liveId){if((liveId!==null||(card.turn||0)<=1)&&on('start'))sfx.start();liveId=card.id}else if(card&&liveId===null)liveId=card.id;
   // a piece lands on the board being played (Local or Online): a tap, heavier when it climbs onto the hive
   if((playing||liveActive)&&!s.reviewing&&s.last_move&&Array.isArray(s.pieces)){
    const moves=String(s.live_game||s.game||'').split(';').length,key=(liveActive?'live:'+card.id:'play')+'|'+String(s.live_game||s.game||'').split(';')[0];
-   if(landed.key===key&&moves>landed.moves){const p=s.pieces.find(q=>q.id===s.last_move.piece);sfx.tap(!!(p&&(p.level||0)>0))}
+   if(landed.key===key&&moves>landed.moves){const p=s.pieces.find(q=>q.id===s.last_move.piece),climb=!!(p&&(p.level||0)>0);if(on(climb?'tapClimb':'tap'))sfx.tap(climb)}
    landed={key,moves};
   }
   // low on time: a heartbeat under the last ten seconds of a human's clock
   const side=s.live_side??s.side,seconds=playing&&(s.players||[])[side]==='Human'&&s.time_control!=='untimed'?(s.clocks||[])[side]:null;
-  if(typeof seconds==='number'&&seconds>0&&seconds<=10){const whole=Math.ceil(seconds);if(lastSecond!==null&&whole<lastSecond)sfx.thump();lastSecond=whole}else lastSecond=null;
+  if(typeof seconds==='number'&&seconds>0&&seconds<=10){const whole=Math.ceil(seconds);if(lastSecond!==null&&whole<lastSecond&&on('thump'))sfx.thump();lastSecond=whole}else lastSecond=null;
  };
  // Try-out buttons in the sound settings.
  const tryBox=document.getElementById('sfxTry');
  if(tryBox)for(const [label,name] of [['White chirp','whiteChirp'],['Black chirp','blackChirp'],['Win','win'],['Loss','loss'],['Draw','draw'],['Game start','start'],['Low time','thump'],['Piece lands','tap'],['Climbs','tapClimb'],['Challenge','knock'],['Long wait White','longWaitWhite'],['Long wait Black','longWaitBlack']]){
-  const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;
-  b.onclick=()=>{const played=name==='whiteChirp'||name==='blackChirp'?window.foulbroodChirp?.(name==='whiteChirp'?0:1):name==='tapClimb'?sfx.tap(true):name==='longWaitWhite'||name==='longWaitBlack'?window.foulbroodLongWait?.(name==='longWaitWhite'?0:1):sfx[name]();if(!played&&typeof toast==='function')toast('Turn sound on to hear it.')};tryBox.append(b);
+  const b=document.createElement('button');b.type='button';b.className='small sfx-toggle';b.textContent=label;
+  const key='foulbrood_sfx_'+name,isOn=()=>{try{return localStorage.getItem(key)!=='0'}catch(e){return true}},paint=()=>b.setAttribute('aria-pressed',String(isOn()));paint();
+  b.title='Yellow: this sound plays. Click to switch it off, or on (it plays when switched on).';
+  b.onclick=()=>{const turnOn=!isOn();try{localStorage.setItem(key,turnOn?'1':'0')}catch(e){}paint();if(!turnOn)return;const played=name==='whiteChirp'||name==='blackChirp'?window.foulbroodChirp?.(name==='whiteChirp'?0:1):name==='tapClimb'?sfx.tap(true):name==='longWaitWhite'||name==='longWaitBlack'?window.foulbroodLongWait?.(name==='longWaitWhite'?0:1):sfx[name]();if(!played&&typeof toast==='function')toast('Turn sound on to hear it.')};tryBox.append(b);
  }
  const earlier=window.renderBotThoughts;
  window.renderBotThoughts=s=>{if(earlier)earlier(s);try{watch(s)}catch(e){}};
