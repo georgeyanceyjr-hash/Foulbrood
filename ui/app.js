@@ -114,7 +114,7 @@ function renderBoard(){if(!state)return;if(stackInspection&&stackInspection.game
  if(!state.pieces.length&&!editorDraft&&!pendingMove){board.append(node('polygon',{points:hex(0,0,38),class:'first-move-hex','pointer-events':'none'}));}
  for(const stack of [...byCell.values()].sort((a,b)=>a.length-b.length)){stack.sort((a,b)=>a.level-b.level);const p=stack[stack.length-1];let [x,y]=xy(p.q,p.r);const black=p.id[0]==='b';const g=node('g',{class:`tile ${selected===p.id?'selected':''}`,'data-piece':p.id,tabindex:0,role:'button','aria-label':`${black?'Black':'White'} ${names[p.id[1]]} ${p.id.slice(2)}, stack ${stack.map(s=>s.id).join(', ')}`});
   for(let level=0;level<stack.length;level++){
-   const layer=node('g',{class:'stack-piece'+(pendingMove?.piece===stack[level].id?' pending-move':''),'data-piece':stack[level].id,style:`--rest:${-level*10}px;--raised:${-level*78}px;--hint-color:${hintColor(state.side)}`});
+   const layer=node('g',{class:'stack-piece'+(pendingMove?.piece===stack[level].id?' pending-move':'')+(state.last_move?.piece===stack[level].id?' last-moved-piece':''),'data-piece':stack[level].id,style:`--rest:${-level*10}px;--raised:${-level*78}px;--hint-color:${hintColor(state.side)}`});
    layer.append(artwork(stack[level].id,x,y));
    if(level===stack.length-1){
     layer.append(node('polygon',{points:hex(x,y,39),class:'selection-ring',fill:'none','pointer-events':'none'}));
@@ -282,6 +282,7 @@ function render(s){{const k=highlightSection(s)+(highlightsOn(s)?'1':'0');if(k!=
  if(s.play_finished)$('turn').textContent=resultText(s);
  $('turn').classList.toggle('opening-thinking',s.mode==='play'&&s.job==='computer'&&s.side===1&&s.review_total<2&&!s.reviewing&&!finished);
  document.querySelector('.arena').classList.toggle('reviewing',!!s.reviewing);
+ document.querySelector('.arena').classList.toggle('highlighting',highlightsOn(s)&&!!s.last_move&&!editorDraft); // highlighter: only the last move and the engine's choice in full colour
  if(s.reviewing)$('turn').textContent=`Viewing move ${s.ply} of ${s.review_total} · ${s.running?(s.time_control==='untimed'?'Live game':'Live clocks are running'):'History'}`;
  const backToLive=(s.reviewing&&s.running)||!!(window.foulbroodLive&&window.foulbroodLive.stepped&&window.foulbroodLive.stepped(s)); // stepped back while a game is being played, Local or Online
  $('historyLast').textContent=backToLive?'Live ⏭':'⏭';

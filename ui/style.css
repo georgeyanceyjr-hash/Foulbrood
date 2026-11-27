@@ -1207,3 +1207,8 @@ body:not(.review-mode):not(.moves-max) aside:has(>#analysisModes:not([hidden]))>
 /* Board highlighter button: lit while the last move and the engine's choice are highlighted. */
 .zoom-controls #engineChoice{padding:5px 8px}
 .zoom-controls #engineChoice[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+/* Highlighter on: every other piece fades (as when stepping back through a game); the last move (pink) and the
+   engine's choice stay in full colour. */
+.arena.highlighting .tile .stack-piece:not(.pending-move):not(.last-moved-piece)>.piece-art,.arena.highlighting .reserve svg>.piece-art{filter:grayscale(.8);opacity:.56}
+.arena.highlighting .tile .stack-piece.last-moved-piece>.piece-art,.arena.reviewing.highlighting .tile .stack-piece.last-moved-piece>.piece-art{filter:none;opacity:1}
+.arena.highlighting .review-marks.suggestion-trail g[opacity]{opacity:1}
