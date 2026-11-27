@@ -121,7 +121,9 @@ class Review:
             except InterruptedError:
                 with self.app.lock:self.extras.pop(key,None)
             except Exception as exc:
-                with self.app.lock:self.extras[key].update(status='error',error=str(exc))
+                with self.app.lock:
+                    if generation!=self.generation:self.extras.pop(key,None)  # stopped (Stop review): not an error
+                    else:self.extras[key].update(status='error',error=str(exc))
             finally:
                 with self.app.lock:
                     self.side_busy=False;self.remaining_units=units;self.phase_started=None
