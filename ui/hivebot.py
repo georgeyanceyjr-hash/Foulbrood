@@ -208,9 +208,9 @@ class HiveBot:
                 with self.lock:
                     self.log.append(str(exc)[:200])
         launcher = BOT_DIR / 'bot-engine.sh'
-        extra = 'TR_CLIMB=1 ' if 'thoraxrex' in Path(engine['path']).name.lower() else ''
+        # The engine runs with its own defaults (TR_CLIMB=1 lost 86.5/200 on 27 Nov, so it is no longer set).
         launcher.write_text('#!/bin/bash\n# Written by the viewer: the engine the hivegame.com bot plays with.\n'
-                            'exec env %s%s\n' % (extra, shlex.quote(engine['path'])))
+                            'exec %s\n' % shlex.quote(engine['path']))
         launcher.chmod(0o755)
         lines = ['max_concurrent_processes: 1', 'base_url: "https://hivegame.com"', 'bots:', '  - name: hotfrass',
                  '    ai_command: %s' % launcher, '    bestmove_command_args: time 00:02:00',
