@@ -501,6 +501,8 @@
   else if(!done&&(card.turn||0)>=2&&Math.abs(live[side]-(soundTurn.clocks[side]-(Date.now()-soundTurn.at)/1000))>2.5){soundTurn.clocks=live;soundTurn.at=Date.now();soundTurn.epoch=(soundTurn.epoch||0)+1} // the site corrected the clock mid-move: schedule the ticking and countdown again from the right figure
   const gameKey=card.id+(soundTurn.epoch?'#'+soundTurn.epoch:''),control=card.base!=null?`${Math.round(card.base/60)}+${card.increment||0}`:'10+10';
   const ending=done?({'White won':'WhiteWins','Black won':'BlackWins','Draw':'Draw'}[card.result]||null):null;
+  // Playing by hand: your own clock, for the low-time heartbeat.
+  window.foulbroodHandClock=bot.manual&&card.our_turn&&!done&&(card.turn||0)>=2?{seconds:live[side],control}:null;
   nativeObserve({mode:'play',running:!done,timeout_side:null,resigned_side:null,completed_state:ending,state:'InProgress',
    live_bot:true,bot_won:done?(card.result==='White won')===(card.white===bot.user):null,
    players:['Human','Human'],side,live_side:side,game:gameKey,live_game:gameKey+';InProgress',
@@ -947,9 +949,10 @@ window.foulbroodSfx=(()=>{
    landed={key,moves};
   }
   // low on time: a heartbeat on a human's clock
-  const side=s.live_side??s.side,seconds=playing&&(s.players||[])[side]==='Human'&&s.time_control!=='untimed'?(s.clocks||[])[side]:null;
+  const side=s.live_side??s.side,hand=!playing&&liveActive?window.foulbroodHandClock:null; // Online, playing by hand: your clock
+  const seconds=playing&&(s.players||[])[side]==='Human'&&s.time_control!=='untimed'?(s.clocks||[])[side]:hand?hand.seconds:null,control=hand?hand.control:s.time_control;
   // Starts at about three increments' worth for the time control; every 2 s at first, every second in the last 10.
-  const from={'1+2':6,'3+3':10,'5+4':15,'10+10':30,'20+20':60}[s.time_control]??(()=>{const m=/^(\d+)\+(\d+)$/.exec(s.time_control||'');return m?Math.max(6,Math.min(60,3*+m[2]+6)):10})();
+  const from={'1+2':6,'3+3':10,'5+4':15,'10+10':30,'20+20':60}[control]??(()=>{const m=/^(\d+)\+(\d+)$/.exec(control||'');return m?Math.max(6,Math.min(60,3*+m[2]+6)):10})();
   if(typeof seconds==='number'&&seconds>0&&seconds<=from){const whole=Math.ceil(seconds);if(lastSecond!==null&&whole<lastSecond&&(whole<=10||whole%2===0)&&on('thump'))sfx.thump();lastSecond=whole}else lastSecond=null;
  };
  // Try-out buttons in the sound settings.
@@ -959,7 +962,7 @@ window.foulbroodSfx=(()=>{
   const key='foulbrood_sfx_'+name,isOn=()=>{try{return localStorage.getItem(key)!=='0'}catch(e){return true}},paint=()=>b.setAttribute('aria-pressed',String(isOn()));paint();
   const about={whiteChirp:"White's turn begins: a short high chirp.",blackChirp:"Black's turn begins: a short low chirp.",
    win:'You win (or the bot wins Online): a royal fanfare.',loss:'You lose: a slow, falling trumpet call.',draw:'A draw: two heralds give the same plain call.',
-   start:'A game starts, Local or Online: a trumpet call.',thump:'Low time on your clock: a heartbeat, every 2 s at first and every second in the last 10. Starts at 6 s for 1+2, 10 s for 3+3, 15 s for 5+4, 30 s for 10+10, 60 s for 20+20.',
+   start:'A game starts, Local or Online: a trumpet call.',thump:'Low time on your clock (Local, or Online when playing by hand): a heartbeat, every 2 s at first and every second in the last 10. Starts at 6 s for 1+2, 10 s for 3+3, 15 s for 5+4, 30 s for 10+10, 60 s for 20+20.',
    tap:'A piece is placed or moved on the board: a soft tap.',tapClimb:'A piece climbs onto the hive: a heavier double tap.',
    knock:'Online: someone challenges the bot by name: two knocks.',
    longWaitWhite:"White's turn after Black took a long time: a double chirp. Long means 10 s at 1+2, 15 s at 3+3, 20 s at 5+4, 30 s at 10+10, 45 s at 20+20, 60 s untimed.",
