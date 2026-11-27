@@ -266,7 +266,8 @@
   if(!liveOn()){if(outsideHints!==null&&Date.now()-insightAt>800){const v=outsideHints;outsideHints=null;insightAt=Date.now();if(!!state.hints!==v)action({action:'hints',enabled:v}).catch(()=>{})}return}
   if(state.mode!=='analysis')return;
   if(outsideHints===null)outsideHints=!!state.hints;
-  const want=el('hbInsight').checked&&!!card&&!card.finished&&(!!manual||!card.our_turn);
+  // Playing by hand: the engine's suggestion is always shown on our turn; on the opponent's turn only with "Engine insight on the opponent".
+  const want=!!card&&!card.finished&&((!!manual&&!!card.our_turn)||(el('hbInsight').checked&&!card.our_turn));
   if(!!state.hints!==want&&Date.now()-insightAt>1500&&!(typeof busy!=='undefined'&&busy)){insightAt=Date.now();action({action:'hints',enabled:want}).catch(()=>{})}
  };
  setInterval(()=>{try{const card=bot&&bot.running?bot.current:null;syncInsight(card,bot&&bot.manual)}catch(e){}},700);
