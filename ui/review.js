@@ -71,9 +71,9 @@ window.renderGameReview=s=>{
 
 
  $('analysisImportHeader').querySelector('h2').textContent=active?'Explore a game':'Explore a position';
- const singles=!!active&&(review.single_working!=null||(review.single_queue||[]).length>0); // moves clicked for review
+ const singles=!!active&&(review.single_working!=null||(review.single_queue||[]).length>0||!!review.side_busy); // moves clicked for review, a tried move or engine line being worked out
  $('analyze').textContent=active?(review.status==='running'||singles?'Stop review':review.can_resume?'Resume review':reviewDone(review)?'Review again':'Start review'):(s.showing_player_thought?'Thinking…':s.insight_job==='hint'?'Stop':'Analyze');
- $('analyze').onclick=active?()=>{const r=state?.game_review;const stop=r?.status==='running'||r?.single_working!=null||(r?.single_queue||[]).length;if(stop)reviewSingleWant=null;action({action:stop?'review_stop':'review_start'})}:toggleAnalysis;
+ $('analyze').onclick=active?()=>{const r=state?.game_review;const stop=r?.status==='running'||r?.single_working!=null||(r?.single_queue||[]).length||r?.side_busy;if(stop)reviewSingleWant=null;action({action:stop?'review_stop':'review_start'})}:toggleAnalysis;
  $('stopAnalysis').textContent=active?'Stop review':'Stop analysis';$('stopAnalysis').onclick=()=>action({action:active?'review_stop':'stop_analysis'});
  if(!active)return;
  $('analysisSetup').hidden=false;$('historyPanel').hidden=false;
