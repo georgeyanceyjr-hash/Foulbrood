@@ -119,7 +119,7 @@ function renderBoard(){if(!state)return;if(stackInspection&&stackInspection.game
    if(level===stack.length-1){
     layer.append(node('polygon',{points:hex(x,y,39),class:'selection-ring',fill:'none','pointer-events':'none'}));
 
-    if(state.last_move?.piece===p.id&&highlightsOn()){for(const radius of state.last_move.from?[39]:[40,32])layer.append(node('polygon',{points:hex(x,y,radius),fill:'none',stroke:'#d83c8c','stroke-width':state.last_move.from?3.5:1.6,'stroke-dasharray':!state.last_move.from&&radius===32?'6 5':'none','pointer-events':'none',class:'last-moved'}));}
+    if(state.last_move?.piece===p.id){for(const radius of state.last_move.from?[39]:[40,32])layer.append(node('polygon',{points:hex(x,y,radius),fill:'none',stroke:'#d83c8c','stroke-width':state.last_move.from?3.5:1.6,'stroke-dasharray':!state.last_move.from&&radius===32?'6 5':'none','pointer-events':'none',class:'last-moved'}));}
    }
    g.append(layer);
   }
@@ -129,7 +129,7 @@ function renderBoard(){if(!state)return;if(stackInspection&&stackInspection.game
   }
   if(stack.length===1)g.append(node('title',{},stack.map(s=>s.id).join(' → ')+' (bottom to top)'+(state.last_move?.piece===p.id?' · Last moved':'')));g.onkeydown=e=>{if(e.key==='Escape')cancelPendingMove()};board.append(g)
  }
- if(state.last_move?.from&&highlightsOn()){const [x,y]=xy(...state.last_move.from);board.append(node('polygon',{points:hex(x,y,37),fill:'none',stroke:'#d83c8c','stroke-width':2.5,'stroke-dasharray':'6 5','pointer-events':'none',class:'last-origin'}))}
+ if(state.last_move?.from){const [x,y]=xy(...state.last_move.from);board.append(node('polygon',{points:hex(x,y,37),fill:'none',stroke:'#d83c8c','stroke-width':2.5,'stroke-dasharray':'6 5','pointer-events':'none',class:'last-origin'}))}
  const destinations=new Map();for(const m of eligible)if(m.to)destinations.set(m.to.join(','),m);
  for(const m of destinations.values()){const [x,y]=xy(...m.to);const g=node('g',{class:'destination',role:'button',tabindex:0,'aria-label':`Play ${m.move}${m.actor?' using '+m.actor:''}`});g.append(node('polygon',{points:hex(x,y,36)}));g.append(node('title',{},m.move+(m.actor?' · lifted by '+m.actor:'')));g.style.pointerEvents='none';board.append(g)}
  for(const [side,id]of [['w','whiteReserve'],['b','blackReserve']]){const div=$(id);div.replaceChildren();
@@ -257,7 +257,7 @@ function regradeReview(s){const r=s?.game_review;if(!r)return;for(const row of r
  if(row.score==null||row.best_score==null)continue;
  if(row.label==='Uncertain'&&((row.depth||0)<3||(row.best_depth||0)<3))continue; // too shallow to grade
  const sign=row.side===0?1:-1,[label,symbol]=gradeReviewMove(row.best_score*sign,row.score*sign,row.best_depth,row.depth);row.label=label;row.symbol=symbol}}
-// The board's highlighter button: the last move (pink) and the engine's choice for it, on or off together.
+// The board's highlighter button: fades every piece but the last move (always marked in pink) and shows the engine's choice for it.
 // Each section (Local, Online, Position, Game review) keeps its own setting, for every board state, until switched off.
 function highlightSection(s=state){return document.body.classList.contains('hb-live')?'online':s?.mode==='play'?'local':s?.game_review?'review':'position'}
 function highlightsOn(s=state){try{return localStorage.getItem('foulbrood_highlight_'+highlightSection(s))!=='0'}catch(e){return true}}
