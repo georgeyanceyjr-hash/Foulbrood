@@ -99,7 +99,11 @@ fn listen_for_commands(outbox: mpsc::UnboundedSender<Outgoing>, auto: Arc<AutoSt
                 let humans_only = command.get("humans").and_then(|h| h.as_bool()).unwrap_or(false);
                 // "direct": accept challenges sent to us by name (only while no game is being played).
                 let direct = command.get("direct").and_then(|d| d.as_bool()).unwrap_or(false);
-                *auto.rules.lock().unwrap() = AutoRules { from, min_base_secs, max_games, anyone, clock, humans_only, direct };
+                // Range of time controls taken automatically, as an estimated game length (base + 40 x increment, seconds).
+                let direct_min = command.get("direct_min").and_then(|m| m.as_i64()).unwrap_or(0);
+                let direct_max = command.get("direct_max").and_then(|m| m.as_i64()).unwrap_or(2000);
+                *auto.rules.lock().unwrap() =
+                    AutoRules { from, min_base_secs, max_games, anyone, clock, humans_only, direct, direct_min, direct_max };
                 // A fresh allowance from now, and a new lobby snapshot to act on at once.
                 auto.accepted.store(0, std::sync::atomic::Ordering::Relaxed);
                 if outbox.send(Outgoing::Resync).is_err() {
@@ -254,6 +258,9 @@ struct AutoRules {
     /// Skip challenges from bot accounts.
     humans_only: bool,
     direct: bool,
+    /// Direct challenges are taken automatically only when base + 40 x increment falls in this range (seconds).
+    direct_min: i64,
+    direct_max: i64,
 }
 
 impl AutoState {
@@ -299,6 +306,8 @@ pub async fn run(bot: BotConfig, shared: Arc<Shared>) {
         clock: None,
         humans_only: false,
         direct: true, // as hive-hydra itself behaves, until the viewer sends its rules (it does so at start)
+        direct_min: 0,
+        direct_max: 2000,
     };
     listen_for_commands(outbox.clone(), auto.clone());
     let mut reconnect_delay = RECONNECT_DELAY_MIN;
@@ -594,12 +603,18 @@ impl Session {
             if addressed_to_us {
                 // A challenge sent to us by name: only with the "accept all direct challenges" rule on,
                 // and never while a game is being played. Otherwise it waits in the lobby for the user.
-                let direct = self.auto.rules.lock().unwrap().direct;
-                // Only timed games of 20+20 or shorter are taken automatically; anything longer waits for the user.
-                let short_enough = challenge.time_mode.as_deref() == Some("RealTime")
-                    && challenge.time_base.is_some_and(|base| base <= 1200)
-                    && challenge.time_increment.unwrap_or(0) <= 20;
-                if !direct || !short_enough || self.auto.busy() {
+                let (direct, lo, hi) = {
+                    let r = self.auto.rules.lock().unwrap();
+                    (r.direct, r.direct_min, r.direct_max)
+                };
+                // Only timed games inside the chosen range are taken automatically (a custom clock counts by its
+                // estimated length, base + 40 x increment); anything else waits in the list for Accept or Reject.
+                let in_range = challenge.time_mode.as_deref() == Some("RealTime")
+                    && challenge.time_base.is_some_and(|base| {
+                        let length = base + 40 * challenge.time_increment.unwrap_or(0);
+                        length >= lo && length <= hi
+                    });
+                if !direct || !in_range || self.auto.busy() {
                     continue;
                 }
             } else {

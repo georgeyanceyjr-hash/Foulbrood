@@ -82,7 +82,8 @@
   // Open challenges are never taken automatically any more: only challenges sent to this account by name,
   // and only with the box ticked. (The time control now just filters the Open Challenges list.)
   const v=el('hbAcceptTime').value;
-  return {direct:el('hbAuto').checked,humans:false,accept:[],anyone:false,max_games:0,clock:v==='any'?null:v.split('+').map(Number)};
+  const clk=id=>el(id).value.split('+').map(Number);
+  return {direct:el('hbAuto').checked,direct_min:clk('hbDirectMin'),direct_max:clk('hbDirectMax'),humans:false,accept:[],anyone:false,max_games:0,clock:v==='any'?null:v.split('+').map(Number)};
  };
  const names=g=>`${g.white||'White'} vs ${g.black||'Black'}`;
  // Live borrows the Analysis board. Whatever game was in Analysis is set aside first and put back when
@@ -301,7 +302,9 @@
   el('hbToAnalysis').textContent='Open in Analysis';
   clockCard=card||null;clockFetched=Date.now();drawClocks();drawThought(card);
   if(connected){
-   {const real=!!bot.direct,box=el('hbAuto');if(box.checked!==real&&Date.now()-(render.autoAt||0)>4000)box.checked=real} // the switch shows what the bot is really doing, in every window
+   {const real=!!bot.direct,box=el('hbAuto');if(box.checked!==real&&Date.now()-(render.autoAt||0)>4000)box.checked=real}
+   if(Date.now()-(render.autoAt||0)>4000)for(const [id,k] of [['hbDirectMin','direct_min'],['hbDirectMax','direct_max']]){const v=Array.isArray(bot[k])?bot[k].join('+'):null;if(v&&[...el(id).options].some(o=>o.value===v)&&el(id).value!==v)el(id).value=v}
+   el('hbDirectRange').classList.toggle('off',!el('hbAuto').checked); // the switch shows what the bot is really doing, in every window
    const who=bot.anyone?'anyone':(bot.accept||[]).join(', ');
    const tc=bot.clock?`${bot.clock[0]/60}+${bot.clock[1]} only`:'10 minutes or longer';
    el('hbAccepting').textContent='';
@@ -555,7 +558,11 @@
   challenge(el('hbOpen'),{opponent:'',base,increment,rated:el('hbORated').checked,color:el('hbOColor').value,min_rating:Number(el('hbMinRating').value)||null,max_rating:Number(el('hbMaxRating').value)||null});
  };
  for(const id of ['hbFollow','hbEngine','hbLogin'])el(id).addEventListener('change',remember);
- for(const id of ['hbAuto','hbAcceptTime','hbMax','hbOnly','hbHumans'])el(id).addEventListener('change',async()=>{
+ // The range keeps its order: moving one end past the other moves the other end with it.
+ const len=v=>{const [b,i]=v.split('+').map(Number);return b+40*i};
+ el('hbDirectMin').addEventListener('change',()=>{if(len(el('hbDirectMin').value)>len(el('hbDirectMax').value))el('hbDirectMax').value=el('hbDirectMin').value},true);
+ el('hbDirectMax').addEventListener('change',()=>{if(len(el('hbDirectMax').value)<len(el('hbDirectMin').value))el('hbDirectMin').value=el('hbDirectMax').value},true);
+ for(const id of ['hbAuto','hbAcceptTime','hbMax','hbOnly','hbHumans','hbDirectMin','hbDirectMax'])el(id).addEventListener('change',async()=>{
   remember();render.autoAt=Date.now();if(!bot||!bot.running)return;
   try{bot=await post({action:'hivebot_accept',...rules()})}catch(e){el('hbStatus').textContent=(window.plainMessage?window.plainMessage(e.message):e.message)}render();
  });

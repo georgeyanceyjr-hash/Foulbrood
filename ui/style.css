@@ -1165,3 +1165,9 @@ body .player.bot-duel:not(.analysis-insight):not(.review-insight) .clock{padding
 #moves>.history-line .history-move.line-move .move-rating{font-style:normal}
 #moves>.history-line .history-move.line-move{border-color:var(--line)!important;background:transparent!important}
 #moves>.history-line .history-move.line-move.current{border-color:var(--hazard)!important}
+
+/* Direct challenges: the range of time controls accepted automatically, under its switch. */
+.hb-range{display:flex;gap:8px;margin:6px 0 10px 26px}
+.hb-range label{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hb-range select{min-height:30px;padding:4px 6px;width:auto}
+.hb-range.off{opacity:.45}

@@ -104,6 +104,40 @@ def _friendly(message):
     return text[:240]
 
 
+_RANGE = {}
+
+
+def _direct_range(key):
+    """The lowest or highest time control taken automatically from direct challenges (kept in a file)."""
+    if not _RANGE:
+        _RANGE.update(direct_min=(60, 2), direct_max=(1200, 20))
+        try:
+            saved = json.loads((BOT_DIR / 'direct-range.json').read_text())
+            for k in ('direct_min', 'direct_max'):
+                if isinstance(saved.get(k), list) and len(saved[k]) == 2:
+                    _RANGE[k] = (int(saved[k][0]), int(saved[k][1]))
+        except (OSError, ValueError, TypeError):
+            pass
+    return _RANGE[key]
+
+
+def _set_direct_range(key, clock):
+    _direct_range(key)
+    _RANGE[key] = tuple(clock)
+    try:
+        (BOT_DIR / 'direct-range.json').write_text(json.dumps({k: list(v) for k, v in _RANGE.items()}))
+    except OSError:
+        pass
+
+
+def _length(clock, default):
+    """Estimated length of a game at this clock: base + 40 x increment, in seconds."""
+    try:
+        return int(clock[0]) + 40 * int(clock[1])
+    except (TypeError, ValueError, IndexError):
+        return default
+
+
 class HiveBot:
     def __init__(self):
         self.lock = threading.RLock()
@@ -366,6 +400,7 @@ class HiveBot:
     def _rules_command(self):
         command = dict(cmd='accept', max_games=self.max_games, min_base=600, anyone=self.anyone,
                        humans=bool(getattr(self, 'humans', False)), direct=bool(getattr(self, 'direct', False)),
+                       direct_min=_length(_direct_range('direct_min'), 0), direct_max=_length(_direct_range('direct_max'), 2000),
                        **{'from': self.accept})
         if self.clock:
             command.update(base=self.clock[0], increment=self.clock[1])
@@ -726,6 +761,7 @@ class HiveBot:
                         client_ready=(CLIENT_DIR / 'Cargo.toml').exists(), needs_build=_needs_build(),
                         saved_login=saved_login(), accept=list(self.accept), max_games=self.max_games,
                         anyone=self.anyone, humans=bool(getattr(self, 'humans', False)), direct=bool(getattr(self, 'direct', False)), clock=list(self.clock) if self.clock else None,
+                        direct_min=list(_direct_range('direct_min')), direct_max=list(_direct_range('direct_max')),
                         lobby=list(self.lobby) if self.state == 'connected' else [],
                         online=list(getattr(self, 'online', [])) if self.state == 'connected' else [],
                         site=True if self.state == 'connected' else site_online(),
@@ -966,6 +1002,11 @@ def hivebot_action(payload, engines):
     if action in ('hivebot_accept', 'hivebot_start'):
         BOT.humans = payload.get('humans') is True
         BOT.direct = payload.get('direct') is True  # accept challenges sent to us by name (never during a game)
+        # The range of time controls taken automatically; challenges outside it wait in the list for Accept or Reject.
+        for key in ('direct_min', 'direct_max'):
+            clock = BOT._clock(payload.get(key)) if payload.get(key) is not None else None
+            if clock:
+                _set_direct_range(key, clock)
     if action == 'hivebot_accept':
         return BOT.set_accept(payload.get('accept'), payload.get('max_games'), payload.get('anyone') is True,
                               payload.get('clock'))
