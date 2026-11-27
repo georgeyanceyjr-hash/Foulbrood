@@ -31,7 +31,8 @@ def save_review(review,session):
                status='complete' if len(review.rows)==review.total and review.before else 'stopped',error=review.error,
                cursor=session.data['ply'],players=session.player_names,
                result=session.reported_result,setup_placed=session.setup_placed,
-               analysis_source=review.source,in_game_history=list(review.in_game_history.values()))
+               analysis_source=review.source,in_game_history=list(review.in_game_history.values()),
+               single=[{k:v for k,v in r.items() if k!='single'} for p,r in sorted(getattr(review,'single',{}).items()) if p>len(review.rows)])
     encoded=base64.b64encode(json.dumps(state,ensure_ascii=True,allow_nan=False,separators=(',',':')).encode()).decode()
     result={'1-0':'WhiteWins','0-1':'BlackWins','1/2-1/2':'Draw'}.get(session.reported_result,session.reported_result)
     exported=export_game(review.game,'pgn',result)
@@ -101,6 +102,17 @@ def validate_review(value,game):
         if row['label']=='Book move':require(row['symbol']=='' and all(row[k] is None for k in ('score','best_score','alternative','reply')) and row['depth']==row['best_depth']==0)
         require(score(row['score']) and score(row['best_score']) and move(row['alternative']) and move(row['reply']))
         require(integer(row['depth'],0,10000) and integer(row['best_depth'],0,10000))
+    # Moves reviewed on their own, ahead of the review (clicked in the move list).
+    single=value.get('single',[]);require(isinstance(single,list) and len(single)<=total)
+    seen=set()
+    for row in single:
+        require(isinstance(row,dict) and set(row)=={'ply','move','side','label','symbol','score','best_score','alternative','reply','depth','best_depth'})
+        require(type(row['ply']) is int and len(rows)<row['ply']<=total and row['ply'] not in seen and row['move']==moves[row['ply']-1])
+        seen.add(row['ply'])
+        require(row['label'] in ('Book move','Best move','Uncertain','Blunder','Missed win','Mistake','Inaccuracy','No clear error') and row['symbol'] in ('','??','∅','?','?!'))
+        require(score(row['score']) and score(row['best_score']) and move(row['alternative']) and move(row['reply']))
+        require(integer(row['depth'],0,10000) and integer(row['best_depth'],0,10000))
+    value['single']=single
     for i,point in enumerate(points):
         require(isinstance(point,dict) and set(point)<={'ply','score','depth'} and point['ply']==i and score(point['score']))
         if 'depth' in point:require(integer(point['depth'],0,10000))

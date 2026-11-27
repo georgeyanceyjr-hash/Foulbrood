@@ -47,6 +47,7 @@ class Review:
         self.portable_engine=saved['engine']
         self.engine=dict(engine or dict(id=None,name=self.portable_engine['name']))
         for name in ('rows','points','before','pending_played','milliseconds','status','error'):setattr(self,name,saved[name])
+        self.single={r['ply']:dict(r,single=True) for r in saved.get('single',[])}
         self.working_ply=len(self.rows)
         self.source=saved['analysis_source']
         self.remaining_units=0 if self.status=='complete' else 2*(self.total-len(self.rows))+(0 if self.before else 1)-(1 if self.pending_played else 0)
@@ -369,6 +370,19 @@ class Review:
                 self.show_position(data,generation)
                 for i,move in enumerate(self.game.split(';')[3+completed:],completed+1):
                     after=self.snapshot('play',data['game'],move)
+                    # Already reviewed on its own (clicked earlier): take that result instead of searching again.
+                    known=getattr(self,'single',{}).get(i)
+                    if known:
+                        row={k:v for k,v in known.items() if k!='single'}
+                        checkpoint=dict(score=None if row['score'] is None else row['score']*(1 if after['side']==0 else -1),side=after['side'],depth=row['depth'] or 0,move=None,terminal=False)
+                        with self.app.lock:
+                            self.check(generation)
+                            if not self.points:self.points=[dict(ply=0,score=None)]
+                            self.rows.append(row);self.points.append(dict(ply=i,score=row['score']));self.before=checkpoint;self.pending_played=None
+                            self.single.pop(i,None);self.remaining_units=2*(self.total-i)+(1 if i<self.total else 0)
+                        self.show_position(after,generation)
+                        data=after;before=checkpoint
+                        continue
                     with self.app.lock:
                         self.check(generation);self.working_ply=i;self.stage=f'Move {i} of {self.total} · book check'
                     if move in self.book_moves(data,generation):

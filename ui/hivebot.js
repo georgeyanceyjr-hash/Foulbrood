@@ -691,7 +691,7 @@
    const kinds=[g.white_kind,g.black_kind].filter(Boolean).join(' vs ');
    const meta=document.createElement('span');meta.className='caption';meta.textContent=[g.time_control||'',g.source||'',when(g.played||g.saved),kinds,g.note].filter(Boolean).join(' · ');
    const bits=[g.result||'',g.moves?`${g.moves} moves`:''];
-   if(g.review)bits.push(g.review.total&&g.review.reviewed<g.review.total?`Review ${g.review.reviewed} of ${g.review.total} moves`:'Reviewed');
+   if(g.review)bits.push(g.review.total&&g.review.reviewed<g.review.total?`Partial review · ${g.review.reviewed} of ${g.review.total} moves`:'Reviewed');
    const extra=document.createElement('span');extra.className='hist-result';extra.textContent=bits.filter(Boolean).join(' · ');
    text.append(title);if(meta.textContent)text.append(meta);if(extra.textContent)text.append(extra);
    const buttons=document.createElement('div');buttons.className='hist-buttons';
