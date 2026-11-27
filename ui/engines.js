@@ -110,7 +110,7 @@ function renderDiscoveredEngines(data){
  const incoming=data.candidates||[],registered=serverState?.engines||state?.engines||[];
  const candidates=incoming.filter(entry=>!retiredFoulbroodDiscoveryCandidate(entry,registered));
  const retiredHidden=incoming.length-candidates.length+(Number.isInteger(data.retired_hidden)&&data.retired_hidden>=0?data.retired_hidden:0);
- $('discoverySummary').textContent=(candidates.length?'Choose an engine to check and connect.':'No engines found. Try Browse this Mac, or download an engine below.')+(data.limited?' Search stopped at its limit; some folders were not checked.':'')+(data.skipped?' Some folders could not be read.':'')+(retiredHidden?' Retired or unversioned Foulbrood builds hidden: '+retiredHidden+'. Use Browse for deliberate selection.':'');
+ $('discoverySummary').textContent=(candidates.length?'Choose an engine to check and connect.':'No engines found. Try Browse, or download an engine below.')+(data.limited?' Search stopped at its limit; some folders were not checked.':'')+(data.skipped?' Some folders could not be read.':'')+(retiredHidden?' Retired or unversioned Foulbrood builds hidden: '+retiredHidden+'. Use Browse for deliberate selection.':'');
  for(const e of candidates){
   const row=document.createElement('div');row.className='engine-entry';
   const info=document.createElement('div'),name=document.createElement('strong'),path=document.createElement('small'),button=document.createElement('button');

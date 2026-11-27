@@ -49,7 +49,7 @@ def main():
         text = text.replace('Mac downloads available. Connection verified with this viewer.', 'Windows downloads available. Choose the Windows x64 version.')
         text = text.replace('Mac users build from source.', 'Choose a Windows release or build from source.')
         text = text.replace('Intel Mac download; Apple silicon may need Rosetta or a build from source.', 'Choose a Windows build.')
-        text = text.replace('<title>FoulBrood · Hive</title>', '<title>FoulBrood GUI · Beta 3 for Windows</title>')
+        text = text.replace('<title>FoulBrood II · Hive</title>', '<title>FoulBrood II · Hive for Windows</title>')
         path.write_text(text, encoding='utf-8')
     runtime = resources/'python'
     runtime.mkdir()
