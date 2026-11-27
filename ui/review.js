@@ -356,7 +356,10 @@ function renderHistoryLine(s,list){
 // Clicking a move the review has not reached yet reviews just that move (when the review is not running).
 const reviewSingleAsked=new Set();
 let reviewUserAt=0;for(const ev of ['pointerdown','keydown'])document.addEventListener(ev,()=>{reviewUserAt=Date.now()},true);
+let reviewSingleLastPly=null;
 function reviewSingleOnSelect(s){
+ const moved=s&&s.ply!==reviewSingleLastPly;if(s)reviewSingleLastPly=s.ply;
+ if(!moved)return; // only when a move is chosen, not when the review is stopped on the move it was working on
  if(Date.now()-reviewUserAt>3000||!document.hasFocus())return; // only the window being used (another open window must not start reviews)
  const review=s?.game_review;if(!review||s.mode!=='analysis'||review.source==='in_game'||review.status==='running'||editorDraft||reviewTry||reviewTryOn)return;
  const ply=s.ply,game=s.review_game||s.game,total=game.split(';').length-3;if(!(ply>=1&&ply<=total))return;
@@ -391,7 +394,7 @@ window.decorateHistory=s=>{
   const verdict=row?historyVerdicts[row.label]||'':'';
   let tag=item.querySelector('.move-rating');
   // The move being reviewed on its own says so in the list, where it was clicked.
-  if(review&&(review.single_working===ply||(review.single_queue||[]).includes(ply))&&!(review.rows||[]).some(r=>r.ply===ply)){const now=review.single_working===ply;item.classList.remove('ingame');if(!tag){tag=document.createElement('span');tag.className='move-rating';item.append(tag)}tag.textContent=now?'Reviewing':'Queued';tag.classList.add('reviewing');tag.classList.toggle('queued',!now);continue}
+  if(review&&(review.single_working===ply||(review.status==='running'&&review.working_ply===ply)||(review.single_queue||[]).includes(ply))&&!(review.rows||[]).some(r=>r.ply===ply)){const now=review.single_working===ply||review.status==='running'&&review.working_ply===ply;item.classList.remove('ingame');if(!tag){tag=document.createElement('span');tag.className='move-rating';item.append(tag)}tag.textContent=now?'Reviewing':'Queued';tag.classList.add('reviewing');tag.classList.toggle('queued',!now);continue}
   if(tag)tag.classList.remove('queued');
   if(tag)tag.classList.remove('reviewing');
   if(!row){item.classList.remove('turning','ingame');if(tag)tag.remove();delete item.dataset.verdict;if(item.dataset.reviewTitle){item.title='';delete item.dataset.reviewTitle}continue}
