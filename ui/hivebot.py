@@ -263,6 +263,30 @@ class HiveBot:
                 raise ValueError('The bot client is not listening. Stop and start the bot.')
         return self.view()
 
+    STANDARD = ((60, 2), (180, 3), (300, 4), (600, 10), (1200, 20))
+
+    def open_all(self, on, rated=True, color=None, min_rating=None, max_rating=None):
+        """Keep an open challenge up at every standard time control (put back after each game), or, when
+        switched off, take back all of our open challenges."""
+        with self.lock:
+            if self.proc is None or self.state != 'connected':
+                raise ValueError('Start the bot and wait until it is connected.')
+        open_all_set(on)
+        if on:
+            have = {_standing_key(r) for r in standing_get()} | {_standing_key(c) for c in self.lobby if c.get('mine') and not c.get('to')}
+            for base, increment in self.STANDARD:
+                if _standing_key(dict(base=base, increment=increment, rated=bool(rated))) not in have:
+                    self.challenge('', base, increment, rated, color, min_rating, max_rating)
+            return self.view()
+        with self.lock:
+            standing_set([])
+            mine = [c for c in self.lobby if c.get('mine') and not c.get('to') and GAME_ID.match(str(c.get('id')))]
+            self.cancelled = (getattr(self, 'cancelled', []) + [str(c['id']) for c in mine])[-40:]
+            self.lobby = [c for c in self.lobby if c not in mine]
+        for c in mine:
+            self._send(dict(cmd='withdraw', id=str(c['id'])))
+        return self.view()
+
     def _send(self, command):
         with self.lock:
             if self.proc is None:
@@ -766,7 +790,7 @@ class HiveBot:
                         online=list(getattr(self, 'online', [])) if self.state == 'connected' else [],
                         site=True if self.state == 'connected' else site_online(),
                         manual=bool(self.manual) and self.state == 'connected', refused=self.refused, cleared=cleared_get(),
-                        resign_lost=resign_lost_get(), standing=len(standing_get()), reopen=reopen_get())
+                        resign_lost=resign_lost_get(), standing=len(standing_get()), reopen=reopen_get(), open_all=open_all_get())
 
 
 _CLEARED = {}
@@ -783,6 +807,27 @@ def cleared_get():
 
 
 _REOPEN = {}
+
+
+_OPEN_ALL = {}
+
+
+def open_all_get():
+    """Whether an open challenge is kept up at every standard time control; kept in a file."""
+    if 'v' not in _OPEN_ALL:
+        try:
+            _OPEN_ALL['v'] = (BOT_DIR / 'open-all-standard.txt').read_text().strip() == '1'
+        except OSError:
+            _OPEN_ALL['v'] = False
+    return _OPEN_ALL['v']
+
+
+def open_all_set(on):
+    _OPEN_ALL['v'] = bool(on)
+    try:
+        (BOT_DIR / 'open-all-standard.txt').write_text('1' if on else '0')
+    except OSError:
+        pass
 
 
 def reopen_get():
@@ -972,6 +1017,9 @@ def hivebot_action(payload, engines):
         if payload.get('lobby'):
             BOT.refresh_lobby()
         return BOT.view()
+    if action == 'hivebot_open_all':
+        return BOT.open_all(payload.get('on') is True, payload.get('rated') is not False, payload.get('color'),
+                            payload.get('min_rating'), payload.get('max_rating'))
     if action == 'hivebot_reopen':
         reopen_set(payload.get('on'))
         return BOT.view()
