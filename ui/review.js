@@ -354,18 +354,20 @@ function renderHistoryLine(s,list){
  if(anchor)anchor.after(box);else list.append(box);
 }
 // Clicking a move the review has not reached yet reviews just that move (when the review is not running).
-const reviewSingleAsked=new Set();
 let reviewUserAt=0;for(const ev of ['pointerdown','keydown'])document.addEventListener(ev,()=>{reviewUserAt=Date.now()},true);
-let reviewSingleLastPly=null;
+let reviewSingleLastPly=null,reviewSingleWant=null;
 function reviewSingleOnSelect(s){
- const moved=s&&s.ply!==reviewSingleLastPly;if(s)reviewSingleLastPly=s.ply;
- if(!moved)return; // only when a move is chosen, not when the review is stopped on the move it was working on
- if(Date.now()-reviewUserAt>3000||!document.hasFocus())return; // only the window being used (another open window must not start reviews)
- const review=s?.game_review;if(!review||s.mode!=='analysis'||review.source==='in_game'||review.status==='running'||editorDraft||reviewTry||reviewTryOn)return;
- const ply=s.ply,game=s.review_game||s.game,total=game.split(';').length-3;if(!(ply>=1&&ply<=total))return;
- if((review.rows||[]).some(r=>r.ply===ply)||review.single_working===ply||(review.single_queue||[]).includes(ply))return; // more clicks queue up, in order
- const key=game+'|'+ply;if(reviewSingleAsked.has(key)||busy)return;reviewSingleAsked.add(key);
- setTimeout(()=>action({action:'review_one',ply}),0);
+ // A move chosen in this window (not the review stopping on a move, and not another open window) is wanted;
+ // it is asked for once the review is idle, and dropped once that move has a result or is being worked on.
+ if(s&&s.ply!==reviewSingleLastPly){reviewSingleLastPly=s.ply;if(Date.now()-reviewUserAt<3000&&document.hasFocus())reviewSingleWant={game:s.review_game||s.game,ply:s.ply}}
+ const want=reviewSingleWant,review=s?.game_review;if(!want||!review)return;
+ const game=s.review_game||s.game;if(want.game!==game||want.ply!==s.ply){reviewSingleWant=null;return}
+ if(s.mode!=='analysis'||review.source==='in_game'||editorDraft||reviewTry||reviewTryOn){reviewSingleWant=null;return}
+ const ply=want.ply,total=game.split(';').length-3;
+ if(!(ply>=1&&ply<=total)||(review.rows||[]).some(r=>r.ply===ply)||review.single_working===ply||(review.single_queue||[]).includes(ply)){reviewSingleWant=null;return}
+ if(review.status==='running'){reviewSingleWant=null;return} // the full review will get there
+ reviewSingleWant=null;
+ fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Board-Token':window.BOARD_TOKEN},body:JSON.stringify({action:'review_one',ply})}).then(r=>r.json()).then(d=>{if(d&&d.game&&typeof render==='function')render(d)}).catch(()=>{});
 }
 window.decorateHistory=s=>{
  const review=s?.game_review,list=$('moves');if(!list)return;
