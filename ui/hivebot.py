@@ -288,6 +288,8 @@ class HiveBot:
             mine = [c for c in self.lobby if c.get('mine') and not c.get('to') and GAME_ID.match(str(c.get('id')))]
             self.cancelled = (getattr(self, 'cancelled', []) + [str(c['id']) for c in mine])[-40:]
             self.lobby = [c for c in self.lobby if c not in mine]
+            self.batch_pending = 0
+            self.log.append('All standard timings closed.')
         for c in mine:
             self._send(dict(cmd='withdraw', id=str(c['id'])))
         return self.view()
@@ -704,8 +706,11 @@ class HiveBot:
                     self._send(dict(cmd='withdraw', id=str(cid)))
                 if withdraws:
                     with self.lock:
-                        self.log.append('A game started: took back %d other waiting challenge%s.' % (
-                            len(set(withdraws)), '' if len(set(withdraws)) == 1 else 's'))
+                        if open_all_get() and len(set(withdraws)) > 1:
+                            self.log.append('Game started: all standard timings closed until it ends.')
+                        else:
+                            self.log.append('A game started: took back %d other waiting challenge%s.' % (
+                                len(set(withdraws)), '' if len(set(withdraws)) == 1 else 's'))
                 elif resync:
                     self._send(dict(cmd='resync'))
             except ValueError:
