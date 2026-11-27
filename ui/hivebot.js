@@ -294,7 +294,7 @@
    if(g){summary='Playing';status='';}
    else if(last){status=`Last game: ${names(last)} — ${last.result||'finished'}.\nWaiting for the next game.`;}
   }
-  {const t=el('hivebotDetails').querySelector('summary strong'),name=connected&&bot.user?bot.user:'hivegame.com bot';if(t.textContent!==name)t.textContent=name} // the account that is logged in
+  {const t=el('hivebotDetails').querySelector('summary strong'),name=connected&&bot.user?bot.user+' bot':'hivegame.com bot';if(t.textContent!==name)t.textContent=name} // the account that is logged in
   el('hbSummary').textContent=summary;el('hbLight').className='hb-light '+(connected?'on':bot.state==='starting'||bot.state==='building'?'wait':'off');site(bot.site);el('hbStatus').textContent=status;el('hbStatus').hidden=!status;
   const card=g||last;el('hbGame').hidden=!card||(!g&&cleared===card.id); // a cleared game takes its hivegame.com link with it
   if(card){
