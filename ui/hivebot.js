@@ -872,18 +872,25 @@ window.foulbroodSfx=(()=>{
   n.connect(lp);lp.connect(env(ctx,out,t,[[0.005,0.5],[0.25,0]]));n.start(t);n.stop(t+0.3);
   const o=ctx.createOscillator();o.type='sine';o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(38,t+0.2);o.connect(env(ctx,out,t,[[0.005,0.6],[0.24,0]]));o.start(t);o.stop(t+0.3);
  };
+ // A herald's trumpet (two slightly detuned saws, the filter opening like a brass attack) and a field drum.
+ const brass=(c,out,t,f,dur,level)=>{const o=c.createOscillator(),o2=c.createOscillator(),lp=c.createBiquadFilter();o.type='sawtooth';o2.type='sawtooth';o.frequency.value=f;o2.frequency.value=f*1.003;
+  lp.type='lowpass';lp.Q.value=2;lp.frequency.setValueAtTime(500,t);lp.frequency.linearRampToValueAtTime(2600,t+0.05);lp.frequency.linearRampToValueAtTime(1500,t+dur);
+  o.connect(lp);o2.connect(lp);lp.connect(env(c,out,t,[[0.025,level],[dur*0.75,level*0.85],[dur,0]]));o.start(t);o2.start(t);o.stop(t+dur+0.05);o2.stop(t+dur+0.05)};
+ const drum=(c,out,t,level=0.5)=>{const o=c.createOscillator();o.type='sine';o.frequency.setValueAtTime(95,t);o.frequency.exponentialRampToValueAtTime(50,t+0.25);o.connect(env(c,out,t,[[0.006,level],[0.3,0]]));o.start(t);o.stop(t+0.35);
+  const n=noise(c,0.12),bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=180;n.connect(bp);bp.connect(env(c,out,t,[[0.003,level*0.5],[0.1,0]]));n.start(t);n.stop(t+0.12)};
  const sfx={
-  // Win: the swarm rises happily, the queen goes splat, then a bright major fanfare with a sparkle on top.
-  win(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02;swarm(c,a.out,t,0.6,0.13,1.9);splat(c,a.out,t+0.6);
-   const note=(at,f,dur,level,type='triangle')=>{const o=c.createOscillator();o.type=type;o.frequency.setValueAtTime(f,t+at);o.connect(env(c,a.out,t+at,[[0.012,level],[dur*0.6,level*0.7],[dur,0]]));o.start(t+at);o.stop(t+at+dur+0.05)};
-   for(const [at,f] of [[0.78,523.25],[0.9,659.25],[1.02,783.99]])note(at,f,0.16,0.22);
-   note(1.14,1046.5,0.55,0.26);note(1.14,1318.5,0.55,0.12);note(1.14,1567.98,0.55,0.1); // the last chord rings out
-   for(const [at,f] of [[1.3,2093],[1.38,2637],[1.46,3136]])note(at,f,0.12,0.05,'sine'); // sparkle
+  // Win: a royal fanfare: the drum, a rising call (ta-ta-taaa, ta-ta-TAAA) and a ringing major chord.
+  win(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02,o=a.out;
+   drum(c,o,t,0.5);drum(c,o,t+0.14,0.35);
+   for(const [at,f,d] of [[0.1,523.25,0.12],[0.24,523.25,0.12],[0.38,659.25,0.3],[0.72,659.25,0.12],[0.86,659.25,0.12]]){brass(c,o,t+at,f,d,0.09);brass(c,o,t+at,f*0.75,d,0.05)}
+   drum(c,o,t+1.0,0.55);brass(c,o,t+1.0,1046.5,0.9,0.1);brass(c,o,t+1.0,783.99,0.9,0.07);brass(c,o,t+1.0,659.25,0.9,0.06);brass(c,o,t+1.0,523.25,0.9,0.06);
    return true},
-  // Loss: one bee sputters, drops in pitch and dies.
-  loss(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02,g=c.createGain();g.connect(a.out);
-   for(const [at,v] of [[0,1],[0.45,1],[0.5,0.15],[0.62,1],[0.9,1],[0.95,0.1],[1.02,0.9],[1.2,0.1],[1.27,0.7],[1.6,0]])g.gain.linearRampToValueAtTime(v,t+at);
-   bee(c,g,t,1.65,230,48,0.2,25);return true},
+  // Loss: a slow, falling call on a lone trumpet over a muffled drum, ending on a low minor chord.
+  loss(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02,o=a.out;
+   drum(c,o,t,0.35);
+   for(const [at,f,d] of [[0.05,392,0.32],[0.42,349.23,0.32],[0.79,311.13,0.38]])brass(c,o,t+at,f,d,0.08);
+   drum(c,o,t+1.2,0.45);brass(c,o,t+1.2,261.63,1.0,0.08);brass(c,o,t+1.2,311.13,1.0,0.05);brass(c,o,t+1.2,196,1.0,0.05);
+   return true},
   // Queen in danger: a low warning rattle.
   rattle(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02,o=c.createOscillator(),am=c.createGain(),lfo=c.createOscillator(),d=c.createGain();
    o.type='square';o.frequency.value=58;am.gain.value=0.5;lfo.type='square';lfo.frequency.value=17;d.gain.value=0.5;lfo.connect(d);d.connect(am.gain);
@@ -897,18 +904,15 @@ window.foulbroodSfx=(()=>{
   knock(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.01;
    for(const at of [0,0.16]){const n=noise(c,0.09),bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=420;bp.Q.value=3;n.connect(bp);bp.connect(env(c,a.out,t+at,[[0.003,0.7],[0.08,0]]));n.start(t+at);n.stop(t+at+0.09);
     const o=c.createOscillator();o.type='sine';o.frequency.setValueAtTime(160,t+at);o.frequency.exponentialRampToValueAtTime(90,t+at+0.07);o.connect(env(c,a.out,t+at,[[0.003,0.4],[0.08,0]]));o.start(t+at);o.stop(t+at+0.1)}return true},
-  // A draw: two bees hold each other off at the same low pitch and neither wins: a level buzz, then two soft, even low notes.
-  draw(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02;
-   bee(c,a.out,t,0.55,165,165,0.08,24);bee(c,a.out,t+0.03,0.55,168,168,0.08,26);
-   for(const at of [0.62,0.9]){const o=c.createOscillator(),lp=c.createBiquadFilter();o.type='triangle';o.frequency.value=196;lp.type='lowpass';lp.frequency.value=600;o.connect(lp);lp.connect(env(c,a.out,t+at,[[0.02,0.2],[0.18,0.1],[0.26,0]]));o.start(t+at);o.stop(t+at+0.3)}
+  // A draw: two heralds answer each other with the same plain call (open fifths, no winner), and a single drum.
+  draw(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02,o=a.out;
+   for(const at of [0,0.55]){brass(c,o,t+at,392,0.18,0.07);brass(c,o,t+at,261.63,0.18,0.05);brass(c,o,t+at+0.2,392,0.28,0.07);brass(c,o,t+at+0.2,261.63,0.28,0.05)}
+   drum(c,o,t+1.15,0.4);brass(c,o,t+1.15,261.63,0.7,0.06);brass(c,o,t+1.15,196,0.7,0.05);
    return true},
-  // Game start: a herald's trumpet call (ta-ta-ta-taaa), brass-like, with a fifth underneath.
-  start(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02;
-   const brass=(at,f,dur,level)=>{const o=c.createOscillator(),o2=c.createOscillator(),lp=c.createBiquadFilter();o.type='sawtooth';o2.type='sawtooth';o.frequency.value=f;o2.frequency.value=f*1.003;
-    lp.type='lowpass';lp.Q.value=2;lp.frequency.setValueAtTime(500,t+at);lp.frequency.linearRampToValueAtTime(2600,t+at+0.05);lp.frequency.linearRampToValueAtTime(1500,t+at+dur);
-    o.connect(lp);o2.connect(lp);lp.connect(env(c,a.out,t+at,[[0.025,level],[dur*0.75,level*0.85],[dur,0]]));o.start(t+at);o2.start(t+at);o.stop(t+at+dur+0.05);o2.stop(t+at+dur+0.05)};
-   for(const at of [0,0.14,0.28]){brass(at,523.25,0.11,0.09);brass(at,349.23,0.11,0.05)} // ta-ta-ta (C over F)
-   brass(0.42,783.99,0.75,0.1);brass(0.42,523.25,0.75,0.06);brass(0.42,392,0.75,0.04); // taaa (G over C)
+  // Game start: a herald's trumpet call (ta-ta-ta-taaa), with a fifth underneath.
+  start(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.02,o=a.out;
+   for(const at of [0,0.14,0.28]){brass(c,o,t+at,523.25,0.11,0.09);brass(c,o,t+at,349.23,0.11,0.05)} // ta-ta-ta
+   brass(c,o,t+0.42,783.99,0.75,0.1);brass(c,o,t+0.42,523.25,0.75,0.06);brass(c,o,t+0.42,392,0.75,0.04); // taaa
    return true},
   // Low on time: a heartbeat.
   thump(){const a=A();if(!a)return false;const c=a.context,t=c.currentTime+0.01;
