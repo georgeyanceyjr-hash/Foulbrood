@@ -658,6 +658,9 @@ class App:
                 ply=payload.get('ply')
                 if type(ply) is not int:raise ValueError('Invalid review request.')
                 self.review.review_single(ply);self.revision+=1
+            elif action=='review_try_forget':
+                if not self.review or self.mode!='analysis':raise ValueError('Open Game review first.')
+                self.review.forget_try(payload.get('ply'),payload.get('move'));self.revision+=1
             elif action=='review_marks':
                 if not self.review or self.mode!='analysis':raise ValueError('Open Game review first.')
                 ply=payload.get('ply')

@@ -830,7 +830,7 @@
   }
   const r=s.game_review,rows=r&&(r.rows||[]).length;
   if(rows&&r.status!=='running'&&!reviewBusy){
-   const key=s.review_game+'|'+rows+'|'+r.status;
+   const key=s.review_game+'|'+rows+'|'+r.status+'|'+(r.extras||[]).filter(e=>e.status==='ready').length; // engine lines and tried moves are saved too
    if(key!==lastReview){
     lastReview=key;reviewBusy=true;
     fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Board-Token':window.BOARD_TOKEN},body:JSON.stringify({action:'review_save'})})

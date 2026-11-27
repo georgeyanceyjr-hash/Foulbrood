@@ -48,6 +48,7 @@ class Review:
         self.engine=dict(engine or dict(id=None,name=self.portable_engine['name']))
         for name in ('rows','points','before','pending_played','milliseconds','status','error'):setattr(self,name,saved[name])
         self.single={r['ply']:dict(r,single=True) for r in saved.get('single',[])}
+        self.restore_extras(saved.get('extras',[]))
         self.working_ply=len(self.rows)
         self.source=saved['analysis_source']
         self.remaining_units=0 if self.status=='complete' else 2*(self.total-len(self.rows))+(0 if self.before else 1)-(1 if self.pending_played else 0)
@@ -76,13 +77,14 @@ class Review:
         row=next((r for r in self.rows if r['ply']==ply),None) or getattr(self,'single',{}).get(ply)
         if not row and not (isinstance(ply,int) and 1<=ply<=self.total):raise ValueError('Review this move first.')
         if not hasattr(self,'extras'):self.extras={}
-        key=(kind,ply)
+        key=(kind,ply) if kind=='line' else (kind,ply,move) # every tried move is kept (until its x is pressed)
+        self.extra_seq=getattr(self,'extra_seq',0)+1
         # A rough time for the countdown: a short search for each move of the line (2 s at most), or one full
         # search for a tried move, plus the move's own review first when the review has not reached it.
         ms=self.milliseconds or 5000;count=max(2,min(int(length or 4),16))
         expected=(count-(1 if row and row.get('reply') else 0))*(min(ms,2000)/1000+.4) if kind=='line' else ms/1000+.4
         if not row:expected+=3*(ms/1000+.4)
-        self.extras[key]=dict(kind=kind,ply=ply,status='running',move=move,expected=round(expected))
+        self.extras[key]=dict(kind=kind,ply=ply,status='running',move=move,expected=round(expected),seq=self.extra_seq)
         self.side_busy=True;generation=self.generation;units=self.remaining_units
         def work():
             try:
@@ -213,6 +215,58 @@ class Review:
             if engine:engine.close()
             with self.app.lock:
                 if engine and self.process is engine.proc:self.process=None;self.phase_started=None
+
+    def forget_try(self,ply,move):
+        """A tried move cleared with its x: gone from the review (and from the saved copy)."""
+        getattr(self,'extras',{}).pop(('try',ply,move),None)
+
+    def saved_extras(self):
+        """Engine lines and tried moves, as kept with the review in the Archive."""
+        out=[]
+        for e in getattr(self,'extras',{}).values():
+            if e.get('status')!='ready':continue
+            if e['kind']=='line':out.append(dict(kind='line',ply=e['ply'],moves=list(e.get('moves') or []),scores=list(e.get('scores') or [])))
+            else:out.append(dict(kind='try',ply=e['ply'],move=e.get('move'),score=e.get('score'),depth=e.get('depth'),side=e.get('side')))
+        return out
+
+    def restore_extras(self,saved):
+        """Put saved engine lines and tried moves back; the board positions for them are worked out in the background."""
+        self.extras={};self.extra_seq=0
+        for e in saved or []:
+            self.extra_seq+=1
+            if e['kind']=='line':self.extras[('line',e['ply'])]=dict(kind='line',ply=e['ply'],status='ready',move=None,moves=e['moves'],scores=e['scores'],steps=[dict(pieces=None,last_move=None) for _ in e['moves']],seq=self.extra_seq)
+            else:self.extras[('try',e['ply'],e['move'])]=dict(kind='try',ply=e['ply'],status='ready',move=e['move'],score=e['score'],depth=e['depth'],side=e['side'],pieces=None,last_move=None,seq=self.extra_seq)
+        if not self.extras:return
+        game=self.game
+        def position_before(ply):
+            parts=game.split(';');moves=parts[3:3+ply-1]
+            if '~' not in parts[0]:
+                n=len(moves);text=';'.join([parts[0],'InProgress' if n else 'NotStarted',('White' if n%2==0 else 'Black')+'[%d]'%(n//2+1)]+moves)
+                try:
+                    data=self.snapshot('snapshot',text)
+                    if data['ply']==n:return data
+                except Exception:pass
+            data=self.snapshot('snapshot',game)
+            while data['ply']>ply-1:data=self.snapshot('undo',data['game'])
+            return data
+        def work():
+            for key,e in list(self.extras.items()):
+                try:
+                    data=position_before(e['ply'])
+                    if e['kind']=='line':
+                        position=data;steps=[]
+                        for m in e['moves']:
+                            position=self.snapshot('play',position['game'],m);steps.append(dict(pieces=position['pieces'],last_move=position.get('last_move')))
+                        with self.app.lock:e['steps']=steps
+                    else:
+                        position=self.snapshot('play',data['game'],e['move'])
+                        with self.app.lock:e.update(pieces=position['pieces'],last_move=position.get('last_move'))
+                except Exception:
+                    with self.app.lock:self.extras.pop(key,None)
+            with self.app.lock:
+                try:self.app.revision+=1
+                except Exception:pass
+        threading.Thread(target=work,daemon=True).start()
 
     def review_single(self,ply):
         """Review moves the main review has not reached yet, one at a time, in the order they were clicked."""

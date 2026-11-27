@@ -32,7 +32,8 @@ def save_review(review,session):
                cursor=session.data['ply'],players=session.player_names,
                result=session.reported_result,setup_placed=session.setup_placed,
                analysis_source=review.source,in_game_history=list(review.in_game_history.values()),
-               single=[{k:v for k,v in r.items() if k!='single'} for p,r in sorted(getattr(review,'single',{}).items()) if p>len(review.rows)])
+               single=[{k:v for k,v in r.items() if k!='single'} for p,r in sorted(getattr(review,'single',{}).items()) if p>len(review.rows)],
+               extras=review.saved_extras() if hasattr(review,'saved_extras') else [])
     encoded=base64.b64encode(json.dumps(state,ensure_ascii=True,allow_nan=False,separators=(',',':')).encode()).decode()
     result={'1-0':'WhiteWins','0-1':'BlackWins','1/2-1/2':'Draw'}.get(session.reported_result,session.reported_result)
     exported=export_game(review.game,'pgn',result)
@@ -113,6 +114,17 @@ def validate_review(value,game):
         require(score(row['score']) and score(row['best_score']) and move(row['alternative']) and move(row['reply']))
         require(integer(row['depth'],0,10000) and integer(row['best_depth'],0,10000))
     value['single']=single
+    # Engine lines looked up and moves tried (kept with the review).
+    extras=value.get('extras',[]);require(isinstance(extras,list) and len(extras)<=4*total+4000)
+    for e in extras:
+        require(isinstance(e,dict) and e.get('kind') in ('line','try') and type(e.get('ply')) is int and 1<=e['ply']<=total)
+        if e['kind']=='line':
+            require(set(e)=={'kind','ply','moves','scores'} and isinstance(e['moves'],list) and 1<=len(e['moves'])<=16 and all(isinstance(m,str) and move(m) for m in e['moves']))
+            require(isinstance(e['scores'],list) and len(e['scores'])<=16 and all(score(x) for x in e['scores']))
+        else:
+            require(set(e)=={'kind','ply','move','score','depth','side'} and isinstance(e['move'],str) and move(e['move']) and score(e['score']))
+            require(e['depth'] is None or integer(e['depth'],0,10000));require(e['side'] in (0,1,None))
+    value['extras']=extras
     for i,point in enumerate(points):
         require(isinstance(point,dict) and set(point)<={'ply','score','depth'} and point['ply']==i and score(point['score']))
         if 'depth' in point:require(integer(point['depth'],0,10000))
