@@ -188,6 +188,7 @@ class App:
     def analysis_budget_ms(self):
         if self.analysis_ms != -1:return self.analysis_ms
         s=self.play
+        if s.clock.untimed:return 10000  # no clock, no time strategy: the same 10 s a computer turn gets
         # Use the same clock allocation as a player, with UHP's one-second floor.
         return match_budget_ms(s.clock.values()[s.data['side']],s.clock.increment,s.data['ply'])
 
@@ -557,6 +558,7 @@ class App:
                 self.launch_search('hint',self.analysis_ms)
 
     def view(self):
+        if self.analysis_ms==-1 and self.play.clock.untimed:self.analysis_ms=10000  # Match timing is not offered without a clock
         with self.lock:
             self.last_seen=time.monotonic()
             self.note_insight()
@@ -846,6 +848,7 @@ class App:
                 if (self.review or self.engines.analysis_engine!='Computer') and milliseconds==0:milliseconds=60000
                 if milliseconds==500:milliseconds=2000
                 if milliseconds==-1 and (self.mode!='play' or self.review):raise ValueError('Match timing is available only on Play.')
+                if milliseconds==-1 and self.play.clock.untimed:raise ValueError('Match timing needs a clock: choose a timed game.')
                 if milliseconds not in (-1,0,2000,5000,10000,30000,60000,600000,3600000,86400000):raise ValueError('Invalid analysis duration.')
                 if self.review and action=='insight_time':self.review.stop();self.review.status='ready'
                 if action=='analyze' and self.job=='computer' and not self.parallel_insight_allowed():raise ValueError('The selected engine is choosing its move.')

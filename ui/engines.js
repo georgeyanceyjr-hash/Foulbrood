@@ -276,8 +276,9 @@ function syncThinkingTimeSelector(s,available,reviewUnsupported){
  const busy=s.insight_job==='hint'||s.game_review?.status==='running';
  const disabled=!available||reviewUnsupported||!!s.reviewing||busy;
  if(select.disabled!==disabled)select.disabled=disabled;
- const noMatchTiming=s.mode!=='play'||!!s.game_review;
- if(matchTiming.disabled!==noMatchTiming)matchTiming.disabled=noMatchTiming;
+ const noMatchTiming=s.mode!=='play'||!!s.game_review,noClock=s.mode==='play'&&(s.time_control==='untimed'||$('time')?.value==='untimed'); // no clock: no time strategy, so no Match timing
+ if(matchTiming.disabled!==(noMatchTiming||noClock))matchTiming.disabled=noMatchTiming||noClock;
+ if(matchTiming.hidden!==noClock)matchTiming.hidden=noClock;
  const value=String(s.analysis_ms??2000);
  // Native menus must keep the user's pending choice between server polls.
  if(document.activeElement!==select&&select.value!==value)select.value=value;
