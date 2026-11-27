@@ -65,13 +65,20 @@ impl std::fmt::Display for ParseError {
 
 impl std::error::Error for ParseError {}
 
+#[allow(dead_code)]
 pub fn spawn_process(command: &str, name: &str) -> std::io::Result<Child> {
+    spawn_process_env(command, name, &[])
+}
+
+/// As spawn_process, with extra environment variables for the engine (engines that do not know them ignore them).
+pub fn spawn_process_env(command: &str, name: &str, env: &[(String, String)]) -> std::io::Result<Child> {
     info!("Starting AI '{}' for '{}'...", command, name);
 
     // The viewer passes the engine's own file path (spaces allowed): run it from its folder, like the viewer does.
     let whole = std::path::Path::new(command.trim());
     if whole.is_file() {
         let mut cmd = Command::new(whole);
+        cmd.envs(env.iter().map(|(k, v)| (k.as_str(), v.as_str())));
         if let Some(dir) = whole.parent().filter(|d| !d.as_os_str().is_empty()) {
             cmd.current_dir(dir);
         }
@@ -91,6 +98,7 @@ pub fn spawn_process(command: &str, name: &str) -> std::io::Result<Child> {
 
     Command::new(program)
         .args(args)
+        .envs(env.iter().map(|(k, v)| (k.as_str(), v.as_str())))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

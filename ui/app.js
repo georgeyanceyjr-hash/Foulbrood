@@ -316,7 +316,8 @@ async function poll(){const epoch=actionEpoch;try{if(!busy){const r=await fetch(
 function evaluationNumbers(hint){
  if(!Number.isFinite(hint.score))return null;
  const raw=hint.score*(hint.side===0?1:-1);
- const index=Math.abs(raw)>99000?Math.sign(raw)*100:Math.max(-99,Math.min(99,Math.round(100*Math.tanh(raw/300))));
+ // The viewer's -100..+100: 100 x (2 x expected score - 1). FoulBrood's scores are logits x 333, so that is tanh(score/666).
+ const index=Math.abs(raw)>99000?Math.sign(raw)*100:Math.max(-99,Math.min(99,Math.round(100*Math.tanh(raw/666))));
  return {raw,index};
 }
 function positionScoreValue(evaluation,engine){

@@ -15,7 +15,7 @@ $('analysisTab').onclick=async()=>{await action({action:'mode',mode:'analysis'})
 $('inGameAnalysis').onchange=()=>action({action:'review_source',source:$('inGameAnalysis').checked?'in_game':'review'});
 for(const [id,w] of [['cancelSetup','position'],['applySetup','position'],['startSetup','arrange'],['rearrangeSetup','arrange']])$(id)?.addEventListener('click',e=>{if(e.isTrusted)analysisWorkspace(w)}); // only the person's own clicks (leaving the page also closes Arrange)
 $('modeReview').onclick=()=>{if(editorDraft)$('cancelSetup').click();analysisWorkspace('review');action({action:'review_enter'})};
-function reviewPoint(score){return score==null?null:Math.abs(score)>99000?Math.sign(score)*100:Math.max(-99,Math.min(99,Math.round(100*Math.tanh(score/300))))}
+function reviewPoint(score){return score==null?null:Math.abs(score)>99000?Math.sign(score)*100:Math.max(-99,Math.min(99,Math.round(100*Math.tanh(score/666))))}
 
 const reviewMarksCache=new Map(),reviewMarksPending=new Set();
 function engineChoiceOn(s){return highlightsOn(s||state)}

@@ -161,7 +161,7 @@ def _view(score):
     """The viewer's -100..+100 scale."""
     if abs(score) > 99000:
         return 100 if score > 0 else -100
-    return max(-99, min(99, round(100 * math.tanh(score / 300))))
+    return max(-99, min(99, round(100 * math.tanh(score / 666))))
 
 
 def _bot_evals():

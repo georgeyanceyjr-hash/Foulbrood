@@ -124,7 +124,7 @@
  };
  // Clocks tick locally between status updates.
  const fmt=t=>{if(t==null||!Number.isFinite(t))return '—';t=Math.max(0,t);const m=Math.floor(t/60),sec=Math.floor(t%60);return (m<10?'0':'')+m+':'+(sec<10?'0':'')+sec};
- const index=raw=>Math.abs(raw)>99000?Math.sign(raw)*100:Math.max(-99,Math.min(99,Math.round(100*Math.tanh(raw/300))));
+ const index=raw=>Math.abs(raw)>99000?Math.sign(raw)*100:Math.max(-99,Math.min(99,Math.round(100*Math.tanh(raw/666))));
  // Clocks use the viewer's own clock at the right end of each player bar while the bot's game is on the board.
  const drawClocks=()=>{
   document.querySelectorAll('.hb-bar-clock').forEach(n=>n.remove());

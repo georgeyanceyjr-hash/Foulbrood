@@ -59,7 +59,10 @@ async fn think(turn: &Turn, engine_slots: &Semaphore) -> Option<String> {
     };
     let game_string = turn.game.uhp_game_string();
     debug!(bot = %bot, game_id = %game_id, game_string = %game_string, "thinking");
-    let child = match ai::spawn_process(&turn.bot.ai_command, bot) {
+    // Contempt from the rating gap (FoulBrood reads TR_CONTEMPT; other engines ignore it): against a stronger
+    // player a draw is worth more than even (a draw gains rating), against a weaker one less.
+    let env = contempt_env(&turn.game);
+    let child = match ai::spawn_process_env(&turn.bot.ai_command, bot, &env) {
         Ok(child) => child,
         Err(e) => {
             error!(bot = %bot, game_id = %game_id, error = %e, "failed to spawn AI process");
@@ -93,5 +96,20 @@ async fn think(turn: &Turn, engine_slots: &Semaphore) -> Option<String> {
             crate::protocol::hb(serde_json::json!({"ev": "error", "msg": format!("engine failed: {e}")}));
             None
         }
+    }
+}
+
+/// 25 (the engine's own default) between equal ratings, 1 less for every 4 points the opponent is
+/// higher (1 more for every 4 lower), between -60 and 60.
+fn contempt_env(game: &crate::protocol::Game) -> Vec<(String, String)> {
+    let uid = |p: &Option<serde_json::Value>| p.as_ref().and_then(|p| p.get("uid")).and_then(|u| u.as_str()).map(str::to_string);
+    let me_white = uid(&game.white_player).as_deref() == Some(game.current_player_id.as_str());
+    let (mine, theirs) = if me_white { (game.white_rating, game.black_rating) } else { (game.black_rating, game.white_rating) };
+    match (mine, theirs) {
+        (Some(m), Some(t)) => {
+            let c = (25.0 - (t - m) / 4.0).round().clamp(-60.0, 60.0) as i64;
+            vec![("TR_CONTEMPT".to_string(), c.to_string())]
+        }
+        _ => Vec::new(),
     }
 }
