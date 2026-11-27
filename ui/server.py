@@ -65,16 +65,6 @@ class Clock:
         return True
 
 
-def budget_ms(remaining, increment):
-    # No game clock: keep computer turns bounded while humans have unlimited time.
-    if remaining is None:return 10000
-    # Conservative first policy: spend a share of the reserve plus most of the
-    # increment. Never consume the completion margin. This is not strength-tuned.
-    margin = min(.25, max(.02, remaining*.05))
-    available = max(0, remaining-margin)
-    return max(0, int(1000*min(available, remaining/25 + .8*increment)))
-
-
 def match_budget_ms(remaining, increment, ply):
     """The time the HotFrass bot gives its engine in a real hivegame.com match (hive-hydra's
     bestmove_time_args): the increment plus a tenth of the clock, less 0.4 s, never more than a quarter
@@ -536,7 +526,7 @@ class App:
             insight=self.insight_worker or self
             recorded=reviewing or self.mode=='play' and s.finished or self.review and self.review.source=='in_game'
             finished=shown['ply']==len(s.review_game.split(';')[3:]) and (s.finished or s.reported_result in (*TERMINAL,'1-0','0-1','1/2-1/2'))
-            return dict(**shown,move_ratings=self.move_ratings(s),recorded_analysis=visible_history(s.analysis_history,shown['ply'],finished=finished) if recorded else None,use_recorded_analysis=bool(recorded),review_work_available=bool(self.reviews_with_work()),analysis_review_available=self.analysis_review_available(),parallel_insight_allowed=self.parallel_insight_allowed(),insight_job=insight.job if insight.job=='hint' else None,engine_thoughts=[dict(t,elapsed=max(0,time.monotonic()-t['started']) if t['status']=='thinking' else (t.get('evaluation') or {}).get('seconds',0)) if t else None for t in s.thoughts],engines=self.engines.entries,builtin_connected=self.engines.builtin_connected,builtin_present=self.engines.builtin_present,analysis_engine=self.engines.analysis_engine,game_review=self.review.view() if self.review else None,setup_placed=s.setup_placed,reviewing=reviewing,review_game=s.review_game,live_game=s.data['game'],live_side=s.data['side'],mode=self.mode,players=s.players,time_control=s.time_control,
+            return dict(**shown,move_ratings=self.move_ratings(s),recorded_analysis=visible_history(s.analysis_history,shown['ply'],finished=finished) if recorded else None,use_recorded_analysis=bool(recorded),review_work_available=bool(self.reviews_with_work()),analysis_review_available=self.analysis_review_available(),parallel_insight_allowed=self.parallel_insight_allowed(),insight_job=insight.job if insight.job=='hint' else None,engine_thoughts=[dict(t,elapsed=max(0,time.monotonic()-t['started']) if t['status']=='thinking' else (t.get('evaluation') or {}).get('seconds',0)) if t else None for t in s.thoughts],engines=[dict(e,connected=self.engines.connected(e['id'])) for e in self.engines.entries],builtin_connected=self.engines.builtin_connected,builtin_present=self.engines.builtin_present,analysis_engine=self.engines.analysis_engine,game_review=self.review.view() if self.review else None,setup_placed=s.setup_placed,reviewing=reviewing,review_game=s.review_game,live_game=s.data['game'],live_side=s.data['side'],mode=self.mode,players=s.players,time_control=s.time_control,
                         clocks=s.clock.values(),running=s.running,timeout_side=s.timeout_side,resigned_side=s.resigned_side,
                         import_info=s.import_info,player_names=s.player_names,reported_result=s.reported_result,play_finished=self.mode=='play' and s.finished,
                         completed_state=s.review_game.split(';')[1],review_total=len(s.review_game.split(';')[3:]),

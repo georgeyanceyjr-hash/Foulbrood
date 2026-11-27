@@ -1,7 +1,7 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const engineCode=fs.readFileSync(__dirname+'/engines.js','utf8'),appCode=fs.readFileSync(__dirname+'/app.js','utf8');
 const calls=[],ctx=vm.createContext({notationFollowsBoard:()=>true,insightMoveText:(game,move,follow)=>{calls.push({game,move,follow});return 'oriented '+move},renderOpponentInsight:(board,s)=>calls.push(s)});
-vm.runInContext(engineCode.slice(engineCode.indexOf('function insightSideData('),engineCode.indexOf('function reviewMoveDifference(')),ctx);
+vm.runInContext(engineCode.slice(engineCode.indexOf('function insightSideData('),engineCode.indexOf('function reviewThoughtFields(')),ctx);
 vm.runInContext(appCode.slice(appCode.indexOf('function renderRecordedInsight('),appCode.indexOf('function hintColor(')),ctx);
 for(const side of [0,1]){
  const record={side,ply:side,game:'captured-position',engine:{name:'Recorded engine',adapter:'mzinga'},evaluation:{move:side?'bS1 wS1-':'wS1',seconds:7,depth:5,source:'external',engine_score:1200}};

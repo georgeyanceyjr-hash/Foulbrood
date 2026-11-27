@@ -20,6 +20,7 @@ const elements=new Map(),actions=[];
 function element(id){if(!elements.has(id))elements.set(id,{hidden:false,disabled:false,value:'2000',textContent:'',setAttribute(){},classList:{toggle(){}},querySelector(){return element(id+' child')},closest(){return element(id+' parent')}});return elements.get(id)}
 const reviewContext=vm.createContext({window:{},$:element,editorDraft:null,renderReviewMarks(){},reviewGraphKey:'',state:null,action:p=>actions.push(p)});
 const reviewCode=fs.readFileSync(__dirname+'/review.js','utf8');
+vm.runInContext('function reviewDone(review){return (review?.rows||[]).filter(r=>!r.single).length}',reviewContext);
 vm.runInContext(reviewCode.slice(reviewCode.indexOf('window.renderGameReview=s=>{'),reviewCode.indexOf(" $('reviewProgress').textContent"))+'};',reviewContext);
 function reviewState(status){return {mode:'analysis',game_review:{status,total:3,rows:[]}}}
 reviewContext.state=reviewState('running');reviewContext.window.renderGameReview(reviewContext.state);

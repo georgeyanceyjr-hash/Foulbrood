@@ -32,11 +32,6 @@ function orientSetupRoot(root){if(!root.includes('~'))return root;const f=root.s
 function notationFollowsBoard(){return notationMode==='traditional'&&(state?.mode==='play'||analysisFollowsBoard)}
 function shownMove(text){return notationFollowsBoard()?orientMove(text):text}
 function shownGame(game){const p=game.split(';');if(notationFollowsBoard())p[0]=orientSetupRoot(p[0]);return p.slice(0,3).concat(p.slice(3).map(shownMove)).join(';')}
-function orientExport(text,format){
- if(!notationFollowsBoard())return text;
- if(format==='pgn')return text.replace(/\[FoulBroodRoot "([^"]+)"\]/g,(_,root)=>`[FoulBroodRoot "${orientSetupRoot(root)}"]`).replace(/^(\d+\.\s*)(.+)$/gm,(_,n,m)=>n+orientMove(m));
- const data=JSON.parse(text);if(data.format==='foulbrood-position'){data.root=orientSetupRoot(data.root);data.moves=data.moves.map(m=>orientMove(m));return JSON.stringify(data,null,2)+'\n'}for(const n of data.nodes||[]){if(n.move_delta){const d=n.move_delta,m=orientMove((d.piece+' '+(d.position||'')).trim()).split(/\s+/);d.piece=m[0];d.position=m.slice(1).join(' ')}n.position_hash=null}return JSON.stringify(data,null,2)+'\n';
-}
 function xy(q,r){[q,r]=orientHex(q,r);return [Math.sqrt(3)*40*(q+r/2),60*r]}
 function hex(x,y,r=38){return Array.from({length:6},(_,i)=>{const a=(30+60*i)*Math.PI/180;return `${x+r*Math.cos(a)},${y+r*Math.sin(a)}`}).join(' ')}
 function artwork(id,x,y){
@@ -286,7 +281,7 @@ function render(s){normalizeEngineNames(s);zeroOpening(s);regradeReview(s);windo
  $('historyLast').textContent=backToLive?'Live ⏭':'⏭';
  $('historyLast').title=backToLive?'Return to live game':'End of game';
  $('historyLast').setAttribute('aria-label',$('historyLast').title);
- $('gameResult').hidden=!finished;$('gameResult').textContent=resultText(s);
+ 
  const resultBanner=$('boardResult');resultBanner.hidden=!finished||!!editorDraft;$('turn').hidden=finished&&!editorDraft;const summary=boardResultText(s);if(resultBanner.textContent!==summary)resultBanner.textContent=summary;
  $('pass').hidden=!canMove()||!s.legal.some(m=>m.move==='pass');$('pause').disabled=finished;
  $('bookEnabled').checked=!!s.book_enabled;$('bookEnabled').disabled=!s.book_available;$('calculateInstead').hidden=s.hint?.source!=='book'||s.reviewing;
@@ -608,7 +603,6 @@ async function importSetupPosition(source,confirmed=false){
  }catch(e){toast(e.message)}finally{busy=false}
 }
 $('setupFromAnalysis').onclick=()=>importSetupPosition('analysis');
-$('setupFromPlay').onclick=()=>importSetupPosition('play');
 $('startSetup').onclick=()=>openPositionSetup(false);
 $('rearrangeSetup').onclick=()=>openPositionSetup(true);
 $('cancelSetup').onclick=()=>{editorDraft=null;editorTool=null;pieceDrag=null;removeDragGhost();$('hints').disabled=false;lastBoardKey='';render(serverState)};

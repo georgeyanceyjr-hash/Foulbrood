@@ -4,7 +4,7 @@ import os
 from unittest.mock import patch
 import unittest
 import json
-from server import App, Clock, TIMES, ROOT, budget_ms, snapshot
+from server import App, Clock, TIMES, ROOT, snapshot, match_budget_ms
 
 
 class ClockTests(unittest.TestCase):
@@ -22,7 +22,8 @@ class ClockTests(unittest.TestCase):
         now[0]=100;self.assertEqual(c.values(),[56,60]);c.start(0);now[0]=102
         self.assertEqual(c.values(),[54,60])
         for remain in [0,.01,.1,1,10,60,1200]:
-            for inc in [2,3,4,10,20]:self.assertLessEqual(budget_ms(remain,inc)/1000,max(0,remain-.02)+1e-9)
+            for inc in [2,3,4,10,20]:
+                b=match_budget_ms(remain,inc,5)/1000;self.assertGreaterEqual(b,1);self.assertLessEqual(b,max(1,remain/4)+1e-9)
 
 
 class BoardTests(unittest.TestCase):
@@ -266,7 +267,7 @@ class BoardTests(unittest.TestCase):
         self.assertEqual(self.app.session.data['ply'],2)
         self.app.command(dict(action='undo'));self.assertEqual(self.app.session.data['ply'],1)
         self.app.command(dict(action='mode',mode='play'))
-        self.assertEqual(self.app.play.data['game'],original);self.assertFalse(self.app.play.running)
+        self.assertEqual(self.app.play.data['game'],original);self.assertTrue(self.app.play.running) # Local keeps going while Analysis is used
 
     def test_time_change_requires_stop_and_does_not_restart_analysis(self):
         self.app.job='hint';old=self.app.analysis_ms;revision=self.app.revision
@@ -281,9 +282,9 @@ class BoardTests(unittest.TestCase):
     def test_analysis_times_and_play_only_matching(self):
         self.assertEqual(self.app.analysis_ms,-1)
         self.app.play.clock.remaining=[60,300]
-        self.assertEqual(self.app.analysis_budget_ms(),budget_ms(60,4))
+        self.assertEqual(self.app.analysis_budget_ms(),match_budget_ms(60,4,self.app.play.data['ply']))
         self.app.play.data['side']=1
-        self.assertEqual(self.app.analysis_budget_ms(),budget_ms(300,4))
+        self.assertEqual(self.app.analysis_budget_ms(),match_budget_ms(300,4,self.app.play.data['ply']))
         self.app.command(dict(action='mode',mode='analysis'))
         self.assertEqual(self.app.analysis_ms,60000)
         with self.assertRaisesRegex(ValueError,'only on Play'):
@@ -444,7 +445,7 @@ class BoardTests(unittest.TestCase):
         self.app.command(dict(action='continuous_hints',enabled=True));self.app.tick()
         self.app.command(dict(action='move',move='wS1'));self.app.tick()
         self.assertEqual(self.app.job,'computer')
-        self.app.last_seen=time.monotonic()-20;self.app.tick()
+        self.app.last_seen=time.monotonic()-1900;self.app.tick()
         self.assertIsNone(self.app.job);self.assertFalse(self.app.session.running)
         self.app.tick();self.assertIsNone(self.app.job)
 
@@ -479,7 +480,7 @@ class BoardTests(unittest.TestCase):
         self.assertEqual(view['player_names'],['Alice','Bob'])
         self.assertEqual(self.app.command(dict(action='navigate',direction='last'))['game'],full)
         self.assertEqual(self.app.play.data['game'],full)
-        self.assertFalse(self.app.play.running)
+        self.assertTrue(self.app.play.running) # Local keeps going while Analysis is used
 
     def test_analysis_navigation_preserves_forward_history_and_cancels_search(self):
         self.new();play=self.app.play.data['game']

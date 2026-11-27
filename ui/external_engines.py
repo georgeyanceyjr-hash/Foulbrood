@@ -115,7 +115,10 @@ class EngineLibrary:
     def builtin_connected(self):return self.connected('Computer')
     def save(self):
         self.path.parent.mkdir(parents=True,exist_ok=True);temp=self.path.with_suffix('.tmp');temp.write_text(json.dumps(dict(version=2,entries=self.entries,analysis_engine=self.analysis_engine),indent=2));os.replace(temp,self.path)
-    def connected(self,key):return bool(self.get(key) and self.get(key).get('connected'))
+    def connected(self,key):
+        # An engine whose file has gone (moved or deleted) counts as not connected, so nothing tries to start it.
+        e=self.get(key)
+        return bool(e and e.get('connected') and (key=='Computer' or not e.get('path') or Path(e['path']).exists()))
     def get(self,key):return next((e for e in self.entries if e['id']==key),None)
     def supports_setup(self,key):
         entry=self.get(key) or {}

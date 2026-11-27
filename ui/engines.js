@@ -1,3 +1,4 @@
+function reviewDone(review){return (review?.rows||[]).filter(r=>!r.single).length} // moves reviewed in order (single-move reviews ahead of the review do not count)
 let enginePageOpen=false,engineListKey='',passiveSuggestions=true;
 try{passiveSuggestions=!document.cookie.split('; ').includes('foulbrood_passive_suggestions=off')}catch(e){}
 function passiveSuggestionMode(s,players=s.players){return !!s.game_review||(s.mode==='play'&&players?.length===2&&players.every(p=>p!=='Human'))}
@@ -191,47 +192,11 @@ function insightSideData(s,side,players){
  if(previous)return {engine,evaluation:previous.evaluation,thinking:false,caption:previous.caption,moveText:insightMoveText(previous.game,previous.evaluation.move,notationFollowsBoard()),seconds:previous.seconds,preview:false};
  return {engine,evaluation,thinking,caption,moveText:insightMoveText(s.game,evaluation?.move,notationFollowsBoard()),seconds,preview:!!evaluation&&canMove()&&!!s.legal?.some(m=>m.move===evaluation.move&&m.to)};
 }
-function reviewMoveDifference(row){
- const played=positionScoreValue({score:row?.score,side:0},null),preferred=positionScoreValue({score:row?.best_score,side:0},null);
- return played==null||preferred==null?null:(preferred-played)*(row.side===0?1:-1);
-}
-function rankedReviewMoves(rows,ascending=false){
- return rows.map(row=>({row,difference:reviewMoveDifference(row)})).filter(item=>item.difference!==null).sort((a,b)=>(ascending?a.difference-b.difference:b.difference-a.difference)||a.row.ply-b.row.ply);
-}
-function renderReviewRanking(s){
- const panel=$('reviewRankingPanel'),list=$('reviewRankingList');
- panel.hidden=!s.game_review||!!editorDraft;
- if(panel.hidden){list.rankingKey=null;return;}
- const order=$('reviewRankingOrder');
- order.textContent=list.rankingAscending?'Smallest':'Largest';
- order.setAttribute('aria-label',list.rankingAscending?'Smallest difference first. Switch to largest first.':'Largest difference first. Switch to smallest first.');
- order.onclick=()=>{list.rankingAscending=!list.rankingAscending;list.scrollTop=0;renderReviewRanking(s)};
- const ranked=rankedReviewMoves(s.game_review.rows,!!list.rankingAscending).map(item=>({...item,move:insightMoveText(botThoughtGame({game:s.review_game||s.game},item.row),item.row.move,notationFollowsBoard())}));
- $('reviewRankingEmpty').hidden=ranked.length>0;
- $('reviewRankingEmpty').textContent=s.game_review.source==='in_game'?'Run a review to compare moves.':'Reviewed moves appear here.';
- const key=JSON.stringify(ranked.map(({row,difference,move})=>[row.ply,row.side,row.label,difference,move]));
- if(list.rankingKey!==key){
-  const scroll=list.scrollTop;list.rankingKey=key;list.replaceChildren();list.rankingButtons=[];
-  for(const {row,difference,move}of ranked){
-   const button=document.createElement('button'),details=document.createElement('span'),caption=document.createElement('span'),notation=document.createElement('strong'),value=document.createElement('strong');
-   button.type='button';button.className='review-ranking-row';button.style.setProperty('--rank-color',hintColor(row.side));
-   details.className='review-ranking-details';caption.className='review-ranking-caption';caption.textContent=`Move ${row.ply} · ${row.side===0?'White':'Black'}`;
-   notation.textContent=move;value.className='review-ranking-value';value.textContent=String(difference);
-   details.append(caption,notation);button.append(details,value);button.title=row.label;
-   button.setAttribute('aria-label',`${caption.textContent}, ${move}, difference ${difference}`);
-   button.onclick=()=>action({action:'navigate',ply:row.ply});list.append(button);list.rankingButtons.push({button,ply:row.ply});
-  }
-  list.scrollTop=scroll;
- }
- for(const {button,ply}of list.rankingButtons||[]){button.classList.toggle('current',ply===s.ply);if(ply===s.ply)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');}
-}
 function reviewThoughtFields(strip){
  if(strip.reviewFields)return strip.reviewFields;
- const summary=document.createElement('div'),heading=document.createElement('div'),difference=document.createElement('div');
- summary.className='review-thought-summary';heading.className='review-thought-heading';difference.className='review-thought-difference';
- const differenceLabel=document.createElement('span'),differenceValue=document.createElement('strong');
- differenceLabel.textContent='Difference';difference.append(differenceLabel,differenceValue);summary.append(heading,difference);strip.append(summary);
- const fields={heading,difference,differenceValue};
+ const summary=document.createElement('div'),heading=document.createElement('div');
+ summary.className='review-thought-summary';heading.className='review-thought-heading';summary.append(heading);strip.append(summary);
+ const fields={heading};
  for(const [key,label]of [['played','Played'],['preferred','Preferred']]){
   const box=document.createElement('div'),caption=document.createElement('span'),move=document.createElement('strong'),depth=document.createElement('small');
   box.className='review-thought-cell';caption.className='bot-field-label';caption.textContent=label;move.className='bot-field-value';depth.className='review-thought-depth';
@@ -267,10 +232,6 @@ function renderReviewThought(strip,s,side,engine){
  }
  fields.heading.classList.toggle('search-activity',pending);
  fields.heading.title=row?.label==='Uncertain'?'Comparison inconclusive at this depth.':row?.label==='Missed win'?'The preferred line retains a forced win.':'';
- const difference=reviewMoveDifference(row);
- fields.difference.hidden=pending||difference==null;
- fields.differenceValue.textContent=difference==null?'':String(difference);
- fields.difference.title='Difference from the player’s perspective: positive favors the preferred move; negative favors the played move.';
  const game=row?botThoughtGame({game:s.review_game||s.game},row):null;
  for(const [key,move,score,depth]of [['played',row?.move,row?.score??point?.score,row?.depth??point?.depth],['preferred',row?.alternative,row?.best_score,row?.best_depth]]){
   const field=fields[key];field.move.textContent=row&&move?insightMoveText(game,move,notationFollowsBoard()):'—';field.move.title=field.move.textContent;
@@ -280,7 +241,6 @@ function renderReviewThought(strip,s,side,engine){
  return !pending&&!!row&&row.ply===s.ply;
 }
 window.renderBotThoughts=s=>{
- renderReviewRanking(s);
  const players=seatPreviewPlayers||s.players,duel=s.mode==='play'&&players?.length===2&&players.every(p=>p!=='Human');
  const visible=window.insightSuggestionsVisible(s,players)&&!editorDraft,review=!!s.game_review&&s.game_review.source!=='in_game';
  if(!duel&&!review&&!editorDraft)insightMemory(s,players);

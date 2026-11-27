@@ -77,7 +77,6 @@
   if(preferred)select.value=preferred.id;select.dataset.engines=key;
  };
  // Challenge rules as the server wants them.
- const onlyList=()=>[...new Set(el('hbOnly').value.split(',').map(x=>x.trim()).filter(x=>/^[A-Za-z0-9_-]{1,40}$/.test(x)))];
  const rules=()=>{
   // Open challenges are never taken automatically any more: only challenges sent to this account by name,
   // and only with the box ticked. (The time control now just filters the Open Challenges list.)
@@ -251,7 +250,7 @@
   }
  };
  el('hbOpenAll').onchange=async()=>{render.openAllAt=Date.now();const on=el('hbOpenAll').checked;
-  try{bot=await post({action:'hivebot_open_all',on,rated:el('hbORated').checked,color:el('hbOColor').value,min_rating:Number(el('hbMinRating').value)||null,max_rating:Number(el('hbMaxRating').value)||null})}
+  try{bot=await post({action:'hivebot_open_all',on,rated:el('hbORated').checked,color:el('hbOColor').value})}
   catch(e){el('hbOpenAll').checked=!on;el('hbStatus').textContent=(window.plainMessage?window.plainMessage(e.message):e.message);el('hbStatus').hidden=false}render()};
  el('hbReopen').onchange=async()=>{render.reopenAt=Date.now();try{bot=await post({action:'hivebot_reopen',on:el('hbReopen').checked})}catch(e){el('hbStatus').textContent=e.message;el('hbStatus').hidden=false}render()};
  el('hbResignLost').onchange=async()=>{try{bot=await post({action:'hivebot_resign_lost',on:el('hbResignLost').checked})}catch(e){el('hbStatus').textContent=e.message;el('hbStatus').hidden=false}render()};
@@ -312,10 +311,7 @@
    {const real=!!bot.direct,box=el('hbAuto');if(box.checked!==real&&Date.now()-(render.autoAt||0)>4000)box.checked=real}
    if(Date.now()-(render.autoAt||0)>4000)for(const [id,k] of [['hbDirectMin','direct_min'],['hbDirectMax','direct_max']]){const v=Array.isArray(bot[k])?bot[k].join('+'):null;if(v&&[...el(id).options].some(o=>o.value===v)&&el(id).value!==v)el(id).value=v}
    el('hbDirectRange').classList.toggle('off',!el('hbAuto').checked); // the switch shows what the bot is really doing, in every window
-   const who=bot.anyone?'anyone':(bot.accept||[]).join(', ');
-   const tc=bot.clock?`${bot.clock[0]/60}+${bot.clock[1]} only`:'10 minutes or longer';
-   el('hbAccepting').textContent='';
-   el('hbAccepting').hidden=!el('hbAccepting').textContent;
+   el('hbAccepting').hidden=true;
    drawLobby(!!g);
   }
   const pending=(bot.lobby||[]).some(c=>c.mine); // a sent challenge is only news while it is still waiting
@@ -571,7 +567,7 @@
  };
  el('hbOpen').onclick=()=>{
   const [base,increment]=el('hbOTime').value.split('+').map(Number);
-  challenge(el('hbOpen'),{opponent:'',base,increment,rated:el('hbORated').checked,color:el('hbOColor').value,min_rating:Number(el('hbMinRating').value)||null,max_rating:Number(el('hbMaxRating').value)||null});
+  challenge(el('hbOpen'),{opponent:'',base,increment,rated:el('hbORated').checked,color:el('hbOColor').value});
  };
  for(const id of ['hbFollow','hbEngine','hbLogin'])el(id).addEventListener('change',remember);
  // The range keeps its order: moving one end past the other moves the other end with it.
