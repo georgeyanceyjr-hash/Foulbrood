@@ -391,12 +391,21 @@ class HiveBot:
             except (OSError, ValueError):
                 raise ValueError('The bot client is not listening. Stop and start the bot.')
 
-    def set_manual(self, on):
-        """Play by hand (the engine stays idle) or hand the moves back to the engine."""
+    def set_manual(self, on, game_id=None, move=None):
+        """Play by hand (the engine stays idle) or hand the moves back to the engine. Handing back on our turn with
+        the engine's move for this position already worked out (`move`): that move is played at once, as the engine's."""
+        play = None
         with self.lock:
             if self.state != 'connected':
                 raise ValueError('Start the bot and wait until it is connected.')
+            if not on and self.manual and move and game_id is not None:
+                game = self.games.get(str(game_id))
+                move = ' '.join(str(move).split())[:40]
+                if game and not game.get('finished') and game.get('our_turn') and move:
+                    play = dict(cmd='move', id=str(game_id), turn=int(game.get('turn') or 0), move=move)
             self.manual = bool(on)
+        if play:
+            self._send(play)  # before handing back, so the client does not start thinking about this position again
         self._send(dict(cmd='manual', on=bool(on)))
         return self.view()
 
@@ -1171,7 +1180,7 @@ def hivebot_action(payload, engines):
     if action == 'hivebot_take':
         return BOT.take(payload.get('id'))
     if action == 'hivebot_manual':
-        return BOT.set_manual(payload.get('on'))
+        return BOT.set_manual(payload.get('on'), payload.get('id'), payload.get('move'))
     if action == 'hivebot_move':
         return BOT.hand_move(payload.get('id'), payload.get('move'))
     if action == 'hivebot_control':

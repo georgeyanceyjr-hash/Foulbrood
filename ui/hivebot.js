@@ -254,7 +254,14 @@
   catch(e){el('hbOpenAll').checked=!on;el('hbStatus').textContent=(window.plainMessage?window.plainMessage(e.message):e.message);el('hbStatus').hidden=false}render()};
  el('hbReopen').onchange=async()=>{render.reopenAt=Date.now();try{bot=await post({action:'hivebot_reopen',on:el('hbReopen').checked})}catch(e){el('hbStatus').textContent=e.message;el('hbStatus').hidden=false}render()};
  el('hbResignLost').onchange=async()=>{try{bot=await post({action:'hivebot_resign_lost',on:el('hbResignLost').checked})}catch(e){el('hbStatus').textContent=e.message;el('hbStatus').hidden=false}render()};
- el('hbManual').onchange=async()=>{try{bot=await post({action:'hivebot_manual',on:el('hbManual').checked})}catch(e){el('hbStatus').textContent=e.message;el('hbStatus').hidden=false}render()};
+ // Handing back to the engine on our turn: if the engine (the bot's own) already finished thinking about this
+ // position, its move is played at once instead of being worked out again.
+ const thoughtMove=()=>{const card=bot&&bot.current;
+  if(!card||card.finished||!card.our_turn||typeof state==='undefined'||!state||state.mode!=='analysis'||state.insight_job==='hint')return null;
+  if(state.ply!==card.turn||!state.hint||!state.hint.move)return null;
+  const insight=(state.engines||[]).find(e=>e.id===state.analysis_engine);if(!insight||!bot.engine||insight.name!==bot.engine)return null;
+  return {id:card.id,move:state.hint.move}};
+ el('hbManual').onchange=async()=>{try{const on=el('hbManual').checked,ready=on?null:thoughtMove();bot=await post({action:'hivebot_manual',on,...(ready||{})})}catch(e){el('hbStatus').textContent=e.message;el('hbStatus').hidden=false}render()};
  try{el('hbInsight').checked=localStorage.getItem('foulbrood_live_insight')==='1'}catch(e){}
  el('hbInsight').onchange=()=>{try{localStorage.setItem('foulbrood_live_insight',el('hbInsight').checked?'1':'0')}catch(e){}render()};
  // Online keeps its own engine-insight switch. While Online is open it decides whether the engine looks at the
