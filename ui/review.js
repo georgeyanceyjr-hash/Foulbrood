@@ -18,9 +18,9 @@ $('modeReview').onclick=()=>{if(editorDraft)$('cancelSetup').click();analysisWor
 function reviewPoint(score){return score==null?null:Math.abs(score)>99000?Math.sign(score)*100:Math.max(-99,Math.min(99,Math.round(100*Math.tanh(score/300))))}
 
 const reviewMarksCache=new Map(),reviewMarksPending=new Set();
-function engineChoiceOn(){try{return localStorage.getItem('foulbrood_engine_choice')!=='0'}catch(e){return true}}
+function engineChoiceOn(){return highlightsOn()}
 {const b=$('engineChoice');if(b){const sync=()=>b.setAttribute('aria-pressed',String(engineChoiceOn()));sync();
- b.onclick=()=>{try{localStorage.setItem('foulbrood_engine_choice',engineChoiceOn()?'0':'1')}catch(e){}sync();reviewMarksCache.clear();if(state)renderReviewMarks(state)}}}
+ b.onclick=()=>{try{localStorage.setItem('foulbrood_engine_choice',engineChoiceOn()?'0':'1')}catch(e){}sync();if(typeof lastBoardKey!=='undefined')lastBoardKey='';if(state)render(state)}}}
 function renderReviewMarks(s){
  const board=$('board');board.querySelectorAll('.review-marks').forEach(e=>e.remove());
  if(window.reviewPreviewActive?.()){ // a tried move on the board carries its grade (or a waiting mark) on the piece itself

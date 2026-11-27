@@ -1203,3 +1203,7 @@ aside #reviewExtra select.review-line-length{width:auto;min-height:0;height:28px
 body:not(.review-mode):not(.moves-max) aside:has(>#analysisModes:not([hidden]))>#historyPanel:not([hidden]):not(.hb-folded){flex:1 1 0;min-height:240px;display:flex;flex-direction:column}
 body:not(.review-mode):not(.moves-max) aside:has(>#analysisModes:not([hidden]))>#historyPanel:not([hidden]):not(.hb-folded)>*{flex:none}
 body:not(.review-mode):not(.moves-max) aside:has(>#analysisModes:not([hidden]))>#historyPanel:not([hidden]):not(.hb-folded) #moves{flex:1 1 0;min-height:0;max-height:none;overflow:auto;align-content:start}
+
+/* Board highlighter button: lit while the last move and the engine's choice are highlighted. */
+.zoom-controls #engineChoice{padding:5px 8px}
+.zoom-controls #engineChoice[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
