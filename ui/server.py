@@ -284,11 +284,52 @@ class App:
         if self.process and self.process.poll() is None: self.process.terminate()
         self.process = None
 
+    @staticmethod
+    def position_key(game,ply=None):
+        parts=game.split(';');moves=parts[3:] if ply is None else parts[3:3+ply]
+        return parts[0]+'|'+';'.join(moves)
+
+    def note_insight(self):
+        # Analysis: every position the engine insight has rated is remembered (by its moves), so the move list can show
+        # the rating on the move that led to it, also after stepping around in the game.
+        if self.mode!='analysis' or self.review:return
+        insight=self.insight_worker or self;hint=insight.hint;s=self.session
+        if not hint or not hint.get('move') or s is None:return
+        engine=self.engines.get(self.engines.analysis_engine)
+        if not engine:return
+        try:
+            entry={0:dict(ply=0,game=s.data['game'],side=s.data['side'],engine=engine_identity(engine),milliseconds=0,evaluation=hint)}
+            point=history_points(entry)[0]
+        except Exception:return
+        if point['score'] is None:return
+        if not hasattr(self,'position_evals'):self.position_evals={}
+        key=self.position_key(s.data['game'])
+        old=self.position_evals.get(key)
+        if old is None or (point.get('depth') or 0)>=(old[1] or 0):self.position_evals[key]=(point['score'],point.get('depth'))
+        if len(self.position_evals)>5000:self.position_evals.pop(next(iter(self.position_evals)))
+
+    def saved_review_rows(self,s):
+        # Outside Game review (Analysis, Position): the colours and ratings of a review already done on this game.
+        if self.mode!='analysis' or self.review is not None:return None
+        try:
+            found=[r for r in self.saved_reviews.values() if r.game==s.review_game and r.source!='in_game' and (r.rows or getattr(r,'single',None))]
+            if not found:return None
+            best=max(found,key=lambda r:len(r.rows)+len(getattr(r,'single',{})))
+            return best.view()['rows']
+        except Exception:return None
+
     def move_ratings(self,s):
-        # The engine's rating of each move made in this game (White's view), for the move list.
+        # The engine's rating of each move made in this game (White's view), for the move list:
+        # Local, what was recorded at each move; Analysis, the rating of the position each move led to.
         try:
             total=len(s.review_game.split(';')[3:])
-            return [[p['ply']+1,p['score'],p.get('depth')] for p in history_points(s.analysis_history) if p['score'] is not None and p['ply']<total]
+            out={p['ply']+1:[p['ply']+1,p['score'],p.get('depth')] for p in history_points(s.analysis_history) if p['score'] is not None and p['ply']<total}
+            if self.mode=='analysis':
+                evals=getattr(self,'position_evals',{})
+                for k in range(1,total+1):
+                    found=evals.get(self.position_key(s.review_game,k))
+                    if found:out[k]=[k,found[0],found[1]]
+            return [out[k] for k in sorted(out)]
         except Exception:return []
 
     def step_aside(self):
@@ -515,6 +556,7 @@ class App:
     def view(self):
         with self.lock:
             self.last_seen=time.monotonic()
+            self.note_insight()
             self.expired()
             self.capture_live_insights()
             s=self.session
@@ -526,7 +568,7 @@ class App:
             insight=self.insight_worker or self
             recorded=reviewing or self.mode=='play' and s.finished or self.review and self.review.source=='in_game'
             finished=shown['ply']==len(s.review_game.split(';')[3:]) and (s.finished or s.reported_result in (*TERMINAL,'1-0','0-1','1/2-1/2'))
-            return dict(**shown,move_ratings=self.move_ratings(s),recorded_analysis=visible_history(s.analysis_history,shown['ply'],finished=finished) if recorded else None,use_recorded_analysis=bool(recorded),review_work_available=bool(self.reviews_with_work()),analysis_review_available=self.analysis_review_available(),parallel_insight_allowed=self.parallel_insight_allowed(),insight_job=insight.job if insight.job=='hint' else None,engine_thoughts=[dict(t,elapsed=max(0,time.monotonic()-t['started']) if t['status']=='thinking' else (t.get('evaluation') or {}).get('seconds',0)) if t else None for t in s.thoughts],engines=[dict(e,connected=bool(e.get('connected')) and (e['id']=='Computer' or not e.get('path') or Path(e['path']).exists())) for e in self.engines.entries],builtin_connected=self.engines.builtin_connected,builtin_present=self.engines.builtin_present,analysis_engine=self.engines.analysis_engine,game_review=self.review.view() if self.review else None,setup_placed=s.setup_placed,reviewing=reviewing,review_game=s.review_game,live_game=s.data['game'],live_side=s.data['side'],mode=self.mode,players=s.players,time_control=s.time_control,
+            return dict(**shown,move_ratings=self.move_ratings(s),saved_review_rows=self.saved_review_rows(s),recorded_analysis=visible_history(s.analysis_history,shown['ply'],finished=finished) if recorded else None,use_recorded_analysis=bool(recorded),review_work_available=bool(self.reviews_with_work()),analysis_review_available=self.analysis_review_available(),parallel_insight_allowed=self.parallel_insight_allowed(),insight_job=insight.job if insight.job=='hint' else None,engine_thoughts=[dict(t,elapsed=max(0,time.monotonic()-t['started']) if t['status']=='thinking' else (t.get('evaluation') or {}).get('seconds',0)) if t else None for t in s.thoughts],engines=[dict(e,connected=bool(e.get('connected')) and (e['id']=='Computer' or not e.get('path') or Path(e['path']).exists())) for e in self.engines.entries],builtin_connected=self.engines.builtin_connected,builtin_present=self.engines.builtin_present,analysis_engine=self.engines.analysis_engine,game_review=self.review.view() if self.review else None,setup_placed=s.setup_placed,reviewing=reviewing,review_game=s.review_game,live_game=s.data['game'],live_side=s.data['side'],mode=self.mode,players=s.players,time_control=s.time_control,
                         clocks=s.clock.values(),running=s.running,timeout_side=s.timeout_side,resigned_side=s.resigned_side,
                         import_info=s.import_info,player_names=s.player_names,reported_result=s.reported_result,play_finished=self.mode=='play' and s.finished,
                         completed_state=s.review_game.split(';')[1],review_total=len(s.review_game.split(';')[3:]),

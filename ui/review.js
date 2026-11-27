@@ -393,8 +393,10 @@ window.decorateHistory=s=>{
    if(tag.textContent!==text)tag.textContent=text}}
  // Local and Online (no review): the engine's own rating of each move it made, as in Game review.
  const played=review?null:playedRatings(s);
+ // Outside Game review, a review already done on this game still colours and rates the moves (clicking does not review).
+ const savedRows=!review&&Array.isArray(s.saved_review_rows)?new Map(s.saved_review_rows.map(r=>[r.ply,r])):null;
  for(const item of list.querySelectorAll(':scope > button.history-move')){
-  const number=item.querySelector('.move-number'),ply=number?parseInt(number.textContent,10):0,row=review&&ply?rows.get(ply):played&&ply?played.get(ply):null;
+  const number=item.querySelector('.move-number'),ply=number?parseInt(number.textContent,10):0,row=review&&ply?rows.get(ply):(savedRows&&ply&&savedRows.get(ply))||(played&&ply?played.get(ply):null);
   const verdict=row?historyVerdicts[row.label]||'':'';
   let tag=item.querySelector('.move-rating');
   // The move being reviewed on its own says so in the list, where it was clicked.

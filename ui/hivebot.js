@@ -120,7 +120,7 @@
   shown={id:g.id,turn:g.turn};
   if(have)return;
   if(g.finished&&/^Aborted/.test(g.result||''))return; // an aborted game has no record on hivegame.com to load
-  try{await action({action:'load_link',url:g.url,confirm_review_clear:true});if(back!=null)await whenFree(()=>action({action:'navigate',ply:back}))}catch(e){}
+  try{await action({action:'load_link',url:g.url,confirm_review_clear:true});try{if(typeof state!=='undefined'&&state)window.foulbroodLinkSeen?.(state.review_game||state.game,g.url)}catch(e){}if(back!=null)await whenFree(()=>action({action:'navigate',ply:back}))}catch(e){}
  };
  // Clocks tick locally between status updates.
  const fmt=t=>{if(t==null||!Number.isFinite(t))return '—';t=Math.max(0,t);const m=Math.floor(t/60),sec=Math.floor(t%60);return (m<10?'0':'')+m+':'+(sec<10?'0':'')+sec};
@@ -721,7 +721,7 @@
  if(opened&&opened.id)setTimeout(()=>call('get',{id:opened.id}).then(g=>{if(!opened||opened.id!==g.id)return;if(Array.isArray(g.times))opened.times=g.times;if(g.bot_evals&&g.bot_name){opened.evals=g.bot_evals;opened.bot=g.bot_name}if(g.result)opened.result=g.result;
   try{localStorage.setItem('foulbrood_analysis_players',JSON.stringify(opened))}catch(e){}try{if(typeof lastBoardKey!=='undefined')lastBoardKey='';if(typeof render==='function'&&typeof serverState!=='undefined'&&(serverState||state))render(serverState||state)}catch(e){}}).catch(()=>{}),600);
  const rememberPlayers=g=>{
-  opened={moves:movesOf(g.game),id:g.id};for(const k of ['white','black','white_kind','black_kind','white_rating','black_rating','white_change','black_change','time_control','played','source','result'])if(g[k]!=null)opened[k]=g[k];if(Array.isArray(g.times))opened.times=g.times;if(g.bot_evals&&g.bot_name){opened.evals=g.bot_evals;opened.bot=g.bot_name}
+  opened={moves:movesOf(g.game),id:g.id};for(const k of ['url','white','black','white_kind','black_kind','white_rating','black_rating','white_change','black_change','time_control','played','source','result'])if(g[k]!=null)opened[k]=g[k];if(Array.isArray(g.times))opened.times=g.times;if(g.bot_evals&&g.bot_name){opened.evals=g.bot_evals;opened.bot=g.bot_name}
   try{localStorage.setItem('foulbrood_analysis_players',JSON.stringify(opened))}catch(e){}
  };
  let wantPly=null;
@@ -749,6 +749,22 @@
  // How the game opened from History ended, while it is still the game on the Analysis board ("... by resignation" / "... on time").
  window.foulbroodOpenedTimes=s=>{try{if(!opened||!opened.moves||!Array.isArray(opened.times)||!s)return null;const now=movesOf(s.review_game||s.game);return now===opened.moves||now.startsWith(opened.moves+';')||opened.moves.startsWith(now+';')?opened.times:null}catch(e){return null}};
  window.foulbroodOpenedEvals=s=>{try{if(!opened||!opened.moves||!opened.evals||!s)return null;const now=movesOf(s.review_game||s.game);if(!(now===opened.moves||now.startsWith(opened.moves+';')||opened.moves.startsWith(now+';')))return null;return {bot:opened.bot,side:opened.white===opened.bot?0:1,evals:opened.evals}}catch(e){return null}};
+ // The hivegame.com page of the game on the Analysis board (from the Archive or the Online board), shown under the History title.
+ const linkByMoves=new Map();
+ window.foulbroodLinkSeen=(game,url)=>{const m=movesOf(game);if(m&&url){linkByMoves.set(m,url);if(linkByMoves.size>40)linkByMoves.delete(linkByMoves.keys().next().value)}};
+ const analysisLink=s=>{
+  const now=movesOf(s.review_game||s.game);if(!now)return null;
+  const same=m=>m&&(now===m||now.startsWith(m+';')||m.startsWith(now+';'));
+  if(opened&&opened.url&&same(opened.moves))return opened.url;
+  for(const [m,url]of linkByMoves)if(same(m))return url;
+  return null;
+ };
+ {const row=document.createElement('div');row.id='anLinkRow';row.className='hb-link-row';row.hidden=true;
+  const a=document.createElement('a');a.href='#';a.textContent='Open on hivegame.com ↗';a.target='_blank';a.rel='noopener noreferrer';row.append(a);
+  a.onclick=e=>{e.preventDefault();const url=a.dataset.url;if(url)fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Board-Token':window.BOARD_TOKEN},body:JSON.stringify({action:'hivebot_open',url})}).then(r=>{if(!r.ok)throw 0}).catch(()=>window.open(url,'_blank'))};
+  const panel=document.getElementById('historyPanel'),head=panel&&panel.querySelector(':scope > .row');if(head)head.after(row);
+  setInterval(()=>{try{const url=typeof state!=='undefined'&&state&&state.mode==='analysis'&&!document.body.classList.contains('hb-live')&&!(typeof editorDraft!=='undefined'&&editorDraft)?analysisLink(state):null;
+   row.hidden=!url;if(url&&a.dataset.url!==url){a.dataset.url=url;a.href=url}}catch(e){}},700)}
  window.foulbroodOpenedResult=s=>{try{if(!opened||!opened.moves||!s)return '';const now=movesOf(s.review_game||s.game);return now===opened.moves||now.startsWith(opened.moves+';')||opened.moves.startsWith(now+';')?String(opened.result||''):''}catch(e){return ''}};
  const openGame=async(id,ply)=>{
   const g=await call('get',{id});
