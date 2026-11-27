@@ -309,7 +309,7 @@ class App:
         if not hasattr(self,'position_evals'):self.position_evals={}
         key=self.position_key(s.data['game'])
         old=self.position_evals.get(key)
-        if old is None or (point.get('depth') or 0)>=(old[1] or 0):self.position_evals[key]=(point['score'],point.get('depth'))
+        if old is None or (point.get('depth') or 0)>=(old[1] or 0):self.position_evals[key]=(point['score'],point.get('depth'),hint.get('move'))
         if len(self.position_evals)>5000:self.position_evals.pop(next(iter(self.position_evals)))
 
     def saved_review_rows(self,s):
@@ -321,6 +321,21 @@ class App:
             best=max(found,key=lambda r:len(r.rows)+len(getattr(r,'single',{})))
             return best.view()['rows']
         except Exception:return None
+
+    def suggested_move(self,s,game,ply):
+        """The engine's choice for move `ply` of `game` (from the position before it), wherever one is known:
+        a Game review (live or saved), the Analysis insight, or what was recorded while the game was played on Local."""
+        rows=[]
+        if self.review is not None and self.review.game==s.review_game:
+            rows=list(self.review.rows)+list(getattr(self.review,'single',{}).values())
+        elif self.mode=='analysis':rows=self.saved_review_rows(s) or []
+        row=next((r for r in rows if r.get('ply')==ply),None)
+        if row:return None if row.get('label')=='Book' else row.get('alternative')
+        found=getattr(self,'position_evals',{}).get(self.position_key(game,ply-1)) if self.mode=='analysis' else None
+        if found and len(found)>2 and found[2]:return found[2]
+        entry=s.analysis_history.get(ply-1)
+        if entry and isinstance(entry.get('evaluation'),dict):return entry['evaluation'].get('move')
+        return None
 
     def move_ratings(self,s):
         # The engine's rating of each move made in this game (White's view), for the move list:
@@ -671,6 +686,23 @@ class App:
             elif action=='review_try_forget':
                 if not self.review or self.mode!='analysis':raise ValueError('Open Game review first.')
                 self.review.forget_try(payload.get('ply'),payload.get('move'));self.revision+=1
+            elif action=='suggest_mark':
+                # The board's "engine's choice" mark for the move that led to the position shown.
+                game=payload.get('game');ply=payload.get('ply')
+                if not isinstance(game,str) or type(ply) is not int or ply<1:return dict(mark=None)
+                full=s.review_game if s.review_game else s.data['game']
+                parts=game.split(';');moves=parts[3:]
+                if len(moves)!=ply or parts[0]!=full.split(';')[0] or full.split(';')[3:3+ply]!=moves:return dict(mark=None)
+                choice=self.suggested_move(s,game,ply)
+                if not choice:return dict(mark=None)
+                before=snapshot('undo',game)
+                move=next((m for m in before['legal'] if m['move']==choice),None)
+                played=next((m for m in before['legal'] if m['move']==moves[-1]),None)
+                if not move or not move.get('to'):return dict(mark=None)
+                if played and played.get('piece')==move['piece'] and played.get('to')==move['to']:return dict(mark=None)  # the engine's choice was played
+                piece=next((p for p in before['pieces'] if p['id']==move['piece']),None)
+                level=sum(1 for p in before['pieces'] if p['q']==move['to'][0] and p['r']==move['to'][1] and p['id']!=move['piece'])
+                return dict(mark=dict(piece=move['piece'],to=move['to'],level=level,side=before['side'],origin=[piece['q'],piece['r']] if piece else None,origin_level=piece.get('level',0) if piece else 0))
             elif action=='review_marks':
                 if not self.review or self.mode!='analysis':raise ValueError('Open Game review first.')
                 ply=payload.get('ply')

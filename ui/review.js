@@ -18,6 +18,9 @@ $('modeReview').onclick=()=>{if(editorDraft)$('cancelSetup').click();analysisWor
 function reviewPoint(score){return score==null?null:Math.abs(score)>99000?Math.sign(score)*100:Math.max(-99,Math.min(99,Math.round(100*Math.tanh(score/300))))}
 
 const reviewMarksCache=new Map(),reviewMarksPending=new Set();
+function engineChoiceOn(){try{return localStorage.getItem('foulbrood_engine_choice')!=='0'}catch(e){return true}}
+{const b=$('engineChoice');if(b){const sync=()=>b.setAttribute('aria-pressed',String(engineChoiceOn()));sync();
+ b.onclick=()=>{try{localStorage.setItem('foulbrood_engine_choice',engineChoiceOn()?'0':'1')}catch(e){}sync();reviewMarksCache.clear();if(state)renderReviewMarks(state)}}}
 function renderReviewMarks(s){
  const board=$('board');board.querySelectorAll('.review-marks').forEach(e=>e.remove());
  if(window.reviewPreviewActive?.()){ // a tried move on the board carries its grade (or a waiting mark) on the piece itself
@@ -34,17 +37,17 @@ function renderReviewMarks(s){
   const text=node('text',{x,y:y+5,'text-anchor':'middle'});text.textContent=label;badge.append(text);board.append(badge);
   return;
  }
- if(globalThis.insightSuggestionsVisible?.(s)===false)return;
- const row=s.game_review?.rows.find(r=>r.ply===s.ply);
- if(!row?.alternative||row.alternative===row.move||row.label==='Book')return; // every graded move shows the engine's preferred move
- const key=s.game+'|'+row.alternative;
+ // The engine's choice for the move that led here (Local, Online, Position, Game review), switched with the board's Best button.
+ if(!engineChoiceOn()||!(s.ply>=1)||editorDraft)return;
+ const rowsKey=(s.game_review?.rows||[]).map(r=>r.ply+(r.alternative||'')).join(',')+'|'+(s.saved_review_rows||[]).length+'|'+(s.move_ratings||[]).map(r=>r[0]+':'+r[2]).join(',')+'|'+JSON.stringify(s.recorded_analysis||null).length;
+ const key=s.game+'|'+s.ply+'|'+rowsKey;
  if(!reviewMarksCache.has(key)){
   if(reviewMarksPending.has(key))return;reviewMarksPending.add(key);
-  fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Board-Token':window.BOARD_TOKEN},body:JSON.stringify({action:'review_marks',ply:s.ply})}).then(async r=>{const data=await r.json();if(r.ok){reviewMarksCache.set(key,data.mark);if(reviewMarksCache.size>200)reviewMarksCache.delete(reviewMarksCache.keys().next().value);if(state?.game===s.game)renderReviewMarks(state)}}).catch(()=>{}).finally(()=>reviewMarksPending.delete(key));return;
+  fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Board-Token':window.BOARD_TOKEN},body:JSON.stringify({action:'suggest_mark',game:s.game,ply:s.ply})}).then(async r=>{const data=await r.json();if(r.ok){reviewMarksCache.set(key,data.mark);if(reviewMarksCache.size>200)reviewMarksCache.delete(reviewMarksCache.keys().next().value);if(state?.game===s.game)renderReviewMarks(state)}}).catch(()=>{}).finally(()=>reviewMarksPending.delete(key));return;
  }
  const mark=reviewMarksCache.get(key);if(!mark)return;
  // Drawn like an Analysis suggestion: gold for White's moves, blue for Black's.
- const color=hintColor(row.side??1-s.side);
+ const color=hintColor(mark.side??1-s.side);
  const layer=node('g',{class:'review-marks suggestion-trail','pointer-events':'none','aria-label':'Preferred move'}),[x,baseY]=xy(...mark.to);
  const height=mark.level??s.pieces.filter(p=>p.q===mark.to[0]&&p.r===mark.to[1]&&p.id!==mark.piece).length,y=baseY-height*10;
  if(mark.origin){
