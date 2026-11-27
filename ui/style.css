@@ -1188,3 +1188,6 @@ body.hb-live #hbLinkRow:not([hidden]){display:block}
 
 /* Engine line length, beside its button. */
 aside #reviewExtra select.review-line-length{width:auto;min-height:0;height:28px;padding:2px 6px;font-size:12px;margin:0}
+
+/* Game review status bar: the move number a little bigger. */
+.player .review-thought-heading>small{font-size:12px;line-height:1.4}
