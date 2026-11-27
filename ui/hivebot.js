@@ -270,7 +270,14 @@
   const want=!!card&&!card.finished&&((!!manual&&!!card.our_turn)||(el('hbInsight').checked&&!card.our_turn));
   if(!!state.hints!==want&&Date.now()-insightAt>1500&&!(typeof busy!=='undefined'&&busy)){insightAt=Date.now();action({action:'hints',enabled:want}).catch(()=>{})}
  };
- setInterval(()=>{try{const card=bot&&bot.running?bot.current:null;syncInsight(card,bot&&bot.manual)}catch(e){}},700);
+ // With "Engine insight on the opponent", the engine's rating of each position the opponent moved from is kept for the move list.
+ const oppRatings={};
+ const recordOpp=card=>{
+  if(!card||card.our_turn||card.finished||!liveOn()||typeof state==='undefined'||!state||!state.hints||!state.hint||state.ply!==card.turn)return;
+  const engine=(state.engines||[]).find(e=>e.id===state.analysis_engine),rating=typeof positionScoreValue==='function'?positionScoreValue(state.hint,engine):null;
+  if(rating==null)return;(oppRatings[card.id]=oppRatings[card.id]||{})[card.turn+1]={rating,depth:state.hint.depth||null};
+ };
+ setInterval(()=>{try{const card=bot&&bot.running?bot.current:null;syncInsight(card,bot&&bot.manual);recordOpp(card)}catch(e){}},700);
  el('hbPass').onclick=()=>{if(typeof action==='function')action({action:'move',move:'pass'})};
  el('hbResign').onclick=()=>{const card=handCard();if(!card)return;ask('Resign this game?','You will lose the game on hivegame.com. Continue?','Resign',async()=>{try{bot=await post({action:'hivebot_control',id:card.id,what:'Resign'})}catch(e){if(typeof toast==='function')toast(e.message)}render()})};
  const render=()=>{
@@ -365,7 +372,7 @@
    last[id]=text;if(typeof toast==='function')toast(text.replace(/\s*\n\s*/g,' · '))};
   for(const id of ['hbStatus','hbLog'])new MutationObserver(()=>banner(id)).observe(el(id),{childList:true,characterData:true,subtree:true});
   new MutationObserver(()=>{if(document.body.classList.contains('hb-live')){banner('hbLog');banner('hbStatus')}}).observe(document.body,{attributes:true,attributeFilter:['class']})}
- window.foulbroodLiveEvals=s=>{try{const card=boardCard(s);if(!card||(!card.evals&&!card.hand))return null;return {side:card.white===bot.user?0:1,evals:card.evals||{},hand:card.hand||[]}}catch(e){return null}};
+ window.foulbroodLiveEvals=s=>{try{const card=boardCard(s);if(!card)return null;return {side:card.white===bot.user?0:1,evals:card.evals||{},hand:card.hand||[],opp:oppRatings[card.id]||{}}}catch(e){return null}};
  const drawNativePreview=s=>{
   const board=el('board');board.querySelectorAll('.hb-native-preview').forEach(n=>n.remove());
   const card=nativeCard(s);if(!card||!card.thinking||s.ply!==card.info.turn)return;
