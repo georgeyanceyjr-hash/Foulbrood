@@ -1,4 +1,6 @@
-# FoulBrood GUI
+<p align="center"><img src="ui/foulbrood-hive.png" alt="FoulBrood bee" width="160"></p>
+
+# FoulBrood II
 
 A local Hive board-game viewer for playing, exploring positions and reviewing games. Connect your own UHP engine; no playing engine is bundled or required for human play.
 

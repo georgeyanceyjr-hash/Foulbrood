@@ -15,6 +15,15 @@ def pe_x64(path):
         raise ValueError('Expected an Intel/AMD 64-bit Windows executable: '+str(path))
 
 
+def has_icon(path):
+    """True when the executable carries a resource section (the bee program icon)."""
+    data = Path(path).read_bytes()
+    pe = struct.unpack_from('<I', data, 0x3c)[0]
+    sections, opt = struct.unpack_from('<H', data, pe+6)[0], struct.unpack_from('<H', data, pe+20)[0]
+    table = pe+24+opt
+    return any(data[table+40*i:table+40*i+8].rstrip(b'\0') == b'.rsrc' for i in range(sections))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('destination', type=Path)
@@ -30,13 +39,17 @@ def main():
         ap.error('Use a new staging directory; destination already exists.')
     pe_x64(args.board_helper)
     pe_x64(args.launcher)
+    if not has_icon(args.launcher):
+        ap.error('The launcher has no program icon. Build it with the icon resource: '
+                 'x86_64-w64-mingw32-windres ui/launcher_windows.rc -O coff -o icon.o && '
+                 'x86_64-w64-mingw32-gcc -municode -mwindows -Os -s ui/launcher_windows.c icon.o -o launcher.exe')
     resources = app/'Resources'
     (resources/'ui').mkdir(parents=True)
     (resources/'target/release').mkdir(parents=True)
     names = ['platform_support.py','external_engines.py','engines.js','hivegame.py',
              'game_review.py','review_file.py','live_analysis.py','review.js',
              'opening_book.py','analytic.py','server.py','import_game.py','export_game.py',
-             'notation.py','index.html','style.css','app.js','pieces.js','foulbrood-hive.png']
+             'notation.py','index.html','style.css','app.js','pieces.js','foulbrood-hive.png','FoulBrood.ico']
     for name in names:
         shutil.copy2(root/'ui'/name, resources/'ui'/name)
     shutil.copytree(root/'ui/vendor', resources/'ui/vendor', ignore=shutil.ignore_patterns('__pycache__','*.pyc'))

@@ -27,13 +27,14 @@ html.write_text(html.read_text().replace('/foulbrood-hive.png','data:image/png;b
 shutil.copytree(root/'ui/vendor',resources/'ui/vendor',dirs_exist_ok=True,ignore=shutil.ignore_patterns('__pycache__'))
 for name in (['board_view'] if args.beta else ['board_view','bench_search','foulbrood']):
     shutil.copy2(root/'target/release'/name,resources/'target/release'/name)
+shutil.copy2(root/'ui/FoulBrood.icns',resources/'FoulBrood.icns')  # Finder, Launchpad and Dock icon
 launcher=contents/'MacOS/FoulBrood'
 shutil.copy2(root/'ui/launcher.py',resources/'launcher.py')
 subprocess.run(['/usr/bin/clang',str(root/'ui/launcher.c'),'-Os','-mmacosx-version-min=11.0','-o',str(launcher)],check=True)
 launcher.chmod(0o755)
 with (contents/'Info.plist').open('wb') as f:
     plistlib.dump(dict(CFBundleExecutable='FoulBrood',CFBundleIdentifier='local.foulbrood.gui.beta' if args.beta else 'local.foulbrood.board',
-                      CFBundleName='FoulBrood II',CFBundleDisplayName='FoulBrood II',CFBundlePackageType='APPL',
+                      CFBundleName='FoulBrood II',CFBundleIconFile='FoulBrood',CFBundleDisplayName='FoulBrood II',CFBundlePackageType='APPL',
                       CFBundleVersion=VIEWER_VERSION,CFBundleShortVersionString=VIEWER_VERSION,LSMinimumSystemVersion='11.0',LSUIElement=True),f)
 if args.beta:
     distribution=args.python_distribution
