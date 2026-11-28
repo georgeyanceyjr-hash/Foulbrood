@@ -41,7 +41,7 @@ class _App:
 def _engine():
     entries = json.loads((library.ROOT.parent / 'engines.json').read_text()).get('entries') or []
     usable = [e for e in entries if e.get('connected') and e.get('review_supported') and e.get('path')]
-    return next((e for e in usable if e.get('name') == 'FoulBrood Book'), None) or \
+    return next((e for e in usable if str(e.get('name') or '').startswith('FoulBrood') and str(e.get('name') or '').endswith(' Book')), None) or \
         next((e for e in usable if e.get('score_adapter') == 'foulbrood'), None)
 
 

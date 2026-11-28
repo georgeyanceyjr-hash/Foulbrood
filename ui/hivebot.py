@@ -1148,9 +1148,10 @@ def hivebot_action(payload, engines):
     # Show the engine under the FoulBrood name, without net tag or build number (the viewer does the same when it starts).
     for entry in getattr(engines, 'entries', None) or []:
         name = entry.get('name') if isinstance(entry, dict) else None
-        if isinstance(name, str) and name.startswith(('ThoraxRex', 'FoulBrood ')) and not name.startswith('FoulBrood Legacy') \
-                and name not in ('FoulBrood', 'FoulBrood Book'):
-            entry['name'] = 'FoulBrood Book' if ' Book' in name else 'FoulBrood'
+        if isinstance(name, str):
+            from external_engines import foulbrood_name
+            if foulbrood_name(name) != name:
+                entry['name'] = foulbrood_name(name)
     _ensure_built_in(engines)
     action = payload.get('action')
     if isinstance(action, str) and action.startswith('hivebot_library_'):

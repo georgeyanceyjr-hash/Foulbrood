@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Assemble a portable local app from the checked build, without network access."""
 import argparse
+VIEWER_VERSION = '1.0'  # FoulBrood II v1.0: the first release of the second viewer
 import hashlib
 import json
 import base64
@@ -32,8 +33,8 @@ subprocess.run(['/usr/bin/clang',str(root/'ui/launcher.c'),'-Os','-mmacosx-versi
 launcher.chmod(0o755)
 with (contents/'Info.plist').open('wb') as f:
     plistlib.dump(dict(CFBundleExecutable='FoulBrood',CFBundleIdentifier='local.foulbrood.gui.beta' if args.beta else 'local.foulbrood.board',
-                      CFBundleName='FoulBrood GUI Beta' if args.beta else 'FoulBrood',CFBundleDisplayName='FoulBrood GUI Beta' if args.beta else 'FoulBrood',CFBundlePackageType='APPL',
-                      CFBundleVersion='3' if args.beta else '13',CFBundleShortVersionString='0.1.0' if args.beta else '0.13',LSMinimumSystemVersion='11.0',LSUIElement=True),f)
+                      CFBundleName='FoulBrood II',CFBundleDisplayName='FoulBrood II',CFBundlePackageType='APPL',
+                      CFBundleVersion=VIEWER_VERSION,CFBundleShortVersionString=VIEWER_VERSION,LSMinimumSystemVersion='11.0',LSUIElement=True),f)
 if args.beta:
     distribution=args.python_distribution
     metadata=json.loads((distribution/'PYTHON.json').read_text())

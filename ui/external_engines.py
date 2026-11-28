@@ -70,10 +70,25 @@ def release_display_name(path, name):
         return 'Foulbrood Legacy (bundled)'
     if resolved == str(Path.home()/'Documents/Codex/FoulBroodData/Engines/FoulBrood-Pillbug-test/foulbrood'):
         return 'Foulbrood 2.0'
-    # The engine is shown under the FoulBrood name, without net tag or build number: "FoulBrood Book" or "FoulBrood".
-    if isinstance(name, str) and name.startswith(('ThoraxRex', 'FoulBrood')) and not name.startswith('FoulBrood Legacy'):
-        return 'FoulBrood Book' if ' Book' in name else 'FoulBrood'
-    return name
+    return foulbrood_name(name)
+
+
+def foulbrood_name(name):
+    """The FoulBrood engine is shown without net tags or build numbers: "FoulBrood Engine", "FoulBrood Engine Book".
+    A published version (1.0 and up) keeps its number: "FoulBrood Engine v1.0", "FoulBrood Engine v1.0 Book".
+    Pre-release builds are 0.x and show no number."""
+    if not (isinstance(name, str) and name.startswith(('ThoraxRex', 'FoulBrood')) and not name.startswith('FoulBrood Legacy')):
+        return name
+    import re
+    version = re.search(r'(?<![\d.])v?(\d+)\.(\d+)(?:\.\d+)?(?![\d.])', name)
+    shown = 'FoulBrood Engine'
+    if version and int(version.group(1)) >= 1:
+        shown += ' v%s.%s' % (version.group(1), version.group(2))
+    return shown + (' Book' if ' Book' in name else '')
+
+
+def is_foulbrood(name):
+    return isinstance(name, str) and name.startswith('FoulBrood') and not name.startswith('FoulBrood Legacy')
 
 def inspect_engine(path):
     path=str(Path(path).expanduser().resolve())
@@ -130,7 +145,7 @@ class EngineLibrary:
         entry['connected']=True;self.entries.append(entry);self.save();return entry
     def remove(self,key):
         # The FoulBrood engine is part of the viewer and stays installed.
-        if (self.get(key) or {}).get('name') in ('FoulBrood','FoulBrood Book'):raise ValueError('FoulBrood is built in and cannot be removed.')
+        if is_foulbrood((self.get(key) or {}).get('name')):raise ValueError('FoulBrood is built in and cannot be removed.')
         self.entries=[e for e in self.entries if e['id']!=key];self.save()
     def check_variant(self,key,variant):
         e=self.get(key)

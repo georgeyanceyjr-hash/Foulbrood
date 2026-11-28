@@ -50,7 +50,7 @@ window.renderEngines=s=>{
   const row=document.createElement('div');row.className='engine-entry';const info=document.createElement('div'),name=document.createElement('strong'),path=document.createElement('small'),status=document.createElement('span');name.textContent=e.name;path.textContent=e.path;status.textContent=(e.connected?'Connected':'Disconnected')+' · Game review: '+(e.review_supported?'yes':'no')+' · Set-up positions: '+(e.setup_supported===true?'yes':'no');status.className='engine-connection'+(e.connected?' connected':'');info.append(name,path,status);
   const controls=document.createElement('div');controls.className='engine-entry-controls';
   // The FoulBrood engine is part of the viewer: always installed, never removed.
-  if(e.name==='FoulBrood'||e.name==='FoulBrood Book'){const built=document.createElement('span');built.className='caption';built.textContent='Built in';controls.append(built)}
+  if(/^FoulBrood Engine( v\d+\.\d+)?( Book)?$/.test(e.name||'')){const built=document.createElement('span');built.className='caption';built.textContent='Built in';controls.append(built)}
   else{const toggle=document.createElement('button');toggle.textContent=e.connected?'Disconnect':'Connect';toggle.onclick=()=>engineRequest({action:'engine_toggle',id:e.id,connected:!e.connected});controls.append(toggle);
   const remove=document.createElement('button');remove.textContent='Remove';remove.disabled=e.connected;remove.title=e.connected?'Disconnect before removing':'';remove.onclick=()=>engineRequest({action:'engine_remove',id:e.id});controls.append(remove)}row.append(info,controls);$('engineList').append(row);
  }
