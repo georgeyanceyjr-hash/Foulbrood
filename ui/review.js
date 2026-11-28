@@ -6,6 +6,7 @@ function reviewLineLength(){let n=4;try{n=parseInt(localStorage.getItem('foulbro
 // Analysis workspaces share one board and history cursor.
 // Analysis reopens where it was last left (Game review the first time).
 // Empty Game review: "Import" (Position screen with every import option open) and "Archive".
+$('reviewClear')?.addEventListener('click',()=>{if(state?.mode!=='analysis')return;$('position').value='';confirmViewerAction('Clear the game?','This clears the board, the moves and this review from Analysis. Saved games in the Archive stay.','Clear game',{action:'load',text:state.game.split(';')[0].split('~')[0],confirm_review_clear:true})});
 function reviewStartLinks(){const p=$('reviewProgress');if(p.querySelector('.start-links'))return;p.textContent='';const box=document.createElement('span');box.className='start-links';
  const mk=(label,title,go)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.title=title;b.onclick=go;box.append(b)};
  mk('Import','Open a file, a hivegame.com link or a move list',async()=>{$('modeAnalyze').click();for(let i=0;i<20&&$('analysisSetup').hidden;i++)await new Promise(r=>setTimeout(r,100));for(const id of ['fileEntry','linkEntry','manualEntry'])if($(id))$(id).open=true});
@@ -401,6 +402,7 @@ window.decorateHistory=s=>{
  const review=s?.game_review,list=$('moves');if(!list)return;
  reviewInfo.hidden=!review||!!editorDraft;
  reviewSettings(!!review&&!editorDraft&&s.mode==='analysis');
+ {const c=$('reviewClear');if(c)c.hidden=!(review&&!editorDraft&&s.mode==='analysis'&&(review.total||s.pieces?.length))}
  {const go=$('reviewGo'),src=$('analyze');if(go&&src){if(go.textContent!==src.textContent)go.textContent=src.textContent;go.disabled=src.disabled;go.hidden=!review}}
  const running=review?.status==='running';
  if(reviewWasRunning===false&&running)window.setMovesMax?.(true); // a review just started: give the history the whole side panel
