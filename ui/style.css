@@ -1224,3 +1224,7 @@ body:not(.review-mode):not(.moves-max) aside:has(>#analysisModes:not([hidden]))>
 .name-editor{position:fixed;z-index:50;top:120px;left:50%;transform:translateX(-50%);min-width:240px;max-width:90vw;padding:14px;border:1px solid var(--line);border-left:3px solid var(--hazard);background:var(--paper);color:var(--ink);box-shadow:0 10px 30px #0008;display:grid;gap:8px}
 .name-editor .name-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.name-editor .name-row button{min-width:0;padding:2px 10px}
 h1 .app-version{font-size:.42em;font-weight:600;letter-spacing:.08em;opacity:.65;vertical-align:middle}
+/* Empty Game review: Import, Archive and Start review as three equal buttons across */
+#reviewInfo .review-info-line:has(.start-links){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:stretch}
+#reviewInfo .review-info-line:has(.start-links)>.review-info-text,#reviewInfo .review-info-line:has(.start-links) #reviewProgress,#reviewProgress .start-links{display:contents}
+#reviewInfo .review-info-line:has(.start-links)>button,#reviewProgress .start-links button{width:100%;min-width:0;margin:0;padding-left:4px;padding-right:4px;letter-spacing:.06em;white-space:normal;line-height:1.15;justify-content:center;text-align:center}

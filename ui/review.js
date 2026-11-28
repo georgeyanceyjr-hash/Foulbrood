@@ -5,6 +5,12 @@ function reviewCountdown(e){const k=e.kind+'|'+e.ply+'|'+(e.move||'')+'|'+(e.exp
 function reviewLineLength(){let n=4;try{n=parseInt(localStorage.getItem('foulbrood_line_length'),10)||4}catch(e){}return [4,6,8,12].includes(n)?n:4}
 // Analysis workspaces share one board and history cursor.
 // Analysis reopens where it was last left (Game review the first time).
+// Empty Game review: "Import" (Position screen with every import option open) and "Archive".
+function reviewStartLinks(){const p=$('reviewProgress');if(p.querySelector('.start-links'))return;p.textContent='';const box=document.createElement('span');box.className='start-links';
+ const mk=(label,title,go)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.title=title;b.onclick=go;box.append(b)};
+ mk('Import','Open a file, a hivegame.com link or a move list',async()=>{$('modeAnalyze').click();for(let i=0;i<20&&$('analysisSetup').hidden;i++)await new Promise(r=>setTimeout(r,100));for(const id of ['fileEntry','linkEntry','manualEntry'])if($(id))$(id).open=true});
+ mk('Archive','Pick a saved game to review',()=>$('historyTab').click());
+ p.append(box)}
 function analysisWorkspace(w){try{if(w)localStorage.setItem('foulbrood_analysis_workspace',w);return localStorage.getItem('foulbrood_analysis_workspace')||'review'}catch(e){return w||'review'}}
 $('modeAnalyze').onclick=()=>{analysisWorkspace('position');if(editorDraft)$('cancelSetup').click();if(state?.game_review)action({action:'review_exit'})};
 $('modeSetup').onclick=async()=>{analysisWorkspace('arrange');if(state?.game_review)await action({action:'review_exit'});if(!editorDraft)openPositionSetup(false)};
@@ -90,7 +96,8 @@ window.renderGameReview=s=>{
  $('analysisSetup').hidden=false;$('historyPanel').hidden=false;
  $('analyze').disabled=!review.total;$('stopAnalysis').hidden=true;
  $('hintsLabel').hidden=true;$('bookEnabled').closest('label').hidden=true;$('calculateInstead').hidden=true;
- $('reviewProgress').textContent=review.source==='in_game'?`${review.recorded_count} positions with in-game analysis`:review.resume_engine_missing?`Saved results loaded. Connect ${review.engine} to continue reviewing.`:review.error||(!review.total?'Import a game to get started.':review.status==='running'?(review.working_ply&&review.total?`Move ${Math.min(review.working_ply,review.total)} of ${review.total}`:'Starting review…'):review.status==='complete'?`${review.total} moves reviewed`:review.status==='stopped'?`Stopped · ${reviewDone(review)} of ${review.total} reviewed`:`${review.total} moves`);
+ {const rp=$('reviewProgress'),txt=review.source==='in_game'?`${review.recorded_count} positions with in-game analysis`:review.resume_engine_missing?`Saved results loaded. Connect ${review.engine} to continue reviewing.`:review.error||(!review.total?'':review.status==='running'?(review.working_ply&&review.total?`Move ${Math.min(review.working_ply,review.total)} of ${review.total}`:'Starting review…'):review.status==='complete'?`${review.total} moves reviewed`:review.status==='stopped'?`Stopped · ${reviewDone(review)} of ${review.total} reviewed`:`${review.total} moves`);if(txt||!rp.querySelector('.start-links'))rp.textContent=txt}
+ if(!review.total&&!review.error&&review.source!=='in_game'&&!review.resume_engine_missing)reviewStartLinks();
  const remaining=review.status==='ready'||review.status==='complete'?(review.status==='complete'?0:(2*review.total+1)*s.analysis_ms/1000):review.remaining_seconds;
  $('reviewRemaining').hidden=!review.total||review.source==='in_game';$('reviewProgressBar').hidden=review.source==='in_game';
  const minutes=Math.max(1,Math.ceil(remaining/60));
