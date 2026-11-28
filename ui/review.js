@@ -384,11 +384,13 @@ function renderHistoryLine(s,list){
 }
 // Clicking a move the review has not reached yet reviews just that move (when the review is not running).
 let reviewUserAt=0;for(const ev of ['pointerdown','keydown'])document.addEventListener(ev,()=>{reviewUserAt=Date.now()},true);
-let reviewSingleLastPly=null,reviewSingleWant=null;
+let reviewSingleLastPly=null,reviewSingleLastGame=null,reviewSingleWant=null;
 function reviewSingleOnSelect(s){
  // A move chosen in this window (not the review stopping on a move, and not another open window) is wanted;
  // it is asked for once the review is idle, and dropped once that move has a result or is being worked on.
- if(s&&s.ply!==reviewSingleLastPly){reviewSingleLastPly=s.ply;if(Date.now()-reviewUserAt<3000&&document.hasFocus())reviewSingleWant={game:s.review_game||s.game,ply:s.ply}}
+ // A newly loaded or imported game (or entering Game review) is not a move chosen: only stepping within the same game is.
+ {const g=s&&(s.review_game||s.game),fresh=!!s&&(g!==reviewSingleLastGame||!s.game_review);if(s){reviewSingleLastGame=s.game_review?g:null}
+ if(s&&s.ply!==reviewSingleLastPly){reviewSingleLastPly=s.ply;if(!fresh&&Date.now()-reviewUserAt<3000&&document.hasFocus())reviewSingleWant={game:g,ply:s.ply}}}
  const want=reviewSingleWant,review=s?.game_review;if(!want||!review)return;
  const game=s.review_game||s.game;if(want.game!==game||want.ply!==s.ply){reviewSingleWant=null;return}
  if(s.mode!=='analysis'||review.source==='in_game'||editorDraft||reviewTry||reviewTryOn){reviewSingleWant=null;return}
