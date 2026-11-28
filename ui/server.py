@@ -1028,6 +1028,22 @@ def setup_root(payload):
     return f"{variant}~{side}~{turn}~{','.join(encoded)}~{tail}"
 
 
+PREFS_FILE=Path(os.environ.get('FOULBROOD_DATA_DIR',str(Path.home()/'Documents/Codex/FoulBroodData')))/'viewer-prefs.json'
+def load_prefs():
+    """Viewer settings kept across restarts (the board's address changes each launch, so the browser alone forgets them)."""
+    try:
+        data=json.loads(PREFS_FILE.read_text())
+        return {k:v for k,v in data.items() if isinstance(k,str) and k.startswith('foulbrood_') and isinstance(v,str)} if isinstance(data,dict) else {}
+    except (OSError,ValueError):return {}
+def save_prefs(prefs):
+    if not isinstance(prefs,dict) or len(prefs)>500:raise ValueError('Settings are not valid.')
+    clean={k:v for k,v in prefs.items() if isinstance(k,str) and k.startswith('foulbrood_') and len(k)<=100 and isinstance(v,str)}
+    body=json.dumps(clean,sort_keys=True)
+    if len(body)>300000:raise ValueError('Settings are too large.')
+    PREFS_FILE.parent.mkdir(parents=True,exist_ok=True)
+    tmp=PREFS_FILE.with_suffix('.tmp');tmp.write_text(body);os.replace(tmp,PREFS_FILE)
+    return dict(ok=True)
+
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--port',type=int,default=0);ap.add_argument('--state-file',required=True)
     args=ap.parse_args();app=App();token=secrets.token_urlsafe(32)
@@ -1042,7 +1058,7 @@ def main():
                 self.send(403,b'{}');return
             path=urlparse(self.path).path
             if path=='/':
-                html=(ROOT/'ui/index.html').read_text().replace('__TOKEN__',token)
+                html=(ROOT/'ui/index.html').read_text().replace('__TOKEN__',token).replace('__PREFS__',json.dumps(load_prefs()).replace('<','\\u003c'))
                 self.send(200,html.encode(),'text/html; charset=utf-8')
             elif path=='/api/state':self.send(200,json.dumps(app.view()).encode())
             elif path=='/health':self.send(200,json.dumps(dict(app='foulbrood-local-board',bundle_path=str(ROOT),build_id=os.environ.get('FOULBROOD_BUILD_ID','development'))).encode())
@@ -1069,6 +1085,8 @@ def main():
                     # Game history (History tab): its own small store, no board state involved.
                     import library
                     self.send(200,json.dumps(library.library_action(payload)).encode());return
+                if payload.get('action')=='prefs_save':
+                    self.send(200,json.dumps(save_prefs(payload.get('prefs'))).encode());return
                 if payload.get('action')=='engine_discover':
                     self.send(200,json.dumps(discover_engines()).encode());return
                 if payload.get('action')=='engine_browse':
