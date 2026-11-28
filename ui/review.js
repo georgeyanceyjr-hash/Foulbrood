@@ -97,12 +97,12 @@ window.renderGameReview=s=>{
  $('analysisSetup').hidden=false;$('historyPanel').hidden=false;
  $('analyze').disabled=!review.total;$('stopAnalysis').hidden=true;
  $('hintsLabel').hidden=true;$('bookEnabled').closest('label').hidden=true;$('calculateInstead').hidden=true;
- {const rp=$('reviewProgress'),txt=review.source==='in_game'?`${review.recorded_count} positions with in-game analysis`:review.resume_engine_missing?`Saved results loaded. Connect ${review.engine} to continue reviewing.`:review.error||(!review.total?'':review.status==='running'?(review.working_ply&&review.total?`Move ${Math.min(review.working_ply,review.total)} of ${review.total}`:'Starting review…'):review.status==='complete'?`${review.total} moves reviewed`:review.status==='stopped'?`Stopped · ${reviewDone(review)} of ${review.total} reviewed`:`${review.total} moves`);if(txt||!rp.querySelector('.start-links'))rp.textContent=txt}
+ {const rp=$('reviewProgress'),txt=review.source==='in_game'?`In-game analysis · ${review.recorded_count}`:review.resume_engine_missing?'Engine not connected':review.error||(!review.total?'':review.status==='running'?(review.working_ply&&review.total?`Move ${Math.min(review.working_ply,review.total)} of ${review.total}`:'Starting review…'):review.status==='complete'?`${review.total} moves reviewed`:review.status==='stopped'?`Stopped · ${reviewDone(review)} of ${review.total}`:`${review.total} moves`);if(txt||!rp.querySelector('.start-links')){rp.textContent=txt;rp.title=txt}}
  if(!review.total&&!review.error&&review.source!=='in_game'&&!review.resume_engine_missing)reviewStartLinks();
  const remaining=review.status==='ready'||review.status==='complete'?(review.status==='complete'?0:(2*review.total+1)*s.analysis_ms/1000):review.remaining_seconds;
  $('reviewRemaining').hidden=!review.total||review.source==='in_game';$('reviewProgressBar').hidden=review.source==='in_game';
  const minutes=Math.max(1,Math.ceil(remaining/60));
- $('reviewRemaining').textContent=review.status==='complete'?'Review complete':review.status==='stopped'?'':`Up to about ${minutes} ${minutes===1?'minute':'minutes'} remaining`;
+ $('reviewRemaining').textContent=review.status==='complete'?'Review complete':review.status==='stopped'?'':(minutes>=90?`About ${Math.round(minutes/60)} h left`:`About ${minutes} min left`);
  $('reviewProgress').classList.toggle('search-activity',review.status==='running');
  $('reviewProgressBar').max=Math.max(1,review.total);$('reviewProgressBar').value=reviewDone(review);
  $('turn').hidden=true;

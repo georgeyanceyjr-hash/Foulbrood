@@ -1234,3 +1234,5 @@ aside button.review-clear,#reviewClear{position:absolute;top:10px;right:10px;z-i
 #reviewClear:hover,#reviewClear:focus-visible{color:var(--ink);border-color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}
 #reviewClear[hidden]{display:none}
 #historyPanel{position:relative}
+/* Game review status lines: one line each (full text on hover) */
+#reviewInfo .review-info-text>#reviewProgress,#reviewInfo .review-info-text>#reviewRemaining{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
