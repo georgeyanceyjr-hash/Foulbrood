@@ -1094,8 +1094,9 @@ except Exception:
 
 
 ENGINES_DIR = Path(os.environ.get('FOULBROOD_DATA_DIR', str(Path.home() / 'Documents/Codex/FoulBroodData'))) / 'Engines'
-BUILT_IN = [ENGINES_DIR / 'ThoraxRex' / ('thoraxrex' + EXE), ENGINES_DIR / 'ThoraxRex-NoBook' / ('thoraxrex' + EXE)]
-# The engine shipped inside the app (engines/<system>-<cpu>/ThoraxRex and ThoraxRex-NoBook).
+BUILT_IN = [ENGINES_DIR / 'ThoraxRex' / ('thoraxrex' + EXE), ENGINES_DIR / 'ThoraxRex-NoBook' / ('thoraxrex' + EXE),
+            ENGINES_DIR / 'ThoraxRex-Formi' / ('thoraxrex' + EXE)]  # FoulBrood Engine Book, FoulBrood Engine, FoulBrood Engine Formi Book
+# The engine shipped inside the app (engines/<system>-<cpu>/ThoraxRex, ThoraxRex-NoBook and ThoraxRex-Formi).
 BUNDLED_ENGINES = Path(__file__).resolve().parent.parent / 'engines'
 _built_in_checked = False
 

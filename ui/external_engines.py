@@ -70,6 +70,9 @@ def release_display_name(path, name):
         return 'Foulbrood Legacy (bundled)'
     if resolved == str(Path.home()/'Documents/Codex/FoulBroodData/Engines/FoulBrood-Pillbug-test/foulbrood'):
         return 'Foulbrood 2.0'
+    # The third built-in FoulBrood plays Formi's opening book (its folder says so, whatever the program reports).
+    if Path(path).parent.name=='ThoraxRex-Formi' and isinstance(name,str) and name.startswith(('ThoraxRex','FoulBrood')):
+        return foulbrood_name(re.sub(r'\s*(Formi )?Book$','',name)+' Formi Book')
     return foulbrood_name(name)
 
 
@@ -84,7 +87,7 @@ def foulbrood_name(name):
     shown = 'FoulBrood Engine'
     if version and int(version.group(1)) >= 1:
         shown += ' v%s.%s' % (version.group(1), version.group(2))
-    return shown + (' Book' if ' Book' in name else '')
+    return shown + (' Formi Book' if 'Formi Book' in name else ' Book' if ' Book' in name else '')
 
 
 def is_foulbrood(name):
