@@ -1229,8 +1229,8 @@ h1 .app-version{font-size:.42em;font-weight:600;letter-spacing:.08em;opacity:.65
 #reviewInfo .review-info-line:has(.start-links)>.review-info-text,#reviewInfo .review-info-line:has(.start-links) #reviewProgress,#reviewProgress .start-links{display:contents}
 #reviewInfo .review-info-line:has(.start-links)>button,#reviewProgress .start-links button{width:100%;min-width:0;margin:0;padding-left:4px;padding-right:4px;letter-spacing:.06em;white-space:normal;line-height:1.15;justify-content:center;text-align:center}
 /* Game review: Clear game, top right */
-aside button.review-clear,#reviewClear{display:inline-flex;align-items:center;gap:6px;min-height:0;height:auto;margin:0 0 0 auto;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+aside button.review-clear,#reviewClear{position:absolute;top:10px;right:10px;z-index:2;display:inline-flex;align-items:center;gap:6px;min-height:0;height:auto;margin:0;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
 #reviewClear svg{width:10px;height:10px;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;fill:none}
 #reviewClear:hover,#reviewClear:focus-visible{color:var(--ink);border-color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}
 #reviewClear[hidden]{display:none}
-body.review-mode #historyPanel>.row #reviewClear~#histExportToggle{margin-left:12px}
+#historyPanel{position:relative}
