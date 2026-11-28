@@ -102,7 +102,7 @@ window.renderGameReview=s=>{
  const remaining=review.status==='ready'||review.status==='complete'?(review.status==='complete'?0:(2*review.total+1)*s.analysis_ms/1000):review.remaining_seconds;
  $('reviewRemaining').hidden=!review.total||review.source==='in_game';$('reviewProgressBar').hidden=review.source==='in_game';
  const minutes=Math.max(1,Math.ceil(remaining/60));
- $('reviewRemaining').textContent=review.status==='complete'?'Review complete':review.status==='stopped'?'':(minutes>=90?`About ${Math.round(minutes/60)} h left`:`About ${minutes} min left`);
+ $('reviewRemaining').textContent=review.status==='complete'?'Review complete':review.status==='stopped'?'':(minutes>=600?`About ${Math.round(minutes/60)} h left`:minutes>=60?`About ${Math.floor(minutes/60)} h${minutes%60?` ${minutes%60} min`:''} left`:`About ${minutes} min left`);
  $('reviewProgress').classList.toggle('search-activity',review.status==='running');
  $('reviewProgressBar').max=Math.max(1,review.total);$('reviewProgressBar').value=reviewDone(review);
  $('turn').hidden=true;
